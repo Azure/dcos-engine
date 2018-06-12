@@ -10,10 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azure/acs-engine/pkg/api"
-	"github.com/Azure/acs-engine/pkg/api/common"
-	"github.com/Azure/acs-engine/pkg/helpers"
-	"github.com/Azure/acs-engine/pkg/openshift/certgen"
+	"github.com/Azure/dcos-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/api/common"
+	"github.com/Azure/dcos-engine/pkg/helpers"
 	"github.com/blang/semver"
 )
 
@@ -28,21 +27,6 @@ const (
 )
 
 var (
-	//DefaultKubernetesSpecConfig is the default Docker image source of Kubernetes
-	DefaultKubernetesSpecConfig = KubernetesSpecConfig{
-		KubernetesImageBase:              "k8s-gcrio.azureedge.net/",
-		TillerImageBase:                  "gcrio.azureedge.net/kubernetes-helm/",
-		ACIConnectorImageBase:            "microsoft/",
-		NVIDIAImageBase:                  "nvidia/",
-		EtcdDownloadURLBase:              "https://acs-mirror.azureedge.net/github-coreos",
-		KubeBinariesSASURLBase:           "https://acs-mirror.azureedge.net/wink8s/",
-		WindowsPackageSASURLBase:         "https://acs-mirror.azureedge.net/wink8s/",
-		WindowsTelemetryGUID:             "fb801154-36b9-41bc-89c2-f4d4f05472b0",
-		CNIPluginsDownloadURL:            "https://acs-mirror.azureedge.net/cni/cni-plugins-amd64-" + CNIPluginVer + ".tgz",
-		VnetCNILinuxPluginsDownloadURL:   "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-linux-amd64-" + AzureCniPluginVer + ".tgz",
-		VnetCNIWindowsPluginsDownloadURL: "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-windows-amd64-" + AzureCniPluginVer + ".zip",
-	}
-
 	//DefaultDCOSSpecConfig is the default DC/OS binary download URL.
 	DefaultDCOSSpecConfig = DCOSSpecConfig{
 		DCOS188BootstrapDownloadURL:     fmt.Sprintf(AzureEdgeDCOSBootstrapDownloadURL, "stable", "5df43052907c021eeb5de145419a3da1898c58a5"),
@@ -85,29 +69,12 @@ var (
 		ImageVersion:   "latest",
 	}
 
-	//DefaultOpenShift39RHELImageConfig is the OpenShift on RHEL distribution.
-	DefaultOpenShift39RHELImageConfig = AzureOSImageConfig{
-		ImageOffer:     "acsengine-preview",
-		ImageSku:       "rhel74",
-		ImagePublisher: "redhat",
-		ImageVersion:   "latest",
-	}
-
-	//DefaultOpenShift39CentOSImageConfig is the OpenShift on CentOS distribution.
-	DefaultOpenShift39CentOSImageConfig = AzureOSImageConfig{
-		ImageOffer:     "origin-acsengine-preview",
-		ImageSku:       "centos7",
-		ImagePublisher: "redhat",
-		ImageVersion:   "latest",
-	}
-
 	//AzureCloudSpec is the default configurations for global azure.
 	AzureCloudSpec = AzureEnvironmentSpecConfig{
 		//DockerSpecConfig specify the docker engine download repo
 		DockerSpecConfig: DefaultDockerSpecConfig,
-		//KubernetesSpecConfig is the default kubernetes container image url.
-		KubernetesSpecConfig: DefaultKubernetesSpecConfig,
-		DCOSSpecConfig:       DefaultDCOSSpecConfig,
+
+		DCOSSpecConfig: DefaultDCOSSpecConfig,
 
 		EndpointConfig: AzureEndpointConfig{
 			ResourceManagerVMDNSSuffix: "cloudapp.azure.com",
@@ -117,17 +84,13 @@ var (
 			api.Ubuntu: DefaultUbuntuImageConfig,
 			api.RHEL:   DefaultRHELOSImageConfig,
 			api.CoreOS: DefaultCoreOSImageConfig,
-			// Image config supported for OpenShift
-			api.OpenShift39RHEL: DefaultOpenShift39RHELImageConfig,
-			api.OpenShiftCentOS: DefaultOpenShift39CentOSImageConfig,
 		},
 	}
 
 	//AzureGermanCloudSpec is the German cloud config.
 	AzureGermanCloudSpec = AzureEnvironmentSpecConfig{
-		DockerSpecConfig:     DefaultDockerSpecConfig,
-		KubernetesSpecConfig: DefaultKubernetesSpecConfig,
-		DCOSSpecConfig:       DefaultDCOSSpecConfig,
+		DockerSpecConfig: DefaultDockerSpecConfig,
+		DCOSSpecConfig:   DefaultDCOSSpecConfig,
 		EndpointConfig: AzureEndpointConfig{
 			ResourceManagerVMDNSSuffix: "cloudapp.microsoftazure.de",
 		},
@@ -145,9 +108,8 @@ var (
 
 	//AzureUSGovernmentCloud is the US government config.
 	AzureUSGovernmentCloud = AzureEnvironmentSpecConfig{
-		DockerSpecConfig:     DefaultDockerSpecConfig,
-		KubernetesSpecConfig: DefaultKubernetesSpecConfig,
-		DCOSSpecConfig:       DefaultDCOSSpecConfig,
+		DockerSpecConfig: DefaultDockerSpecConfig,
+		DCOSSpecConfig:   DefaultDCOSSpecConfig,
 		EndpointConfig: AzureEndpointConfig{
 			ResourceManagerVMDNSSuffix: "cloudapp.usgovcloudapi.net",
 		},
@@ -170,19 +132,7 @@ var (
 			DockerEngineRepo:         "https://mirror.azure.cn/docker-engine/apt/repo/",
 			DockerComposeDownloadURL: "https://mirror.azure.cn/docker-toolbox/linux/compose",
 		},
-		//KubernetesSpecConfig - Due to Chinese firewall issue, the default containers from google is blocked, use the Chinese local mirror instead
-		KubernetesSpecConfig: KubernetesSpecConfig{
-			KubernetesImageBase:              "crproxy.trafficmanager.net:6000/google_containers/",
-			TillerImageBase:                  "crproxy.trafficmanager.net:6000/kubernetes-helm/",
-			ACIConnectorImageBase:            DefaultKubernetesSpecConfig.ACIConnectorImageBase,
-			EtcdDownloadURLBase:              DefaultKubernetesSpecConfig.EtcdDownloadURLBase,
-			KubeBinariesSASURLBase:           DefaultKubernetesSpecConfig.KubeBinariesSASURLBase,
-			WindowsPackageSASURLBase:         DefaultKubernetesSpecConfig.WindowsPackageSASURLBase,
-			WindowsTelemetryGUID:             DefaultKubernetesSpecConfig.WindowsTelemetryGUID,
-			CNIPluginsDownloadURL:            DefaultKubernetesSpecConfig.CNIPluginsDownloadURL,
-			VnetCNILinuxPluginsDownloadURL:   DefaultKubernetesSpecConfig.VnetCNILinuxPluginsDownloadURL,
-			VnetCNIWindowsPluginsDownloadURL: DefaultKubernetesSpecConfig.VnetCNIWindowsPluginsDownloadURL,
-		},
+
 		DCOSSpecConfig: DCOSSpecConfig{
 			DCOS188BootstrapDownloadURL:     fmt.Sprintf(AzureChinaCloudDCOSBootstrapDownloadURL, "5df43052907c021eeb5de145419a3da1898c58a5"),
 			DCOSWindowsBootstrapDownloadURL: "https://dcosdevstorage.blob.core.windows.net/dcos-windows",
@@ -359,10 +309,8 @@ func setPropertiesDefaults(cs *api.ContainerService, isUpgrade bool) (bool, erro
 
 // setOrchestratorDefaults for orchestrators
 func setOrchestratorDefaults(cs *api.ContainerService) {
-	location := cs.Location
 	a := cs.Properties
 
-	cloudSpecConfig := getCloudSpecConfig(location)
 	if a.OrchestratorProfile == nil {
 		return
 	}
@@ -372,251 +320,6 @@ func setOrchestratorDefaults(cs *api.ContainerService) {
 		o.OrchestratorVersion, a.HasWindows())
 
 	switch o.OrchestratorType {
-	case api.Kubernetes:
-		k8sVersion := o.OrchestratorVersion
-
-		if o.KubernetesConfig == nil {
-			o.KubernetesConfig = &api.KubernetesConfig{}
-		}
-		// For backwards compatibility with original, overloaded "NetworkPolicy" config vector
-		// we translate deprecated NetworkPolicy usage to the NetworkConfig equivalent
-		// and set a default network policy enforcement configuration
-		switch o.KubernetesConfig.NetworkPolicy {
-		case NetworkPluginAzure:
-			o.KubernetesConfig.NetworkPlugin = NetworkPluginAzure
-			o.KubernetesConfig.NetworkPolicy = DefaultNetworkPolicy
-		case NetworkPolicyNone:
-			o.KubernetesConfig.NetworkPlugin = NetworkPluginKubenet
-			o.KubernetesConfig.NetworkPolicy = DefaultNetworkPolicy
-		case NetworkPolicyCalico:
-			o.KubernetesConfig.NetworkPlugin = NetworkPluginKubenet
-		case NetworkPolicyCilium:
-			o.KubernetesConfig.NetworkPlugin = NetworkPolicyCilium
-		}
-
-		// Add default addons specification, if no user-provided spec exists
-		if o.KubernetesConfig.Addons == nil {
-			o.KubernetesConfig.Addons = []api.KubernetesAddon{
-				DefaultTillerAddonsConfig,
-				DefaultACIConnectorAddonsConfig,
-				DefaultClusterAutoscalerAddonsConfig,
-				DefaultDashboardAddonsConfig,
-				DefaultReschedulerAddonsConfig,
-				DefaultMetricsServerAddonsConfig,
-				DefaultNVIDIADevicePluginAddonsConfig,
-				DefaultContainerMonitoringAddonsConfig,
-			}
-			enforceK8sVersionAddonOverrides(o.KubernetesConfig.Addons, o)
-		} else {
-			// For each addon, provide default configuration if user didn't provide its own config
-			t := getAddonsIndexByName(o.KubernetesConfig.Addons, DefaultTillerAddonName)
-			if t < 0 {
-				// Provide default acs-engine config for Tiller
-				o.KubernetesConfig.Addons = append(o.KubernetesConfig.Addons, DefaultTillerAddonsConfig)
-			}
-			a := getAddonsIndexByName(o.KubernetesConfig.Addons, DefaultACIConnectorAddonName)
-			if a < 0 {
-				// Provide default acs-engine config for ACI Connector
-				o.KubernetesConfig.Addons = append(o.KubernetesConfig.Addons, DefaultACIConnectorAddonsConfig)
-			}
-			s := getAddonsIndexByName(o.KubernetesConfig.Addons, DefaultClusterAutoscalerAddonName)
-			if s < 0 {
-				// Provide default acs-engine config for cluster autoscaler
-				o.KubernetesConfig.Addons = append(o.KubernetesConfig.Addons, DefaultClusterAutoscalerAddonsConfig)
-			}
-			d := getAddonsIndexByName(o.KubernetesConfig.Addons, DefaultDashboardAddonName)
-			if d < 0 {
-				// Provide default acs-engine config for Dashboard
-				o.KubernetesConfig.Addons = append(o.KubernetesConfig.Addons, DefaultDashboardAddonsConfig)
-			}
-			r := getAddonsIndexByName(o.KubernetesConfig.Addons, DefaultReschedulerAddonName)
-			if r < 0 {
-				// Provide default acs-engine config for Rescheduler
-				o.KubernetesConfig.Addons = append(o.KubernetesConfig.Addons, DefaultReschedulerAddonsConfig)
-			}
-			m := getAddonsIndexByName(o.KubernetesConfig.Addons, DefaultMetricsServerAddonName)
-			if m < 0 {
-				// Provide default acs-engine config for Metrics Server
-				o.KubernetesConfig.Addons = append(o.KubernetesConfig.Addons, DefaultMetricsServerAddonsConfig)
-				m = getAddonsIndexByName(o.KubernetesConfig.Addons, DefaultMetricsServerAddonName)
-				o.KubernetesConfig.Addons[m].Enabled = k8sVersionMetricsServerAddonEnabled(o)
-			}
-			n := getAddonsIndexByName(o.KubernetesConfig.Addons, DefaultNVIDIADevicePluginAddonName)
-			if n < 0 {
-				// Provide default acs-engine config for NVIDIA Device Plugin
-				o.KubernetesConfig.Addons = append(o.KubernetesConfig.Addons, DefaultNVIDIADevicePluginAddonsConfig)
-			}
-			cm := getAddonsIndexByName(o.KubernetesConfig.Addons, ContainerMonitoringAddonName)
-			if cm < 0 {
-				// Provide default acs-engine config for Container Monitoring
-				o.KubernetesConfig.Addons = append(o.KubernetesConfig.Addons, DefaultContainerMonitoringAddonsConfig)
-			}
-		}
-		if o.KubernetesConfig.KubernetesImageBase == "" {
-			o.KubernetesConfig.KubernetesImageBase = cloudSpecConfig.KubernetesSpecConfig.KubernetesImageBase
-		}
-		if o.KubernetesConfig.EtcdVersion == "" {
-			o.KubernetesConfig.EtcdVersion = DefaultEtcdVersion
-		}
-		if a.HasWindows() {
-			if o.KubernetesConfig.NetworkPlugin == "" {
-				o.KubernetesConfig.NetworkPlugin = DefaultNetworkPluginWindows
-			}
-		} else {
-			if o.KubernetesConfig.NetworkPlugin == "" {
-				o.KubernetesConfig.NetworkPlugin = DefaultNetworkPlugin
-			}
-		}
-		if o.KubernetesConfig.ContainerRuntime == "" {
-			o.KubernetesConfig.ContainerRuntime = DefaultContainerRuntime
-		}
-		if o.KubernetesConfig.ClusterSubnet == "" {
-			if o.IsAzureCNI() {
-				// When VNET integration is enabled, all masters, agents and pods share the same large subnet.
-				o.KubernetesConfig.ClusterSubnet = DefaultKubernetesSubnet
-			} else {
-				o.KubernetesConfig.ClusterSubnet = DefaultKubernetesClusterSubnet
-			}
-		}
-		if o.KubernetesConfig.GCHighThreshold == 0 {
-			o.KubernetesConfig.GCHighThreshold = DefaultKubernetesGCHighThreshold
-		}
-		if o.KubernetesConfig.GCLowThreshold == 0 {
-			o.KubernetesConfig.GCLowThreshold = DefaultKubernetesGCLowThreshold
-		}
-		if o.KubernetesConfig.DNSServiceIP == "" {
-			o.KubernetesConfig.DNSServiceIP = DefaultKubernetesDNSServiceIP
-		}
-		if o.KubernetesConfig.DockerBridgeSubnet == "" {
-			o.KubernetesConfig.DockerBridgeSubnet = DefaultDockerBridgeSubnet
-		}
-		if o.KubernetesConfig.ServiceCIDR == "" {
-			o.KubernetesConfig.ServiceCIDR = DefaultKubernetesServiceCIDR
-		}
-		// Enforce sane cloudprovider backoff defaults, if CloudProviderBackoff is true in KubernetesConfig
-		if o.KubernetesConfig.CloudProviderBackoff {
-			if o.KubernetesConfig.CloudProviderBackoffDuration == 0 {
-				o.KubernetesConfig.CloudProviderBackoffDuration = DefaultKubernetesCloudProviderBackoffDuration
-			}
-			if o.KubernetesConfig.CloudProviderBackoffExponent == 0 {
-				o.KubernetesConfig.CloudProviderBackoffExponent = DefaultKubernetesCloudProviderBackoffExponent
-			}
-			if o.KubernetesConfig.CloudProviderBackoffJitter == 0 {
-				o.KubernetesConfig.CloudProviderBackoffJitter = DefaultKubernetesCloudProviderBackoffJitter
-			}
-			if o.KubernetesConfig.CloudProviderBackoffRetries == 0 {
-				o.KubernetesConfig.CloudProviderBackoffRetries = DefaultKubernetesCloudProviderBackoffRetries
-			}
-		}
-		k8sSemVer, _ := semver.Make(k8sVersion)
-		minVersion, _ := semver.Make("1.6.6")
-		// Enforce sane cloudprovider rate limit defaults, if CloudProviderRateLimit is true in KubernetesConfig
-		// For k8s version greater or equal to 1.6.6, we will set the default CloudProviderRate* settings
-		if o.KubernetesConfig.CloudProviderRateLimit && k8sSemVer.GTE(minVersion) {
-			if o.KubernetesConfig.CloudProviderRateLimitQPS == 0 {
-				o.KubernetesConfig.CloudProviderRateLimitQPS = DefaultKubernetesCloudProviderRateLimitQPS
-			}
-			if o.KubernetesConfig.CloudProviderRateLimitBucket == 0 {
-				o.KubernetesConfig.CloudProviderRateLimitBucket = DefaultKubernetesCloudProviderRateLimitBucket
-			}
-		}
-
-		// For each addon, produce a synthesized config between user-provided and acs-engine defaults
-		t := getAddonsIndexByName(a.OrchestratorProfile.KubernetesConfig.Addons, DefaultTillerAddonName)
-		if a.OrchestratorProfile.KubernetesConfig.Addons[t].IsEnabled(api.DefaultTillerAddonEnabled) {
-			a.OrchestratorProfile.KubernetesConfig.Addons[t] = assignDefaultAddonVals(a.OrchestratorProfile.KubernetesConfig.Addons[t], DefaultTillerAddonsConfig)
-		}
-		c := getAddonsIndexByName(a.OrchestratorProfile.KubernetesConfig.Addons, DefaultACIConnectorAddonName)
-		if a.OrchestratorProfile.KubernetesConfig.Addons[c].IsEnabled(api.DefaultACIConnectorAddonEnabled) {
-			a.OrchestratorProfile.KubernetesConfig.Addons[c] = assignDefaultAddonVals(a.OrchestratorProfile.KubernetesConfig.Addons[c], DefaultACIConnectorAddonsConfig)
-		}
-		s := getAddonsIndexByName(a.OrchestratorProfile.KubernetesConfig.Addons, DefaultClusterAutoscalerAddonName)
-		if a.OrchestratorProfile.KubernetesConfig.Addons[s].IsEnabled(api.DefaultClusterAutoscalerAddonEnabled) {
-			a.OrchestratorProfile.KubernetesConfig.Addons[s] = assignDefaultAddonVals(a.OrchestratorProfile.KubernetesConfig.Addons[s], DefaultClusterAutoscalerAddonsConfig)
-		}
-		d := getAddonsIndexByName(a.OrchestratorProfile.KubernetesConfig.Addons, DefaultDashboardAddonName)
-		if a.OrchestratorProfile.KubernetesConfig.Addons[d].IsEnabled(api.DefaultDashboardAddonEnabled) {
-			a.OrchestratorProfile.KubernetesConfig.Addons[d] = assignDefaultAddonVals(a.OrchestratorProfile.KubernetesConfig.Addons[d], DefaultDashboardAddonsConfig)
-		}
-		r := getAddonsIndexByName(a.OrchestratorProfile.KubernetesConfig.Addons, DefaultReschedulerAddonName)
-		if a.OrchestratorProfile.KubernetesConfig.Addons[r].IsEnabled(api.DefaultReschedulerAddonEnabled) {
-			a.OrchestratorProfile.KubernetesConfig.Addons[r] = assignDefaultAddonVals(a.OrchestratorProfile.KubernetesConfig.Addons[r], DefaultReschedulerAddonsConfig)
-		}
-		m := getAddonsIndexByName(a.OrchestratorProfile.KubernetesConfig.Addons, DefaultMetricsServerAddonName)
-		if a.OrchestratorProfile.KubernetesConfig.Addons[m].IsEnabled(api.DefaultMetricsServerAddonEnabled) {
-			a.OrchestratorProfile.KubernetesConfig.Addons[m] = assignDefaultAddonVals(a.OrchestratorProfile.KubernetesConfig.Addons[m], DefaultMetricsServerAddonsConfig)
-		}
-		n := getAddonsIndexByName(a.OrchestratorProfile.KubernetesConfig.Addons, DefaultNVIDIADevicePluginAddonName)
-		if a.OrchestratorProfile.KubernetesConfig.Addons[n].IsEnabled(api.DefaultNVIDIADevicePluginAddonEnabled) {
-			a.OrchestratorProfile.KubernetesConfig.Addons[n] = assignDefaultAddonVals(a.OrchestratorProfile.KubernetesConfig.Addons[n], DefaultNVIDIADevicePluginAddonsConfig)
-		}
-		cm := getAddonsIndexByName(a.OrchestratorProfile.KubernetesConfig.Addons, ContainerMonitoringAddonName)
-		if a.OrchestratorProfile.KubernetesConfig.Addons[cm].IsEnabled(api.DefaultContainerMonitoringAddonEnabled) {
-			a.OrchestratorProfile.KubernetesConfig.Addons[cm] = assignDefaultAddonVals(a.OrchestratorProfile.KubernetesConfig.Addons[cm], DefaultContainerMonitoringAddonsConfig)
-		}
-
-		if o.KubernetesConfig.PrivateCluster == nil {
-			o.KubernetesConfig.PrivateCluster = &api.PrivateCluster{}
-		}
-
-		if o.KubernetesConfig.PrivateCluster.Enabled == nil {
-			o.KubernetesConfig.PrivateCluster.Enabled = helpers.PointerToBool(api.DefaultPrivateClusterEnabled)
-		}
-
-		if "" == a.OrchestratorProfile.KubernetesConfig.EtcdDiskSizeGB {
-			switch {
-			case a.TotalNodes() > 20:
-				a.OrchestratorProfile.KubernetesConfig.EtcdDiskSizeGB = DefaultEtcdDiskSizeGT20Nodes
-			case a.TotalNodes() > 10:
-				a.OrchestratorProfile.KubernetesConfig.EtcdDiskSizeGB = DefaultEtcdDiskSizeGT10Nodes
-			case a.TotalNodes() > 3:
-				a.OrchestratorProfile.KubernetesConfig.EtcdDiskSizeGB = DefaultEtcdDiskSizeGT3Nodes
-			default:
-				a.OrchestratorProfile.KubernetesConfig.EtcdDiskSizeGB = DefaultEtcdDiskSize
-			}
-		}
-
-		if helpers.IsTrueBoolPointer(o.KubernetesConfig.EnableDataEncryptionAtRest) {
-			if "" == a.OrchestratorProfile.KubernetesConfig.EtcdEncryptionKey {
-				a.OrchestratorProfile.KubernetesConfig.EtcdEncryptionKey = generateEtcdEncryptionKey()
-			}
-		}
-
-		if a.OrchestratorProfile.KubernetesConfig.PrivateJumpboxProvision() && a.OrchestratorProfile.KubernetesConfig.PrivateCluster.JumpboxProfile.OSDiskSizeGB == 0 {
-			a.OrchestratorProfile.KubernetesConfig.PrivateCluster.JumpboxProfile.OSDiskSizeGB = DefaultJumpboxDiskSize
-		}
-
-		if a.OrchestratorProfile.KubernetesConfig.PrivateJumpboxProvision() && a.OrchestratorProfile.KubernetesConfig.PrivateCluster.JumpboxProfile.Username == "" {
-			a.OrchestratorProfile.KubernetesConfig.PrivateCluster.JumpboxProfile.Username = DefaultJumpboxUsername
-		}
-
-		if a.OrchestratorProfile.KubernetesConfig.PrivateJumpboxProvision() && a.OrchestratorProfile.KubernetesConfig.PrivateCluster.JumpboxProfile.StorageProfile == "" {
-			a.OrchestratorProfile.KubernetesConfig.PrivateCluster.JumpboxProfile.StorageProfile = api.ManagedDisks
-		}
-
-		if a.OrchestratorProfile.KubernetesConfig.EnableRbac == nil {
-			a.OrchestratorProfile.KubernetesConfig.EnableRbac = helpers.PointerToBool(api.DefaultRBACEnabled)
-		}
-
-		if a.OrchestratorProfile.KubernetesConfig.EnableSecureKubelet == nil {
-			a.OrchestratorProfile.KubernetesConfig.EnableSecureKubelet = helpers.PointerToBool(api.DefaultSecureKubeletEnabled)
-		}
-
-		if a.OrchestratorProfile.KubernetesConfig.UseInstanceMetadata == nil {
-			a.OrchestratorProfile.KubernetesConfig.UseInstanceMetadata = helpers.PointerToBool(api.DefaultUseInstanceMetadata)
-		}
-
-		// Configure kubelet
-		setKubeletConfig(cs)
-		// Configure controller-manager
-		setControllerManagerConfig(cs)
-		// Configure cloud-controller-manager
-		setCloudControllerManagerConfig(cs)
-		// Configure apiserver
-		setAPIServerConfig(cs)
-		// Configure scheduler
-		setSchedulerConfig(cs)
-
 	case api.DCOS:
 		if o.DcosConfig == nil {
 			o.DcosConfig = &api.DcosConfig{}
@@ -630,20 +333,6 @@ func setOrchestratorDefaults(cs *api.ContainerService) {
 			if len(o.DcosConfig.BootstrapProfile.VMSize) == 0 {
 				o.DcosConfig.BootstrapProfile.VMSize = "Standard_D2s_v3"
 			}
-		}
-	case api.OpenShift:
-		if a.MasterProfile.Distro == "" {
-			a.MasterProfile.Distro = api.RHEL
-		}
-		kc := a.OrchestratorProfile.OpenShiftConfig.KubernetesConfig
-		if kc == nil {
-			kc = &api.KubernetesConfig{}
-		}
-		if kc.ContainerRuntime == "" {
-			kc.ContainerRuntime = DefaultContainerRuntime
-		}
-		if kc.NetworkPlugin == "" {
-			kc.NetworkPlugin = DefaultNetworkPlugin
 		}
 	}
 }
@@ -815,10 +504,6 @@ func setStorageDefaults(a *api.Properties) {
 }
 
 func setDefaultCerts(a *api.Properties) (bool, error) {
-	if a.MasterProfile != nil && a.OrchestratorProfile.OrchestratorType == api.OpenShift {
-		return certgen.OpenShiftSetDefaultCerts(a, DefaultOpenshiftOrchestratorName, GenerateClusterID(a))
-	}
-
 	if a.MasterProfile == nil || a.OrchestratorProfile.OrchestratorType != api.Kubernetes {
 		return false, nil
 	}

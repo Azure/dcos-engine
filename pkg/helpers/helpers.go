@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/Azure/acs-engine/pkg/i18n"
+	"github.com/Azure/dcos-engine/pkg/i18n"
 	"golang.org/x/crypto/ssh"
 )
 

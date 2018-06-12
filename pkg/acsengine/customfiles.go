@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Azure/acs-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/api"
 )
 
 // CustomFileReader takes represents the source text of a file as an io.Reader and

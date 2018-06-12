@@ -16,12 +16,12 @@ import (
 
 	"encoding/json"
 
-	"github.com/Azure/acs-engine/pkg/acsengine"
-	"github.com/Azure/acs-engine/pkg/acsengine/transform"
-	"github.com/Azure/acs-engine/pkg/api"
-	"github.com/Azure/acs-engine/pkg/armhelpers"
-	"github.com/Azure/acs-engine/pkg/helpers"
-	"github.com/Azure/acs-engine/pkg/i18n"
+	"github.com/Azure/dcos-engine/pkg/acsengine"
+	"github.com/Azure/dcos-engine/pkg/acsengine/transform"
+	"github.com/Azure/dcos-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/armhelpers"
+	"github.com/Azure/dcos-engine/pkg/helpers"
+	"github.com/Azure/dcos-engine/pkg/i18n"
 	"github.com/Azure/azure-sdk-for-go/arm/graphrbac"
 	"github.com/Azure/go-autorest/autorest/to"
 )

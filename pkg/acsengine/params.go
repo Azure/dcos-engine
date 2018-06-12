@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Azure/acs-engine/pkg/api"
-	"github.com/Azure/acs-engine/pkg/api/common"
+	"github.com/Azure/dcos-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/api/common"
 )
 
 func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode string, acsengineVersion string) (paramsMap, error) {
@@ -77,29 +77,6 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 		for j, c := range s.VaultCertificates {
 			addValue(parametersMap, fmt.Sprintf("linuxKeyVaultID%dCertificateURL%d", i, j), c.CertificateURL)
 		}
-	}
-
-	//Swarm and SwarmMode Parameters
-	if properties.OrchestratorProfile.OrchestratorType == api.Swarm || properties.OrchestratorProfile.OrchestratorType == api.SwarmMode {
-		var dockerEngineRepo, dockerComposeDownloadURL string
-		if cloudSpecConfig.DockerSpecConfig.DockerEngineRepo == "" {
-			dockerEngineRepo = DefaultDockerEngineRepo
-		} else {
-			dockerEngineRepo = cloudSpecConfig.DockerSpecConfig.DockerEngineRepo
-		}
-		if cloudSpecConfig.DockerSpecConfig.DockerComposeDownloadURL == "" {
-			dockerComposeDownloadURL = DefaultDockerComposeURL
-		} else {
-			dockerComposeDownloadURL = cloudSpecConfig.DockerSpecConfig.DockerComposeDownloadURL
-		}
-		addValue(parametersMap, "dockerEngineDownloadRepo", dockerEngineRepo)
-		addValue(parametersMap, "dockerComposeDownloadURL", dockerComposeDownloadURL)
-	}
-
-	// Kubernetes Parameters
-	if properties.OrchestratorProfile.IsKubernetes() ||
-		properties.OrchestratorProfile.IsOpenShift() {
-		assignKubernetesParameters(properties, parametersMap, cloudSpecConfig, generatorCode)
 	}
 
 	if strings.HasPrefix(properties.OrchestratorProfile.OrchestratorType, api.DCOS) {
@@ -216,18 +193,6 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 		}
 		if properties.WindowsProfile.WindowsSku != "" {
 			addValue(parametersMap, "agentWindowsSku", properties.WindowsProfile.WindowsSku)
-		}
-		if properties.OrchestratorProfile.IsKubernetes() || properties.OrchestratorProfile.IsOpenShift() {
-			k8sVersion := properties.OrchestratorProfile.OrchestratorVersion
-			kubeBinariesSASURL := properties.OrchestratorProfile.KubernetesConfig.CustomWindowsPackageURL
-			if kubeBinariesSASURL == "" {
-				kubeBinariesSASURL = cloudSpecConfig.KubernetesSpecConfig.KubeBinariesSASURLBase + KubeConfigs[k8sVersion]["windowszip"]
-			}
-
-			addValue(parametersMap, "kubeBinariesSASURL", kubeBinariesSASURL)
-			addValue(parametersMap, "windowsPackageSASURLBase", cloudSpecConfig.KubernetesSpecConfig.WindowsPackageSASURLBase)
-			addValue(parametersMap, "kubeBinariesVersion", k8sVersion)
-			addValue(parametersMap, "windowsTelemetryGUID", cloudSpecConfig.KubernetesSpecConfig.WindowsTelemetryGUID)
 		}
 		for i, s := range properties.WindowsProfile.Secrets {
 			addValue(parametersMap, fmt.Sprintf("windowsKeyVaultID%d", i), s.SourceVault.ID)

@@ -2,13 +2,10 @@ package acsengine
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path"
-	"path/filepath"
-	"strconv"
 
-	"github.com/Azure/acs-engine/pkg/api"
-	"github.com/Azure/acs-engine/pkg/i18n"
+	"github.com/Azure/dcos-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/i18n"
 )
 
 // ArtifactWriter represents the object that writes artifacts
@@ -56,83 +53,5 @@ func (w *ArtifactWriter) WriteTLSArtifacts(containerService *api.ContainerServic
 	if !certsGenerated {
 		return nil
 	}
-
-	properties := containerService.Properties
-	if properties.OrchestratorProfile.IsKubernetes() {
-		directory := path.Join(artifactsDir, "kubeconfig")
-		var locations []string
-		if containerService.Location != "" {
-			locations = []string{containerService.Location}
-		} else {
-			locations = AzureLocations
-		}
-
-		for _, location := range locations {
-			b, gkcerr := GenerateKubeConfig(properties, location)
-			if gkcerr != nil {
-				return gkcerr
-			}
-			if e := f.SaveFileString(directory, fmt.Sprintf("kubeconfig.%s.json", location), b); e != nil {
-				return e
-			}
-		}
-
-		if e := f.SaveFileString(artifactsDir, "ca.key", properties.CertificateProfile.CaPrivateKey); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "ca.crt", properties.CertificateProfile.CaCertificate); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "apiserver.key", properties.CertificateProfile.APIServerPrivateKey); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "apiserver.crt", properties.CertificateProfile.APIServerCertificate); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "client.key", properties.CertificateProfile.ClientPrivateKey); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "client.crt", properties.CertificateProfile.ClientCertificate); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "kubectlClient.key", properties.CertificateProfile.KubeConfigPrivateKey); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "kubectlClient.crt", properties.CertificateProfile.KubeConfigCertificate); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "etcdserver.key", properties.CertificateProfile.EtcdServerPrivateKey); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "etcdserver.crt", properties.CertificateProfile.EtcdServerCertificate); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "etcdclient.key", properties.CertificateProfile.EtcdClientPrivateKey); e != nil {
-			return e
-		}
-		if e := f.SaveFileString(artifactsDir, "etcdclient.crt", properties.CertificateProfile.EtcdClientCertificate); e != nil {
-			return e
-		}
-		for i := 0; i < properties.MasterProfile.Count; i++ {
-			k := "etcdpeer" + strconv.Itoa(i) + ".key"
-			if e := f.SaveFileString(artifactsDir, k, properties.CertificateProfile.EtcdPeerPrivateKeys[i]); e != nil {
-				return e
-			}
-			c := "etcdpeer" + strconv.Itoa(i) + ".crt"
-			if e := f.SaveFileString(artifactsDir, c, properties.CertificateProfile.EtcdPeerCertificates[i]); e != nil {
-				return e
-			}
-		}
-	} else if properties.OrchestratorProfile.IsOpenShift() {
-		masterTarballPath := filepath.Join(artifactsDir, "master.tar.gz")
-		masterBundle := properties.OrchestratorProfile.OpenShiftConfig.ConfigBundles["master"]
-		if err := ioutil.WriteFile(masterTarballPath, masterBundle, 0644); err != nil {
-			return err
-		}
-		nodeTarballPath := filepath.Join(artifactsDir, "node.tar.gz")
-		nodeBundle := properties.OrchestratorProfile.OpenShiftConfig.ConfigBundles["bootstrap"]
-		return ioutil.WriteFile(nodeTarballPath, nodeBundle, 0644)
-	}
-
 	return nil
 }

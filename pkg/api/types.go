@@ -5,14 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azure/acs-engine/pkg/api/agentPoolOnlyApi/v20170831"
-	"github.com/Azure/acs-engine/pkg/api/agentPoolOnlyApi/v20180331"
-	"github.com/Azure/acs-engine/pkg/api/common"
-	"github.com/Azure/acs-engine/pkg/api/v20160330"
-	"github.com/Azure/acs-engine/pkg/api/v20160930"
-	"github.com/Azure/acs-engine/pkg/api/v20170131"
-	"github.com/Azure/acs-engine/pkg/api/v20170701"
-	"github.com/Azure/acs-engine/pkg/api/vlabs"
+	"github.com/Azure/dcos-engine/pkg/api/common"
+	"github.com/Azure/dcos-engine/pkg/api/vlabs"
 	"github.com/blang/semver"
 )
 
@@ -567,59 +561,11 @@ type CustomProfile struct {
 }
 
 // VlabsARMContainerService is the type we read and write from file
-// needed because the json that is sent to ARM and acs-engine
+// needed because the json that is sent to ARM and dcos-engine
 // is different from the json that the ACS RP Api gets from ARM
 type VlabsARMContainerService struct {
 	TypeMeta
 	*vlabs.ContainerService
-}
-
-// V20160330ARMContainerService is the type we read and write from file
-// needed because the json that is sent to ARM and acs-engine
-// is different from the json that the ACS RP Api gets from ARM
-type V20160330ARMContainerService struct {
-	TypeMeta
-	*v20160330.ContainerService
-}
-
-// V20160930ARMContainerService is the type we read and write from file
-// needed because the json that is sent to ARM and acs-engine
-// is different from the json that the ACS RP Api gets from ARM
-type V20160930ARMContainerService struct {
-	TypeMeta
-	*v20160930.ContainerService
-}
-
-// V20170131ARMContainerService is the type we read and write from file
-// needed because the json that is sent to ARM and acs-engine
-// is different from the json that the ACS RP Api gets from ARM
-type V20170131ARMContainerService struct {
-	TypeMeta
-	*v20170131.ContainerService
-}
-
-// V20170701ARMContainerService is the type we read and write from file
-// needed because the json that is sent to ARM and acs-engine
-// is different from the json that the ACS RP Api gets from ARM
-type V20170701ARMContainerService struct {
-	TypeMeta
-	*v20170701.ContainerService
-}
-
-// V20170831ARMManagedContainerService is the type we read and write from file
-// needed because the json that is sent to ARM and acs-engine
-// is different from the json that the ACS RP Api gets from ARM
-type V20170831ARMManagedContainerService struct {
-	TypeMeta
-	*v20170831.ManagedCluster
-}
-
-// V20180331ARMManagedContainerService is the type we read and write from file
-// needed because the json that is sent to ARM and acs-engine
-// is different from the json that the ACS RP Api gets from ARM
-type V20180331ARMManagedContainerService struct {
-	TypeMeta
-	*v20180331.ManagedCluster
 }
 
 // HasWindows returns true if the cluster contains windows

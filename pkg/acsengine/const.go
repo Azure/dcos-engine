@@ -119,7 +119,7 @@ const (
 	// DefaultGeneratorCode specifies the source generator of the cluster template.
 	DefaultGeneratorCode = "acsengine"
 	// DefaultOrchestratorName specifies the 3 character orchestrator code of the cluster template and affects resource naming.
-	DefaultOrchestratorName = "k8s"
+	DefaultOrchestratorName = "dcos"
 	// DefaultOpenshiftOrchestratorName specifies the 3 character orchestrator code of the cluster template and affects resource naming.
 	DefaultOpenshiftOrchestratorName = "ocp"
 	// DefaultEtcdVersion specifies the default etcd version to install
@@ -169,7 +169,7 @@ const (
 
 const (
 	//DefaultExtensionsRootURL  Root URL for extensions
-	DefaultExtensionsRootURL = "https://raw.githubusercontent.com/Azure/acs-engine/master/"
+	DefaultExtensionsRootURL = "https://raw.githubusercontent.com/Azure/dcos-engine/master/"
 	// DefaultDockerEngineRepo for grabbing docker engine packages
 	DefaultDockerEngineRepo = "https://download.docker.com/linux/ubuntu"
 	// DefaultDockerComposeURL for grabbing docker images
@@ -184,25 +184,7 @@ const (
 
 const (
 	//DefaultConfigurationScriptRootURL  Root URL for configuration script (used for script extension on RHEL)
-	DefaultConfigurationScriptRootURL = "https://raw.githubusercontent.com/Azure/acs-engine/master/parts/"
-)
-
-const (
-	kubernetesMasterCustomDataYaml           = "k8s/kubernetesmastercustomdata.yml"
-	kubernetesCustomScript                   = "k8s/kubernetescustomscript.sh"
-	kubernetesProvisionSourceScript          = "k8s/kubernetesprovisionsource.sh"
-	kubernetesMountetcd                      = "k8s/kubernetes_mountetcd.sh"
-	kubernetesCustomSearchDomainsScript      = "k8s/setup-custom-search-domains.sh"
-	kubernetesMasterGenerateProxyCertsScript = "k8s/kubernetesmastergenerateproxycertscript.sh"
-	kubernetesAgentCustomDataYaml            = "k8s/kubernetesagentcustomdata.yml"
-	kubernetesJumpboxCustomDataYaml          = "k8s/kubernetesjumpboxcustomdata.yml"
-	kubeConfigJSON                           = "k8s/kubeconfig.json"
-	kubernetesWindowsAgentCustomDataPS1      = "k8s/kuberneteswindowssetup.ps1"
-	// OpenShift custom scripts
-	openshiftNodeScript     = "openshift/unstable/openshiftnodescript.sh"
-	openshiftMasterScript   = "openshift/unstable/openshiftmasterscript.sh"
-	openshift39NodeScript   = "openshift/release-3.9/openshiftnodescript.sh"
-	openshift39MasterScript = "openshift/release-3.9/openshiftmasterscript.sh"
+	DefaultConfigurationScriptRootURL = "https://raw.githubusercontent.com/Azure/dcos-engine/master/parts/"
 )
 
 const (
@@ -217,13 +199,6 @@ const (
 	dcos2BootstrapProvision = "dcos/bstrap/bootstrapprovision.sh"
 	dcos2CustomData1110     = "dcos/bstrap/dcos1.11.0.customdata.t"
 	dcos2CustomData1112     = "dcos/bstrap/dcos1.11.2.customdata.t"
-)
-
-const (
-	swarmProvision            = "swarm/configure-swarm-cluster.sh"
-	swarmWindowsProvision     = "swarm/Install-ContainerHost-And-Join-Swarm.ps1"
-	swarmModeProvision        = "swarm/configure-swarmmode-cluster.sh"
-	swarmModeWindowsProvision = "swarm/Join-SwarmMode-cluster.ps1"
 )
 
 const (
@@ -247,27 +222,8 @@ const (
 	dcos2MasterVars               = "dcos/bstrap/dcosmastervars.t"
 	dcos2MasterResources          = "dcos/bstrap/dcosmasterresources.t"
 	iaasOutputs                   = "iaasoutputs.t"
-	kubernetesBaseFile            = "k8s/kubernetesbase.t"
-	kubernetesAgentResourcesVMAS  = "k8s/kubernetesagentresourcesvmas.t"
-	kubernetesAgentResourcesVMSS  = "k8s/kubernetesagentresourcesvmss.t"
-	kubernetesAgentVars           = "k8s/kubernetesagentvars.t"
-	kubernetesMasterResources     = "k8s/kubernetesmasterresources.t"
-	kubernetesMasterVars          = "k8s/kubernetesmastervars.t"
-	kubernetesParams              = "k8s/kubernetesparams.t"
-	kubernetesWinAgentVars        = "k8s/kuberneteswinagentresourcesvmas.t"
-	kubernetesWinAgentVarsVMSS    = "k8s/kuberneteswinagentresourcesvmss.t"
 	masterOutputs                 = "masteroutputs.t"
 	masterParams                  = "masterparams.t"
-	swarmBaseFile                 = "swarm/swarmbase.t"
-	swarmParams                   = "swarm/swarmparams.t"
-	swarmAgentResourcesVMAS       = "swarm/swarmagentresourcesvmas.t"
-	swarmAgentResourcesVMSS       = "swarm/swarmagentresourcesvmss.t"
-	swarmAgentResourcesClassic    = "swarm/swarmagentresourcesclassic.t"
-	swarmAgentVars                = "swarm/swarmagentvars.t"
-	swarmMasterResources          = "swarm/swarmmasterresources.t"
-	swarmMasterVars               = "swarm/swarmmastervars.t"
-	swarmWinAgentResourcesVMAS    = "swarm/swarmwinagentresourcesvmas.t"
-	swarmWinAgentResourcesVMSS    = "swarm/swarmwinagentresourcesvmss.t"
 	windowsParams                 = "windowsparams.t"
 )
 

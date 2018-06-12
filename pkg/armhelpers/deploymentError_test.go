@@ -3,7 +3,7 @@ package armhelpers
 import (
 	"testing"
 
-	. "github.com/Azure/acs-engine/pkg/test"
+	. "github.com/Azure/dcos-engine/pkg/test"
 	. "github.com/onsi/gomega"
 
 	. "github.com/onsi/ginkgo"

@@ -5,9 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azure/acs-engine/pkg/api/common"
-	"github.com/Azure/acs-engine/pkg/api/v20170930"
-	"github.com/Azure/acs-engine/pkg/api/vlabs"
+	"github.com/Azure/dcos-engine/pkg/api/common"
+	"github.com/Azure/dcos-engine/pkg/api/vlabs"
 	"github.com/blang/semver"
 )
 
@@ -77,19 +76,6 @@ func GetOrchestratorVersionProfileListVLabs(orchestrator, version string) (*vlab
 	orchList.Orchestrators = []*vlabs.OrchestratorVersionProfile{}
 	for _, orch := range apiOrchs {
 		orchList.Orchestrators = append(orchList.Orchestrators, ConvertOrchestratorVersionProfileToVLabs(orch))
-	}
-	return orchList, nil
-}
-
-// GetOrchestratorVersionProfileListV20170930 returns v20170930 OrchestratorVersionProfileList object per (optionally) specified orchestrator and version
-func GetOrchestratorVersionProfileListV20170930(orchestrator, version string) (*v20170930.OrchestratorVersionProfileList, error) {
-	apiOrchs, err := getOrchestratorVersionProfileList(orchestrator, version)
-	if err != nil {
-		return nil, err
-	}
-	orchList := &v20170930.OrchestratorVersionProfileList{}
-	for _, orch := range apiOrchs {
-		orchList.Properties.Orchestrators = append(orchList.Properties.Orchestrators, ConvertOrchestratorVersionProfileToV20170930(orch))
 	}
 	return orchList, nil
 }

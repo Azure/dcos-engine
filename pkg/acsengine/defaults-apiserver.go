@@ -3,9 +3,9 @@ package acsengine
 import (
 	"strconv"
 
-	"github.com/Azure/acs-engine/pkg/api"
-	"github.com/Azure/acs-engine/pkg/api/common"
-	"github.com/Azure/acs-engine/pkg/helpers"
+	"github.com/Azure/dcos-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/api/common"
+	"github.com/Azure/dcos-engine/pkg/helpers"
 )
 
 func setAPIServerConfig(cs *api.ContainerService) {

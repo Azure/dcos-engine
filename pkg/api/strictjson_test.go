@@ -5,11 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Azure/acs-engine/pkg/api/v20160330"
-	"github.com/Azure/acs-engine/pkg/api/v20160930"
-	"github.com/Azure/acs-engine/pkg/api/v20170131"
-	"github.com/Azure/acs-engine/pkg/api/v20170701"
-	"github.com/Azure/acs-engine/pkg/api/vlabs"
+	"github.com/Azure/dcos-engine/pkg/api/v20160330"
+	"github.com/Azure/dcos-engine/pkg/api/v20160930"
+	"github.com/Azure/dcos-engine/pkg/api/v20170131"
+	"github.com/Azure/dcos-engine/pkg/api/v20170701"
+	"github.com/Azure/dcos-engine/pkg/api/vlabs"
 )
 
 type SubTestProfile struct {

@@ -1,10 +1,10 @@
 # Microsoft Azure Container Service Engine - Builds Docker Enabled Clusters
-[![Coverage Status](https://codecov.io/gh/Azure/acs-engine/branch/master/graph/badge.svg)](https://codecov.io/gh/Azure/acs-engine)
-[![CircleCI](https://circleci.com/gh/Azure/acs-engine/tree/master.svg?style=svg)](https://circleci.com/gh/Azure/acs-engine/tree/master)
+[![Coverage Status](https://codecov.io/gh/Azure/dcos-engine/branch/master/graph/badge.svg)](https://codecov.io/gh/Azure/dcos-engine)
+[![CircleCI](https://circleci.com/gh/Azure/dcos-engine/tree/master.svg?style=svg)](https://circleci.com/gh/Azure/dcos-engine/tree/master)
 
 ## Overview
 
-The Azure Container Service Engine (`acs-engine`) generates ARM (Azure Resource Manager) templates for Docker enabled clusters on Microsoft Azure with your choice of DC/OS, Kubernetes, OpenShift, Swarm Mode, or Swarm orchestrators. The input to the tool is a cluster definition. The cluster definition (or apimodel) is very similar to (in many cases the same as) the ARM template syntax used to deploy a Microsoft Azure Container Service cluster.
+The Azure Container Service Engine (`dcos-engine`) generates ARM (Azure Resource Manager) templates for Docker enabled clusters on Microsoft Azure with your choice of DC/OS, Kubernetes, OpenShift, Swarm Mode, or Swarm orchestrators. The input to the tool is a cluster definition. The cluster definition (or apimodel) is very similar to (in many cases the same as) the ARM template syntax used to deploy a Microsoft Azure Container Service cluster.
 
 The cluster definition file enables you to customize your Docker enabled cluster in many ways including:
 * choice of DC/OS, Kubernetes, OpenShift, Swarm Mode, or Swarm orchestrators
@@ -35,7 +35,7 @@ The cluster definition file enables you to customize your Docker enabled cluster
 
 Follow the [developers guide](docs/developers.md) to set up your environment.
 
-To build acs-engine, run `make build`. If you are developing with a working [Docker environment](https://docs.docker.com/engine), you can also run `make dev` first to start a Docker container and run `make build` inside the container.
+To build dcos-engine, run `make build`. If you are developing with a working [Docker environment](https://docs.docker.com/engine), you can also run `make dev` first to start a Docker container and run `make build` inside the container.
 
 Please follow these instructions before submitting a PR:
 
@@ -59,7 +59,7 @@ $ vim examples/classic/kubernetes.classic.json
 # insert your preferred, unique DNS prefix
 # insert your SSH public key
 
-$ ./acs-engine generate examples/classic/kubernetes.classic.json
+$ ./dcos-engine generate examples/classic/kubernetes.classic.json
 ```
 
 This produces a new directory inside `_output/` that contains an ARM template

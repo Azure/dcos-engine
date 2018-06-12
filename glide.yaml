@@ -1,4 +1,4 @@
-package: github.com/Azure/acs-engine
+package: github.com/Azure/dcos-engine
 import:
 - package: github.com/Azure/azure-sdk-for-go
   version: ~v11.0.0-beta
@@ -54,13 +54,6 @@ import:
   version: v3.5.1
 - package: github.com/imdario/mergo
   version: ^0.2.2
-- package: k8s.io/apiserver
-  version: 0841753fc26e934b715ca7a83dced5bcb721245a
-- package: k8s.io/client-go
-  version: ~7.0.0
-# This is the same version client-go is pinned to
-- package: k8s.io/api
-  version: 73d903622b7391f3312dcbac6483fed484e185f8
 - package: github.com/Jeffail/gabs
   version: 1.0
 - package: github.com/rjtsdl/conform
@@ -71,10 +64,4 @@ testImport:
 - package: github.com/onsi/gomega
 - package: github.com/onsi/ginkgo
 - package: github.com/kelseyhightower/envconfig
-- package: k8s.io/apiserver
-  version: 0841753fc26e934b715ca7a83dced5bcb721245a
-- package: k8s.io/client-go
-  version: ~7.0.0
-- package: k8s.io/api
-  version: 73d903622b7391f3312dcbac6483fed484e185f8
 - package: github.com/influxdata/influxdb/client/v2

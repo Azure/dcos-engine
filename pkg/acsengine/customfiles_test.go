@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Azure/acs-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/api"
 )
 
 func TestCustomFilesIntoReadersNonExistingFile(t *testing.T) {

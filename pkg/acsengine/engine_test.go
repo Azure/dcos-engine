@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Azure/acs-engine/pkg/acsengine/transform"
-	"github.com/Azure/acs-engine/pkg/api"
-	"github.com/Azure/acs-engine/pkg/api/v20160330"
-	"github.com/Azure/acs-engine/pkg/api/vlabs"
-	"github.com/Azure/acs-engine/pkg/i18n"
+	"github.com/Azure/dcos-engine/pkg/acsengine/transform"
+	"github.com/Azure/dcos-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/api/v20160330"
+	"github.com/Azure/dcos-engine/pkg/api/vlabs"
+	"github.com/Azure/dcos-engine/pkg/i18n"
 	"github.com/leonelquinteros/gotext"
 )
 

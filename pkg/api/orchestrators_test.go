@@ -3,7 +3,7 @@ package api
 import (
 	"testing"
 
-	"github.com/Azure/acs-engine/pkg/api/common"
+	"github.com/Azure/dcos-engine/pkg/api/common"
 	"github.com/blang/semver"
 	. "github.com/onsi/gomega"
 )
