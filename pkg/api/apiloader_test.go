@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/Azure/acs-engine/pkg/api/common"
-	"github.com/Azure/acs-engine/pkg/i18n"
+	"github.com/Azure/dcos-engine/pkg/api/common"
+	"github.com/Azure/dcos-engine/pkg/i18n"
 	"github.com/leonelquinteros/gotext"
 
 	"path"

@@ -3,8 +3,8 @@ package operations
 import (
 	"fmt"
 
-	"github.com/Azure/acs-engine/pkg/armhelpers"
-	"github.com/Azure/acs-engine/pkg/armhelpers/utils"
+	"github.com/Azure/dcos-engine/pkg/armhelpers"
+	"github.com/Azure/dcos-engine/pkg/armhelpers/utils"
 	log "github.com/sirupsen/logrus"
 )
 

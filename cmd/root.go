@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/Azure/acs-engine/pkg/armhelpers"
+	"github.com/Azure/dcos-engine/pkg/armhelpers"
 	"github.com/Azure/go-autorest/autorest/azure"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	rootName             = "acs-engine"
+	rootName             = "dcos-engine"
 	rootShortDescription = "ACS-Engine deploys and manages container orchestrators in Azure"
 	rootLongDescription  = "ACS-Engine deploys and manages Kubernetes, OpenShift, Swarm Mode, and DC/OS clusters in Azure"
 )
@@ -41,8 +41,6 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(newGenerateCmd())
 	rootCmd.AddCommand(newDeployCmd())
 	rootCmd.AddCommand(newOrchestratorsCmd())
-	rootCmd.AddCommand(newUpgradeCmd())
-	rootCmd.AddCommand(newScaleCmd())
 	rootCmd.AddCommand(newDcosUpgradeCmd())
 
 	return rootCmd

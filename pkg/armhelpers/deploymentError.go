@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Azure/acs-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/api"
 	"github.com/Azure/azure-sdk-for-go/arm/resources/resources"
 	"github.com/sirupsen/logrus"
 )

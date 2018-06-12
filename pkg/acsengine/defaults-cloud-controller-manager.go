@@ -3,7 +3,7 @@ package acsengine
 import (
 	"strconv"
 
-	"github.com/Azure/acs-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/api"
 )
 
 func setCloudControllerManagerConfig(cs *api.ContainerService) {

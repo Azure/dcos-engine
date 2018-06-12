@@ -16,7 +16,7 @@ GO              ?= go
 TAGS            :=
 LDFLAGS         :=
 BINDIR          := $(CURDIR)/bin
-BINARIES        := acs-engine
+BINARIES        := dcos-engine
 VERSION         ?= $(shell git rev-parse HEAD)
 VERSION_SHORT   ?= $(shell git rev-parse --short HEAD)
 GITTAG          := $(shell git describe --exact-match --tags $(shell git log -n1 --pretty='%h') 2> /dev/null)
@@ -24,7 +24,7 @@ ifeq ($(GITTAG),)
 GITTAG := $(VERSION_SHORT)
 endif
 
-REPO_PATH := github.com/Azure/acs-engine
+REPO_PATH := github.com/Azure/dcos-engine
 DEV_ENV_IMAGE := quay.io/deis/go-dev:v1.10.0
 DEV_ENV_WORK_DIR := /go/src/${REPO_PATH}
 DEV_ENV_OPTS := --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_VARS}
@@ -59,21 +59,17 @@ generate-azure-constants:
 .PHONY: build
 build: generate
 	GOBIN=$(BINDIR) $(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)'
-	cd test/acs-engine-test; go build $(GOFLAGS)
+	cd test/dcos-engine-test; go build $(GOFLAGS)
 
 build-binary: generate
-	go build $(GOFLAGS) -v -ldflags "${LDFLAGS}" -o ${BINARY_DEST_DIR}/acs-engine .
+	go build $(GOFLAGS) -v -ldflags "${LDFLAGS}" -o ${BINARY_DEST_DIR}/dcos-engine .
 
 # usage: make clean build-cross dist VERSION=v0.4.0
 .PHONY: build-cross
 build-cross: build
 build-cross: LDFLAGS += -extldflags "-static"
 build-cross:
-	CGO_ENABLED=0 gox -output="_dist/acs-engine-${GITTAG}-{{.OS}}-{{.Arch}}/{{.Dir}}" -osarch='$(TARGETS)' $(GOFLAGS) -tags '$(TAGS)' -ldflags '$(LDFLAGS)'
-
-.PHONY: build-windows-k8s
-build-windows-k8s:
-	./scripts/build-windows-k8s.sh -v ${K8S_VERSION} -p ${PATCH_VERSION}
+	CGO_ENABLED=0 gox -output="_dist/dcos-engine-${GITTAG}-{{.OS}}-{{.Arch}}/{{.Dir}}" -osarch='$(TARGETS)' $(GOFLAGS) -tags '$(TAGS)' -ldflags '$(LDFLAGS)'
 
 .PHONY: dist
 dist: build-cross
@@ -97,7 +93,7 @@ clean:
 
 GIT_BASEDIR    = $(shell git rev-parse --show-toplevel 2>/dev/null)
 ifneq ($(GIT_BASEDIR),)
-	LDFLAGS += -X github.com/Azure/acs-engine/pkg/test.JUnitOutDir=${GIT_BASEDIR}/test/junit
+	LDFLAGS += -X github.com/Azure/dcos-engine/pkg/test.JUnitOutDir=${GIT_BASEDIR}/test/junit
 endif
 
 test: generate

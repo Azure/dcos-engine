@@ -1,9 +1,9 @@
 package dcosupgrade
 
 import (
-	"github.com/Azure/acs-engine/pkg/api"
-	"github.com/Azure/acs-engine/pkg/armhelpers"
-	"github.com/Azure/acs-engine/pkg/i18n"
+	"github.com/Azure/dcos-engine/pkg/api"
+	"github.com/Azure/dcos-engine/pkg/armhelpers"
+	"github.com/Azure/dcos-engine/pkg/i18n"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 )

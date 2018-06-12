@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Azure/acs-engine/pkg/acsengine"
-	"github.com/Azure/acs-engine/pkg/operations"
+	"github.com/Azure/dcos-engine/pkg/acsengine"
+	"github.com/Azure/dcos-engine/pkg/operations"
 )
 
 type nodeHealthReport struct {

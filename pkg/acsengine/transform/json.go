@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/Azure/acs-engine/pkg/helpers"
+	"github.com/Azure/dcos-engine/pkg/helpers"
 )
 
 // PrettyPrintArmTemplate will pretty print the arm template ensuring ordered by params, vars, resources, and outputs

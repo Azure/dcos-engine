@@ -6,9 +6,9 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"k8s.io/apimachinery/pkg/api/equality"
 
-	"github.com/Azure/acs-engine/pkg/api/common"
-	"github.com/Azure/acs-engine/pkg/api/v20170701"
-	"github.com/Azure/acs-engine/pkg/api/vlabs"
+	"github.com/Azure/dcos-engine/pkg/api/common"
+	"github.com/Azure/dcos-engine/pkg/api/v20170701"
+	"github.com/Azure/dcos-engine/pkg/api/vlabs"
 )
 
 func TestAddDCOSPublicAgentPool(t *testing.T) {

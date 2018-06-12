@@ -3,7 +3,7 @@ package operations
 import (
 	"container/list"
 
-	"github.com/Azure/acs-engine/pkg/armhelpers"
+	"github.com/Azure/dcos-engine/pkg/armhelpers"
 	log "github.com/sirupsen/logrus"
 )
 
