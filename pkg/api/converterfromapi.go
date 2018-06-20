@@ -5,7 +5,6 @@ import (
 
 	"github.com/blang/semver"
 
-	"github.com/Azure/dcos-engine/pkg/api/common"
 	"github.com/Azure/dcos-engine/pkg/api/vlabs"
 )
 
@@ -41,16 +40,8 @@ func ConvertContainerServiceToVLabs(api *ContainerService) *vlabs.ContainerServi
 func ConvertOrchestratorVersionProfileToVLabs(api *OrchestratorVersionProfile) *vlabs.OrchestratorVersionProfile {
 	vlabsProfile := &vlabs.OrchestratorVersionProfile{}
 	switch api.OrchestratorType {
-	case Kubernetes:
-		vlabsProfile.OrchestratorType = vlabs.Kubernetes
 	case DCOS:
 		vlabsProfile.OrchestratorType = vlabs.DCOS
-	case Swarm:
-		vlabsProfile.OrchestratorType = vlabs.Swarm
-	case SwarmMode:
-		vlabsProfile.OrchestratorType = vlabs.SwarmMode
-	case OpenShift:
-		vlabsProfile.OrchestratorType = vlabs.OpenShift
 	}
 	vlabsProfile.OrchestratorVersion = api.OrchestratorVersion
 	vlabsProfile.Default = api.Default
@@ -106,14 +97,6 @@ func convertPropertiesToVLabs(api *Properties, vlabsProps *vlabs.Properties) {
 	if api.ServicePrincipalProfile != nil {
 		vlabsProps.ServicePrincipalProfile = &vlabs.ServicePrincipalProfile{}
 		convertServicePrincipalProfileToVLabs(api.ServicePrincipalProfile, vlabsProps.ServicePrincipalProfile)
-	}
-	if api.AADProfile != nil {
-		vlabsProps.AADProfile = &vlabs.AADProfile{}
-		convertAADProfileToVLabs(api.AADProfile, vlabsProps.AADProfile)
-	}
-	if api.AzProfile != nil {
-		vlabsProps.AzProfile = &vlabs.AzProfile{}
-		convertAzProfileToVLabs(api.AzProfile, vlabsProps.AzProfile)
 	}
 }
 
@@ -187,12 +170,8 @@ func convertOrchestratorProfileToVLabs(api *OrchestratorProfile, o *vlabs.Orches
 
 	if api.OrchestratorVersion != "" {
 		o.OrchestratorVersion = api.OrchestratorVersion
-		// Enable using "unstable" as a valid version in the openshift orchestrator.
-		// Required for progressing on an unreleased version.
-		if !api.IsOpenShift() || api.OrchestratorVersion != common.OpenShiftVersionUnstable {
-			sv, _ := semver.Make(o.OrchestratorVersion)
-			o.OrchestratorRelease = fmt.Sprintf("%d.%d", sv.Major, sv.Minor)
-		}
+		sv, _ := semver.Make(o.OrchestratorVersion)
+		o.OrchestratorRelease = fmt.Sprintf("%d.%d", sv.Major, sv.Minor)
 	}
 
 	if api.DcosConfig != nil {
@@ -241,15 +220,6 @@ func convertCustomFilesToVlabs(a *MasterProfile, v *vlabs.MasterProfile) {
 			})
 		}
 	}
-}
-
-func convertPrivateJumpboxProfileToVlabs(api *PrivateJumpboxProfile, vlabsProfile *vlabs.PrivateJumpboxProfile) {
-	vlabsProfile.Name = api.Name
-	vlabsProfile.OSDiskSizeGB = api.OSDiskSizeGB
-	vlabsProfile.VMSize = api.VMSize
-	vlabsProfile.PublicKey = api.PublicKey
-	vlabsProfile.Username = api.Username
-	vlabsProfile.StorageProfile = api.StorageProfile
 }
 
 func convertMasterProfileToVLabs(api *MasterProfile, vlabsProfile *vlabs.MasterProfile) {
@@ -353,18 +323,4 @@ func convertServicePrincipalProfileToVLabs(api *ServicePrincipalProfile, v *vlab
 			SecretVersion: api.KeyvaultSecretRef.SecretVersion,
 		}
 	}
-}
-
-func convertAADProfileToVLabs(api *AADProfile, vlabs *vlabs.AADProfile) {
-	vlabs.ClientAppID = api.ClientAppID
-	vlabs.ServerAppID = api.ServerAppID
-	vlabs.TenantID = api.TenantID
-	vlabs.AdminGroupID = api.AdminGroupID
-}
-
-func convertAzProfileToVLabs(api *AzProfile, vlabs *vlabs.AzProfile) {
-	vlabs.Location = api.Location
-	vlabs.ResourceGroup = api.ResourceGroup
-	vlabs.SubscriptionID = api.SubscriptionID
-	vlabs.TenantID = api.TenantID
 }

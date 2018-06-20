@@ -2,12 +2,10 @@ package api
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/Azure/dcos-engine/pkg/api/common"
 	"github.com/Azure/dcos-engine/pkg/api/vlabs"
-	"github.com/blang/semver"
 )
 
 type orchestratorsFunc func(*OrchestratorProfile) ([]*OrchestratorVersionProfile, error)
@@ -17,33 +15,17 @@ var versionsMap map[string][]string
 
 func init() {
 	funcmap = map[string]orchestratorsFunc{
-		Kubernetes: kubernetesInfo,
-		DCOS:       dcosInfo,
-		Swarm:      swarmInfo,
-		SwarmMode:  dockerceInfo,
-		OpenShift:  openShiftInfo,
+		DCOS: dcosInfo,
 	}
 	versionsMap = map[string][]string{
-		Kubernetes: common.GetAllSupportedKubernetesVersions(),
-		DCOS:       common.GetAllSupportedDCOSVersions(),
-		Swarm:      common.GetAllSupportedSwarmVersions(),
-		SwarmMode:  common.GetAllSupportedDockerCEVersions(),
-		OpenShift:  common.GetAllSupportedOpenShiftVersions(),
+		DCOS: common.GetAllSupportedDCOSVersions(),
 	}
 }
 
 func validate(orchestrator, version string) (string, error) {
 	switch {
-	case strings.EqualFold(orchestrator, Kubernetes):
-		return Kubernetes, nil
 	case strings.EqualFold(orchestrator, DCOS):
 		return DCOS, nil
-	case strings.EqualFold(orchestrator, Swarm):
-		return Swarm, nil
-	case strings.EqualFold(orchestrator, SwarmMode):
-		return SwarmMode, nil
-	case strings.EqualFold(orchestrator, OpenShift):
-		return OpenShift, nil
 	case orchestrator == "":
 		if version != "" {
 			return "", fmt.Errorf("Must specify orchestrator for version '%s'", version)
@@ -109,7 +91,7 @@ func GetOrchestratorVersionProfile(orch *OrchestratorProfile) (*OrchestratorVers
 		return nil, fmt.Errorf("Missing Orchestrator Version")
 	}
 	switch orch.OrchestratorType {
-	case Kubernetes, DCOS:
+	case DCOS:
 		arr, err := funcmap[orch.OrchestratorType](orch)
 		if err != nil {
 			return nil, err
@@ -122,65 +104,6 @@ func GetOrchestratorVersionProfile(orch *OrchestratorProfile) (*OrchestratorVers
 	default:
 		return nil, fmt.Errorf("Upgrade operation is not supported for '%s'", orch.OrchestratorType)
 	}
-}
-
-func kubernetesInfo(csOrch *OrchestratorProfile) ([]*OrchestratorVersionProfile, error) {
-	orchs := []*OrchestratorVersionProfile{}
-	if csOrch.OrchestratorVersion == "" {
-		// get info for all supported versions
-		for _, ver := range common.GetAllSupportedKubernetesVersions() {
-			upgrades, err := kubernetesUpgrades(&OrchestratorProfile{OrchestratorVersion: ver})
-			if err != nil {
-				return nil, err
-			}
-			orchs = append(orchs,
-				&OrchestratorVersionProfile{
-					OrchestratorProfile: OrchestratorProfile{
-						OrchestratorType:    Kubernetes,
-						OrchestratorVersion: ver,
-					},
-					Default:  ver == common.GetDefaultKubernetesVersion(),
-					Upgrades: upgrades,
-				})
-		}
-	} else {
-		if !isVersionSupported(csOrch) {
-			return nil, fmt.Errorf("Kubernetes version %s is not supported", csOrch.OrchestratorVersion)
-		}
-
-		upgrades, err := kubernetesUpgrades(csOrch)
-		if err != nil {
-			return nil, err
-		}
-		orchs = append(orchs,
-			&OrchestratorVersionProfile{
-				OrchestratorProfile: OrchestratorProfile{
-					OrchestratorType:    Kubernetes,
-					OrchestratorVersion: csOrch.OrchestratorVersion,
-				},
-				Default:  csOrch.OrchestratorVersion == common.GetDefaultKubernetesVersion(),
-				Upgrades: upgrades,
-			})
-	}
-	return orchs, nil
-}
-
-func kubernetesUpgrades(csOrch *OrchestratorProfile) ([]*OrchestratorProfile, error) {
-	ret := []*OrchestratorProfile{}
-
-	currentVer, err := semver.Make(csOrch.OrchestratorVersion)
-	if err != nil {
-		return nil, err
-	}
-	nextNextMinorString := strconv.FormatUint(currentVer.Major, 10) + "." + strconv.FormatUint(currentVer.Minor+2, 10) + ".0"
-	upgradeableVersions := common.GetVersionsBetween(common.GetAllSupportedKubernetesVersions(), csOrch.OrchestratorVersion, nextNextMinorString, false, true)
-	for _, ver := range upgradeableVersions {
-		ret = append(ret, &OrchestratorProfile{
-			OrchestratorType:    Kubernetes,
-			OrchestratorVersion: ver,
-		})
-	}
-	return ret, nil
 }
 
 func dcosInfo(csOrch *OrchestratorProfile) ([]*OrchestratorVersionProfile, error) {
@@ -236,91 +159,4 @@ func dcosUpgrades(csOrch *OrchestratorProfile) ([]*OrchestratorProfile, error) {
 		})
 	}
 	return ret, nil
-}
-
-func swarmInfo(csOrch *OrchestratorProfile) ([]*OrchestratorVersionProfile, error) {
-	if csOrch.OrchestratorVersion == "" {
-		return []*OrchestratorVersionProfile{
-			{
-				OrchestratorProfile: OrchestratorProfile{
-					OrchestratorType:    Swarm,
-					OrchestratorVersion: SwarmVersion,
-				},
-			},
-		}, nil
-	}
-
-	if !isVersionSupported(csOrch) {
-		return nil, fmt.Errorf("Swarm version %s is not supported", csOrch.OrchestratorVersion)
-	}
-	return []*OrchestratorVersionProfile{
-		{
-			OrchestratorProfile: OrchestratorProfile{
-				OrchestratorType:    Swarm,
-				OrchestratorVersion: csOrch.OrchestratorVersion,
-			},
-		},
-	}, nil
-}
-
-func dockerceInfo(csOrch *OrchestratorProfile) ([]*OrchestratorVersionProfile, error) {
-
-	if csOrch.OrchestratorVersion == "" {
-		return []*OrchestratorVersionProfile{
-			{
-				OrchestratorProfile: OrchestratorProfile{
-					OrchestratorType:    SwarmMode,
-					OrchestratorVersion: DockerCEVersion,
-				},
-			},
-		}, nil
-	}
-
-	if !isVersionSupported(csOrch) {
-		return nil, fmt.Errorf("Docker CE version %s is not supported", csOrch.OrchestratorVersion)
-	}
-	return []*OrchestratorVersionProfile{
-		{
-			OrchestratorProfile: OrchestratorProfile{
-				OrchestratorType:    SwarmMode,
-				OrchestratorVersion: csOrch.OrchestratorVersion,
-			},
-		},
-	}, nil
-}
-
-func openShiftInfo(csOrch *OrchestratorProfile) ([]*OrchestratorVersionProfile, error) {
-	orchs := []*OrchestratorVersionProfile{}
-	if csOrch.OrchestratorVersion == "" {
-		// get info for all supported versions
-		for _, ver := range common.GetAllSupportedOpenShiftVersions() {
-			if ver == common.OpenShiftVersionUnstable {
-				continue
-			}
-			// TODO: populate OrchestratorVersionProfile.Upgrades
-			orchs = append(orchs,
-				&OrchestratorVersionProfile{
-					OrchestratorProfile: OrchestratorProfile{
-						OrchestratorType:    OpenShift,
-						OrchestratorVersion: ver,
-					},
-					Default: ver == common.OpenShiftDefaultVersion,
-				})
-		}
-	} else {
-		if !isVersionSupported(csOrch) {
-			return nil, fmt.Errorf("OpenShift version %s is not supported", csOrch.OrchestratorVersion)
-		}
-
-		// TODO: populate OrchestratorVersionProfile.Upgrades
-		orchs = append(orchs,
-			&OrchestratorVersionProfile{
-				OrchestratorProfile: OrchestratorProfile{
-					OrchestratorType:    OpenShift,
-					OrchestratorVersion: csOrch.OrchestratorVersion,
-				},
-				Default: csOrch.OrchestratorVersion == common.OpenShiftDefaultVersion,
-			})
-	}
-	return orchs, nil
 }

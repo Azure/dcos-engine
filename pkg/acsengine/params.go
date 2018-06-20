@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Azure/dcos-engine/pkg/api"
-	"github.com/Azure/dcos-engine/pkg/api/common"
 )
 
 func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode string, acsengineVersion string) (paramsMap, error) {
@@ -49,16 +48,10 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 	if properties.MasterProfile != nil {
 		// MasterProfile exists, uses master DNS prefix
 		addValue(parametersMap, "masterEndpointDNSNamePrefix", properties.MasterProfile.DNSPrefix)
-	} else if properties.HostedMasterProfile != nil {
-		// Agents only, use cluster DNS prefix
-		addValue(parametersMap, "masterEndpointDNSNamePrefix", properties.HostedMasterProfile.DNSPrefix)
 	}
 	if properties.MasterProfile != nil {
 		if properties.MasterProfile.IsCustomVNET() {
 			addValue(parametersMap, "masterVnetSubnetID", properties.MasterProfile.VnetSubnetID)
-			if properties.OrchestratorProfile.IsKubernetes() || properties.OrchestratorProfile.IsOpenShift() {
-				addValue(parametersMap, "vnetCidr", properties.MasterProfile.VnetCidr)
-			}
 		} else {
 			addValue(parametersMap, "masterSubnet", properties.MasterProfile.Subnet)
 		}
@@ -67,9 +60,6 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 		if isClassicMode {
 			addValue(parametersMap, "masterCount", properties.MasterProfile.Count)
 		}
-	}
-	if properties.HostedMasterProfile != nil {
-		addValue(parametersMap, "masterSubnet", properties.HostedMasterProfile.Subnet)
 	}
 	addValue(parametersMap, "sshRSAPublicKey", properties.LinuxProfile.SSH.PublicKeys[0].KeyData)
 	for i, s := range properties.LinuxProfile.Secrets {
@@ -82,25 +72,11 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 	if strings.HasPrefix(properties.OrchestratorProfile.OrchestratorType, api.DCOS) {
 		dcosBootstrapURL := cloudSpecConfig.DCOSSpecConfig.DCOS188BootstrapDownloadURL
 		dcosWindowsBootstrapURL := cloudSpecConfig.DCOSSpecConfig.DCOSWindowsBootstrapDownloadURL
-		dcosRepositoryURL := cloudSpecConfig.DCOSSpecConfig.DcosRepositoryURL
-		dcosClusterPackageListID := cloudSpecConfig.DCOSSpecConfig.DcosClusterPackageListID
-		dcosProviderPackageID := cloudSpecConfig.DCOSSpecConfig.DcosProviderPackageID
 
 		switch properties.OrchestratorProfile.OrchestratorType {
 		case api.DCOS:
-			switch properties.OrchestratorProfile.OrchestratorVersion {
-			case common.DCOSVersion1Dot8Dot8:
-				dcosBootstrapURL = cloudSpecConfig.DCOSSpecConfig.DCOS188BootstrapDownloadURL
-			case common.DCOSVersion1Dot9Dot0:
-				dcosBootstrapURL = cloudSpecConfig.DCOSSpecConfig.DCOS190BootstrapDownloadURL
-			case common.DCOSVersion1Dot9Dot8:
-				dcosBootstrapURL = cloudSpecConfig.DCOSSpecConfig.DCOS198BootstrapDownloadURL
-			case common.DCOSVersion1Dot10Dot0:
-				dcosBootstrapURL = cloudSpecConfig.DCOSSpecConfig.DCOS110BootstrapDownloadURL
-			default:
-				dcosBootstrapURL = getDCOSDefaultBootstrapInstallerURL(properties.OrchestratorProfile)
-				dcosWindowsBootstrapURL = getDCOSDefaultWindowsBootstrapInstallerURL(properties.OrchestratorProfile)
-			}
+			dcosBootstrapURL = getDCOSDefaultBootstrapInstallerURL(properties.OrchestratorProfile)
+			dcosWindowsBootstrapURL = getDCOSDefaultWindowsBootstrapInstallerURL(properties.OrchestratorProfile)
 		}
 
 		if properties.OrchestratorProfile.DcosConfig != nil {
@@ -114,33 +90,13 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 				addValue(parametersMap, "registry", properties.OrchestratorProfile.DcosConfig.Registry)
 				addValue(parametersMap, "registryKey", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", properties.OrchestratorProfile.DcosConfig.RegistryUser, properties.OrchestratorProfile.DcosConfig.RegistryPass))))
 			}
-			if properties.OrchestratorProfile.DcosConfig.DcosRepositoryURL != "" {
-				dcosRepositoryURL = properties.OrchestratorProfile.DcosConfig.DcosRepositoryURL
-			} else {
-				dcosRepositoryURL = getDCOSDefaultRepositoryURL(
-					properties.OrchestratorProfile.OrchestratorType,
-					properties.OrchestratorProfile.OrchestratorVersion)
-			}
-
-			if properties.OrchestratorProfile.DcosConfig.DcosClusterPackageListID != "" {
-				dcosClusterPackageListID = properties.OrchestratorProfile.DcosConfig.DcosClusterPackageListID
-			}
-
-			if properties.OrchestratorProfile.DcosConfig.DcosProviderPackageID != "" {
-				dcosProviderPackageID = properties.OrchestratorProfile.DcosConfig.DcosProviderPackageID
-			} else {
-				dcosProviderPackageID = getDCOSDefaultProviderPackageGUID(
-					properties.OrchestratorProfile.OrchestratorType,
-					properties.OrchestratorProfile.OrchestratorVersion,
-					properties.MasterProfile.Count)
-			}
 		}
 
 		addValue(parametersMap, "dcosBootstrapURL", dcosBootstrapURL)
 		addValue(parametersMap, "dcosWindowsBootstrapURL", dcosWindowsBootstrapURL)
-		addValue(parametersMap, "dcosRepositoryURL", dcosRepositoryURL)
-		addValue(parametersMap, "dcosClusterPackageListID", dcosClusterPackageListID)
-		addValue(parametersMap, "dcosProviderPackageID", dcosProviderPackageID)
+		//addValue(parametersMap, "dcosRepositoryURL", dcosRepositoryURL)
+		//addValue(parametersMap, "dcosClusterPackageListID", dcosClusterPackageListID)
+		//addValue(parametersMap, "dcosProviderPackageID", dcosProviderPackageID)
 
 		if properties.OrchestratorProfile.DcosConfig.BootstrapProfile != nil {
 			addValue(parametersMap, "bootstrapStaticIP", properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP)

@@ -116,7 +116,7 @@
       ],
       "tags":
       {
-        "creationSource" : "[concat('acsengine-', variables('{{.Name}}VMNamePrefix'), '-vmss')]",
+        "creationSource" : "[concat('dcos-engine-', variables('{{.Name}}VMNamePrefix'), '-vmss')]",
         "orchestratorName": "dcos",
         "orchestratorVersion": "[variables('orchestratorVersion')]",
         "orchestratorNode": "agent"
@@ -124,6 +124,7 @@
       "location": "[variables('location')]",
       "name": "[concat(variables('{{.Name}}VMNamePrefix'), '-vmss')]",
       "properties": {
+        "overprovision": false,
         "upgradePolicy": {
           "mode": "Manual"
         },

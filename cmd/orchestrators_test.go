@@ -38,19 +38,19 @@ var _ = Describe("The orchestrators command", func() {
 
 	It("should fail on unsupported version", func() {
 		command := &orchestratorsCmd{
-			orchestrator: "kubernetes",
-			version:      "1.1.1",
+			orchestrator: "dcos",
+			version:      "0.1.1",
 		}
 
 		err := command.run(nil, nil)
 		Expect(err).NotTo(BeNil())
-		Expect(err.Error()).To(Equal("Kubernetes version 1.1.1 is not supported"))
+		Expect(err.Error()).To(Equal("DCOS version 0.1.1 is not supported"))
 	})
 
 	It("should succeed", func() {
 		command := &orchestratorsCmd{
-			orchestrator: "kubernetes",
-			version:      "1.7.14",
+			orchestrator: "dcos",
+			version:      "1.11.0",
 		}
 
 		err := command.run(nil, nil)

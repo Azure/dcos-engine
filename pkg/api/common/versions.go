@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/blang/semver"
@@ -61,47 +60,6 @@ var AllKubernetesSupportedVersions = map[string]bool{
 	"1.11.0-alpha.2": true,
 	"1.11.0-beta.1":  true,
 	"1.11.0-beta.2":  true,
-}
-
-// GetDefaultKubernetesVersion returns the default Kubernetes version, that is the latest patch of the default release
-func GetDefaultKubernetesVersion() string {
-	return GetLatestPatchVersion(KubernetesDefaultRelease, GetAllSupportedKubernetesVersions())
-}
-
-// GetDefaultKubernetesVersionWindows returns the default Kubernetes version for Windows, that is the latest patch of the default release
-func GetDefaultKubernetesVersionWindows() string {
-	return GetLatestPatchVersion(KubernetesDefaultReleaseWindows, GetAllSupportedKubernetesVersionsWindows())
-}
-
-// GetSupportedKubernetesVersion verifies that a passed-in version string is supported, or returns a default version string if not
-func GetSupportedKubernetesVersion(version string, hasWindows bool) string {
-	var k8sVersion string
-	if hasWindows {
-		k8sVersion = GetDefaultKubernetesVersionWindows()
-		if AllKubernetesWindowsSupportedVersions[version] {
-			k8sVersion = version
-		}
-	} else {
-		k8sVersion = GetDefaultKubernetesVersion()
-		if AllKubernetesSupportedVersions[version] {
-			k8sVersion = version
-		}
-	}
-	return k8sVersion
-}
-
-// GetAllSupportedKubernetesVersions returns a slice of all supported Kubernetes versions
-func GetAllSupportedKubernetesVersions() []string {
-	var versions []string
-	for ver, supported := range AllKubernetesSupportedVersions {
-		if supported {
-			versions = append(versions, ver)
-		}
-	}
-	sort.Slice(versions, func(i, j int) bool {
-		return IsKubernetesVersionGe(versions[j], versions[i])
-	})
-	return versions
 }
 
 // GetVersionsGt returns a list of versions greater than a semver string given a list of versions
@@ -198,59 +156,9 @@ func GetMaxVersion(versions []string, preRelease bool) string {
 	return highest.String()
 }
 
-// AllKubernetesWindowsSupportedVersions maintain a set of available k8s Windows versions in acs-engine
-var AllKubernetesWindowsSupportedVersions = getAllKubernetesWindowsSupportedVersionsMap()
-
-func getAllKubernetesWindowsSupportedVersionsMap() map[string]bool {
-	ret := make(map[string]bool)
-	for k, v := range AllKubernetesSupportedVersions {
-		ret[k] = v
-	}
-	for _, version := range []string{
-		"1.6.6",
-		"1.6.9",
-		"1.6.11",
-		"1.6.12",
-		"1.6.13",
-		"1.7.0",
-		"1.7.1",
-		"1.8.13",
-		"1.10.0-beta.2",
-		"1.10.0-beta.4",
-		"1.10.0-rc.1",
-		"1.11.0-alpha.1",
-		"1.11.0-alpha.2"} {
-		ret[version] = false
-	}
-	return ret
-}
-
-// GetAllSupportedKubernetesVersionsWindows returns a slice of all supported Kubernetes versions on Windows
-func GetAllSupportedKubernetesVersionsWindows() []string {
-	var versions []string
-	for ver, supported := range AllKubernetesWindowsSupportedVersions {
-		if supported {
-			versions = append(versions, ver)
-		}
-	}
-	sort.Slice(versions, func(i, j int) bool {
-		return IsKubernetesVersionGe(versions[j], versions[i])
-	})
-	return versions
-}
-
 // GetSupportedVersions get supported version list for a certain orchestrator
 func GetSupportedVersions(orchType string, hasWindows bool) (versions []string, defaultVersion string) {
 	switch orchType {
-	case Kubernetes:
-		if hasWindows {
-			return GetAllSupportedKubernetesVersionsWindows(), GetDefaultKubernetesVersionWindows()
-		}
-		return GetAllSupportedKubernetesVersions(), GetDefaultKubernetesVersion()
-
-	case OpenShift:
-		return GetAllSupportedOpenShiftVersions(), string(OpenShiftDefaultVersion)
-
 	case DCOS:
 		return AllDCOSSupportedVersions, DCOSDefaultVersion
 	default:

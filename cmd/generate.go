@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -123,8 +122,6 @@ func (gc *generateCmd) mergeAPIModel() error {
 }
 
 func (gc *generateCmd) loadAPIModel(cmd *cobra.Command, args []string) error {
-	var caCertificateBytes []byte
-	var caKeyBytes []byte
 	var err error
 
 	apiloader := &api.Apiloader{
@@ -138,34 +135,8 @@ func (gc *generateCmd) loadAPIModel(cmd *cobra.Command, args []string) error {
 	}
 
 	if gc.outputDirectory == "" {
-		if gc.containerService.Properties.MasterProfile != nil {
-			gc.outputDirectory = path.Join("_output", gc.containerService.Properties.MasterProfile.DNSPrefix)
-		} else {
-			gc.outputDirectory = path.Join("_output", gc.containerService.Properties.HostedMasterProfile.DNSPrefix)
-		}
+		gc.outputDirectory = path.Join("_output", gc.containerService.Properties.MasterProfile.DNSPrefix)
 	}
-
-	// consume gc.caCertificatePath and gc.caPrivateKeyPath
-
-	if (gc.caCertificatePath != "" && gc.caPrivateKeyPath == "") || (gc.caCertificatePath == "" && gc.caPrivateKeyPath != "") {
-		return errors.New("--ca-certificate-path and --ca-private-key-path must be specified together")
-	}
-	if gc.caCertificatePath != "" {
-		if caCertificateBytes, err = ioutil.ReadFile(gc.caCertificatePath); err != nil {
-			return fmt.Errorf(fmt.Sprintf("failed to read CA certificate file: %s", err.Error()))
-		}
-		if caKeyBytes, err = ioutil.ReadFile(gc.caPrivateKeyPath); err != nil {
-			return fmt.Errorf(fmt.Sprintf("failed to read CA private key file: %s", err.Error()))
-		}
-
-		prop := gc.containerService.Properties
-		if prop.CertificateProfile == nil {
-			prop.CertificateProfile = &api.CertificateProfile{}
-		}
-		prop.CertificateProfile.CaCertificate = string(caCertificateBytes)
-		prop.CertificateProfile.CaPrivateKey = string(caKeyBytes)
-	}
-
 	return nil
 }
 

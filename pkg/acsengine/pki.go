@@ -8,12 +8,9 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"math/big"
 	"net"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -27,114 +24,6 @@ const (
 type PkiKeyCertPair struct {
 	CertificatePem string
 	PrivateKeyPem  string
-}
-
-// CreatePki creates PKI certificates
-func CreatePki(extraFQDNs []string, extraIPs []net.IP, clusterDomain string, caPair *PkiKeyCertPair, masterCount int) (*PkiKeyCertPair, *PkiKeyCertPair, *PkiKeyCertPair, *PkiKeyCertPair, *PkiKeyCertPair, []*PkiKeyCertPair, error) {
-	start := time.Now()
-	defer func(s time.Time) {
-		log.Debugf("pki: PKI asset creation took %s", time.Since(s))
-	}(start)
-	extraFQDNs = append(extraFQDNs, fmt.Sprintf("kubernetes"))
-	extraFQDNs = append(extraFQDNs, fmt.Sprintf("kubernetes.default"))
-	extraFQDNs = append(extraFQDNs, fmt.Sprintf("kubernetes.default.svc"))
-	extraFQDNs = append(extraFQDNs, fmt.Sprintf("kubernetes.default.svc.%s", clusterDomain))
-	extraFQDNs = append(extraFQDNs, fmt.Sprintf("kubernetes.kube-system"))
-	extraFQDNs = append(extraFQDNs, fmt.Sprintf("kubernetes.kube-system.svc"))
-	extraFQDNs = append(extraFQDNs, fmt.Sprintf("kubernetes.kube-system.svc.%s", clusterDomain))
-
-	var (
-		caCertificate         *x509.Certificate
-		caPrivateKey          *rsa.PrivateKey
-		apiServerCertificate  *x509.Certificate
-		apiServerPrivateKey   *rsa.PrivateKey
-		clientCertificate     *x509.Certificate
-		clientPrivateKey      *rsa.PrivateKey
-		kubeConfigCertificate *x509.Certificate
-		kubeConfigPrivateKey  *rsa.PrivateKey
-		etcdServerCertificate *x509.Certificate
-		etcdServerPrivateKey  *rsa.PrivateKey
-		etcdClientCertificate *x509.Certificate
-		etcdClientPrivateKey  *rsa.PrivateKey
-		etcdPeerCertPairs     []*PkiKeyCertPair
-	)
-	errors := make(chan error)
-
-	var err error
-	caCertificate, err = pemToCertificate(caPair.CertificatePem)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
-	}
-	caPrivateKey, err = pemToKey(caPair.PrivateKeyPem)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
-	}
-
-	go func() {
-		var err error
-		apiServerCertificate, apiServerPrivateKey, err = createCertificate("apiserver", caCertificate, caPrivateKey, false, true, extraFQDNs, extraIPs, nil)
-		errors <- err
-	}()
-
-	go func() {
-		var err error
-		organization := make([]string, 1)
-		organization[0] = "system:masters"
-		clientCertificate, clientPrivateKey, err = createCertificate("client", caCertificate, caPrivateKey, false, false, nil, nil, organization)
-		errors <- err
-	}()
-
-	go func() {
-		var err error
-		organization := make([]string, 1)
-		organization[0] = "system:masters"
-		kubeConfigCertificate, kubeConfigPrivateKey, err = createCertificate("client", caCertificate, caPrivateKey, false, false, nil, nil, organization)
-		errors <- err
-	}()
-
-	go func() {
-		var err error
-		ip := net.ParseIP("127.0.0.1").To4()
-		peerIPs := append(extraIPs, ip)
-		etcdServerCertificate, etcdServerPrivateKey, err = createCertificate("etcdserver", caCertificate, caPrivateKey, true, true, nil, peerIPs, nil)
-		errors <- err
-	}()
-
-	go func() {
-		var err error
-		ip := net.ParseIP("127.0.0.1").To4()
-		peerIPs := append(extraIPs, ip)
-		etcdClientCertificate, etcdClientPrivateKey, err = createCertificate("etcdclient", caCertificate, caPrivateKey, true, false, nil, peerIPs, nil)
-		errors <- err
-	}()
-
-	etcdPeerCertPairs = make([]*PkiKeyCertPair, masterCount)
-	for i := 0; i < masterCount; i++ {
-		go func(i int) {
-			var err error
-			ip := net.ParseIP("127.0.0.1").To4()
-			peerIPs := append(extraIPs, ip)
-			etcdPeerCertificate, etcdPeerPrivateKey, err := createCertificate("etcdpeer", caCertificate, caPrivateKey, true, false, nil, peerIPs, nil)
-			etcdPeerCertPairs[i] = &PkiKeyCertPair{CertificatePem: string(certificateToPem(etcdPeerCertificate.Raw)), PrivateKeyPem: string(privateKeyToPem(etcdPeerPrivateKey))}
-			errors <- err
-		}(i)
-	}
-
-	e := make([]error, (masterCount + 5))
-	for i := 0; i < len(e); i++ {
-		e[i] = <-errors
-		if e[i] != nil {
-			return nil, nil, nil, nil, nil, nil, e[i]
-		}
-	}
-
-	return &PkiKeyCertPair{CertificatePem: string(certificateToPem(apiServerCertificate.Raw)), PrivateKeyPem: string(privateKeyToPem(apiServerPrivateKey))},
-		&PkiKeyCertPair{CertificatePem: string(certificateToPem(clientCertificate.Raw)), PrivateKeyPem: string(privateKeyToPem(clientPrivateKey))},
-		&PkiKeyCertPair{CertificatePem: string(certificateToPem(kubeConfigCertificate.Raw)), PrivateKeyPem: string(privateKeyToPem(kubeConfigPrivateKey))},
-		&PkiKeyCertPair{CertificatePem: string(certificateToPem(etcdServerCertificate.Raw)), PrivateKeyPem: string(privateKeyToPem(etcdServerPrivateKey))},
-		&PkiKeyCertPair{CertificatePem: string(certificateToPem(etcdClientCertificate.Raw)), PrivateKeyPem: string(privateKeyToPem(etcdClientPrivateKey))},
-		etcdPeerCertPairs,
-		nil
 }
 
 func createCertificate(commonName string, caCertificate *x509.Certificate, caPrivateKey *rsa.PrivateKey, isEtcd bool, isServer bool, extraFQDNs []string, extraIPs []net.IP, organization []string) (*x509.Certificate, *rsa.PrivateKey, error) {

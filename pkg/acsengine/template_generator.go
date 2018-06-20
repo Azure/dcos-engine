@@ -6,13 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
-	"sort"
 	"strconv"
 	"strings"
 	"text/template"
 
 	"github.com/Azure/dcos-engine/pkg/api"
-	"github.com/Azure/dcos-engine/pkg/api/common"
 	"github.com/Azure/dcos-engine/pkg/helpers"
 	"github.com/Azure/dcos-engine/pkg/i18n"
 )
@@ -53,9 +51,7 @@ func (t *TemplateGenerator) GenerateTemplate(containerService *api.ContainerServ
 	defer func() {
 		properties.OrchestratorProfile.OrchestratorVersion = orchVersion
 	}()
-	if certsGenerated, err = setPropertiesDefaults(containerService, isUpgrade); err != nil {
-		return templateRaw, parametersRaw, certsGenerated, err
-	}
+	setPropertiesDefaults(containerService, isUpgrade)
 
 	templ = template.New("acs template").Funcs(t.getTemplateFuncMap(containerService))
 
@@ -113,7 +109,6 @@ func (t *TemplateGenerator) GenerateTemplate(containerService *api.ContainerServ
 
 func (t *TemplateGenerator) verifyFiles() error {
 	allFiles := commonTemplateFiles
-	allFiles = append(allFiles, dcosTemplateFiles...)
 	allFiles = append(allFiles, dcos2TemplateFiles...)
 	for _, file := range allFiles {
 		if _, err := Asset(file); err != nil {
@@ -128,13 +123,8 @@ func (t *TemplateGenerator) prepareTemplateFiles(properties *api.Properties) ([]
 	var baseFile string
 	switch properties.OrchestratorProfile.OrchestratorType {
 	case api.DCOS:
-		if properties.OrchestratorProfile.DcosConfig == nil || properties.OrchestratorProfile.DcosConfig.BootstrapProfile == nil {
-			files = append(commonTemplateFiles, dcosTemplateFiles...)
-			baseFile = dcosBaseFile
-		} else {
-			files = append(commonTemplateFiles, dcos2TemplateFiles...)
-			baseFile = dcos2BaseFile
-		}
+		files = append(commonTemplateFiles, dcos2TemplateFiles...)
+		baseFile = dcos2BaseFile
 	default:
 		return nil, "", t.Translator.Errorf("orchestrator '%s' is unsupported", properties.OrchestratorProfile.OrchestratorType)
 	}
@@ -146,70 +136,7 @@ func (t *TemplateGenerator) prepareTemplateFiles(properties *api.Properties) ([]
 func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) template.FuncMap {
 	return template.FuncMap{
 		"IsHostedMaster": func() bool {
-			return cs.Properties.HostedMasterProfile != nil
-		},
-		"IsDCOS19": func() bool {
-			return cs.Properties.OrchestratorProfile.OrchestratorType == api.DCOS &&
-				(cs.Properties.OrchestratorProfile.OrchestratorVersion == common.DCOSVersion1Dot9Dot0 ||
-					cs.Properties.OrchestratorProfile.OrchestratorVersion == common.DCOSVersion1Dot9Dot8)
-		},
-		"IsKubernetesVersionGe": func(version string) bool {
-			return cs.Properties.OrchestratorProfile.IsKubernetes() && common.IsKubernetesVersionGe(cs.Properties.OrchestratorProfile.OrchestratorVersion, version)
-		},
-		"IsKubernetesVersionLt": func(version string) bool {
-			return cs.Properties.OrchestratorProfile.IsKubernetes() && !common.IsKubernetesVersionGe(cs.Properties.OrchestratorProfile.OrchestratorVersion, version)
-		},
-		"GetMasterKubernetesLabels": func(rg string) string {
-			var buf bytes.Buffer
-			buf.WriteString("kubernetes.io/role=master")
-			buf.WriteString(fmt.Sprintf(",kubernetes.azure.com/cluster=%s", rg))
-			return buf.String()
-		},
-		"GetAgentKubernetesLabels": func(profile *api.AgentPoolProfile, rg string) string {
-			var buf bytes.Buffer
-			buf.WriteString(fmt.Sprintf("kubernetes.io/role=agent,agentpool=%s", profile.Name))
-			if profile.StorageProfile == api.ManagedDisks {
-				storagetier, _ := getStorageAccountType(profile.VMSize)
-				buf.WriteString(fmt.Sprintf(",storageprofile=managed,storagetier=%s", storagetier))
-			}
-			buf.WriteString(fmt.Sprintf(",kubernetes.azure.com/cluster=%s", rg))
-			for k, v := range profile.CustomNodeLabels {
-				buf.WriteString(fmt.Sprintf(",%s=%s", k, v))
-			}
-			return buf.String()
-		},
-		"GetKubeletConfigKeyVals": func(kc *api.KubernetesConfig) string {
-			if kc == nil {
-				return ""
-			}
-			kubeletConfig := cs.Properties.OrchestratorProfile.KubernetesConfig.KubeletConfig
-			if kc.KubeletConfig != nil {
-				kubeletConfig = kc.KubeletConfig
-			}
-			// Order by key for consistency
-			keys := []string{}
-			for key := range kubeletConfig {
-				keys = append(keys, key)
-			}
-			sort.Strings(keys)
-			var buf bytes.Buffer
-			for _, key := range keys {
-				buf.WriteString(fmt.Sprintf("%s=%s ", key, kubeletConfig[key]))
-			}
-			return buf.String()
-		},
-		"GetK8sRuntimeConfigKeyVals": func(config map[string]string) string {
-			// Order by key for consistency
-			keys := []string{}
-			for key := range config {
-				keys = append(keys, key)
-			}
-			sort.Strings(keys)
-			var buf bytes.Buffer
-			for _, key := range keys {
-				buf.WriteString(fmt.Sprintf("\\\"%s=%s\\\", ", key, config[key]))
-			}
-			return strings.TrimSuffix(buf.String(), ", ")
+			return false
 		},
 		"HasPrivateRegistry": func() bool {
 			if cs.Properties.OrchestratorProfile.DcosConfig != nil {
@@ -218,37 +145,16 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			return false
 		},
 		"RequiresFakeAgentOutput": func() bool {
-			return cs.Properties.OrchestratorProfile.IsKubernetes() || cs.Properties.OrchestratorProfile.IsOpenShift()
-		},
-		"IsSwarmMode": func() bool {
-			return cs.Properties.OrchestratorProfile.IsSwarmMode()
-		},
-		"IsKubernetes": func() bool {
-			return cs.Properties.OrchestratorProfile.IsKubernetes()
-		},
-		"IsOpenShift": func() bool {
-			return cs.Properties.OrchestratorProfile.IsOpenShift()
+			return false
 		},
 		"IsPublic": func(ports []int) bool {
 			return len(ports) > 0
-		},
-		"IsAzureCNI": func() bool {
-			return cs.Properties.OrchestratorProfile.IsAzureCNI()
 		},
 		"RequireRouteTable": func() bool {
 			return cs.Properties.OrchestratorProfile.RequireRouteTable()
 		},
 		"IsPrivateCluster": func() bool {
-			if !cs.Properties.OrchestratorProfile.IsKubernetes() {
-				return false
-			}
-			return helpers.IsTrueBoolPointer(cs.Properties.OrchestratorProfile.KubernetesConfig.PrivateCluster.Enabled)
-		},
-		"UseManagedIdentity": func() bool {
-			return cs.Properties.OrchestratorProfile.KubernetesConfig.UseManagedIdentity
-		},
-		"UseInstanceMetadata": func() bool {
-			return helpers.IsTrueBoolPointer(cs.Properties.OrchestratorProfile.KubernetesConfig.UseInstanceMetadata)
+			return false
 		},
 		"GetVNETSubnetDependencies": func() string {
 			return getVNETSubnetDependencies(cs.Properties)
@@ -395,16 +301,8 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 		"GetAgentAllowedSizes": func() string {
 			if t.ClassicMode {
 				return GetClassicAllowedSizes()
-			} else if cs.Properties.OrchestratorProfile.IsKubernetes() || cs.Properties.OrchestratorProfile.IsOpenShift() {
-				return GetKubernetesAgentAllowedSizes()
 			}
 			return GetMasterAgentAllowedSizes()
-		},
-		"getSwarmVersions": func() string {
-			return getSwarmVersions(api.SwarmVersion, api.SwarmDockerComposeVersion)
-		},
-		"GetSwarmModeVersions": func() string {
-			return getSwarmVersions(api.DockerCEVersion, api.DockerCEDockerComposeVersion)
 		},
 		"GetSizeMap": func() string {
 			if t.ClassicMode {
@@ -417,9 +315,6 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 		},
 		"Base64": func(s string) string {
 			return base64.StdEncoding.EncodeToString([]byte(s))
-		},
-		"GetDefaultInternalLbStaticIPOffset": func() int {
-			return DefaultInternalLbStaticIPOffset
 		},
 		"WriteLinkedTemplatesForExtensions": func() string {
 			extensions := getLinkedTemplatesForExtensions(cs.Properties)
@@ -458,9 +353,6 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			}
 			return false
 		},
-		"IsNVIDIADevicePluginEnabled": func() bool {
-			return cs.Properties.IsNVIDIADevicePluginEnabled()
-		},
 		"IsNSeriesSKU": func(profile *api.AgentPoolProfile) bool {
 			return isNSeriesSKU(profile)
 		},
@@ -481,12 +373,6 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 		},
 		"HasWindowsCustomImage": func() bool {
 			return cs.Properties.WindowsProfile.HasCustomImage()
-		},
-		"GetConfigurationScriptRootURL": func() string {
-			if cs.Properties.LinuxProfile.ScriptRootURL == "" {
-				return DefaultConfigurationScriptRootURL
-			}
-			return cs.Properties.LinuxProfile.ScriptRootURL
 		},
 		"GetMasterOSImageOffer": func() string {
 			cloudSpecConfig := getCloudSpecConfig(cs.Location)
@@ -528,43 +414,12 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			imageRef := cs.Properties.MasterProfile.ImageRef
 			return imageRef != nil && len(imageRef.Name) > 0 && len(imageRef.ResourceGroup) > 0
 		},
-		"GetMasterEtcdServerPort": func() int {
-			return DefaultMasterEtcdServerPort
-		},
-		"GetMasterEtcdClientPort": func() int {
-			return DefaultMasterEtcdClientPort
-		},
 		"PopulateClassicModeDefaultValue": func(attr string) string {
 			var val string
 			if !t.ClassicMode {
 				val = ""
 			} else {
 				switch attr {
-				case "cloudProviderBackoff":
-					val = strconv.FormatBool(cs.Properties.OrchestratorProfile.KubernetesConfig.CloudProviderBackoff)
-				case "cloudProviderBackoffRetries":
-					val = strconv.Itoa(cs.Properties.OrchestratorProfile.KubernetesConfig.CloudProviderBackoffRetries)
-				case "cloudProviderBackoffExponent":
-					val = strconv.FormatFloat(cs.Properties.OrchestratorProfile.KubernetesConfig.CloudProviderBackoffExponent, 'f', -1, 64)
-				case "cloudProviderBackoffDuration":
-					val = strconv.Itoa(cs.Properties.OrchestratorProfile.KubernetesConfig.CloudProviderBackoffDuration)
-				case "cloudProviderBackoffJitter":
-					val = strconv.FormatFloat(cs.Properties.OrchestratorProfile.KubernetesConfig.CloudProviderBackoffJitter, 'f', -1, 64)
-				case "cloudProviderRatelimit":
-					val = strconv.FormatBool(cs.Properties.OrchestratorProfile.KubernetesConfig.CloudProviderRateLimit)
-				case "cloudProviderRatelimitQPS":
-					val = strconv.FormatFloat(cs.Properties.OrchestratorProfile.KubernetesConfig.CloudProviderRateLimitQPS, 'f', -1, 64)
-				case "cloudProviderRatelimitBucket":
-					val = strconv.Itoa(cs.Properties.OrchestratorProfile.KubernetesConfig.CloudProviderRateLimitBucket)
-				case "caPrivateKey":
-					// The base64 encoded "NotAvailable"
-					val = "Tm90QXZhaWxhYmxlCg=="
-				case "dockerBridgeCidr":
-					val = DefaultDockerBridgeSubnet
-				case "gchighthreshold":
-					val = strconv.Itoa(cs.Properties.OrchestratorProfile.KubernetesConfig.GCHighThreshold)
-				case "gclowthreshold":
-					val = strconv.Itoa(cs.Properties.OrchestratorProfile.KubernetesConfig.GCLowThreshold)
 				case "generatorCode":
 					val = DefaultGeneratorCode
 				case "orchestratorName":
@@ -574,9 +429,6 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 				}
 			}
 			return fmt.Sprintf("\"defaultValue\": \"%s\",", val)
-		},
-		"AdminGroupID": func() bool {
-			return cs.Properties.AADProfile != nil && cs.Properties.AADProfile.AdminGroupID != ""
 		},
 		// inspired by http://stackoverflow.com/questions/18276173/calling-a-template-with-several-pipeline-parameters/18276968#18276968
 		"dict": func(values ...interface{}) (map[string]interface{}, error) {

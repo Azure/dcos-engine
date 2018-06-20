@@ -341,7 +341,7 @@
       ],
       "tags":
       {
-        "creationSource" : "[concat('acsengine-', variables('masterVMNamePrefix'), copyIndex())]"
+        "creationSource" : "[concat('dcos-engine-', variables('masterVMNamePrefix'), copyIndex())]"
       },
       "location": "[variables('location')]",
       "name": "[concat(variables('masterVMNamePrefix'), copyIndex())]",

@@ -57,10 +57,8 @@ func convertVLabsProperties(vlabs *vlabs.Properties, api *Properties) {
 		apiProfile := &AgentPoolProfile{}
 		convertVLabsAgentPoolProfile(p, apiProfile)
 		// by default vlabs will use managed disks for all orchestrators but kubernetes as it has encryption at rest.
-		if !api.OrchestratorProfile.IsKubernetes() && !api.OrchestratorProfile.IsOpenShift() {
-			if len(p.StorageProfile) == 0 {
-				apiProfile.StorageProfile = ManagedDisks
-			}
+		if len(p.StorageProfile) == 0 {
+			apiProfile.StorageProfile = ManagedDisks
 		}
 		api.AgentPoolProfiles = append(api.AgentPoolProfiles, apiProfile)
 	}
@@ -82,26 +80,6 @@ func convertVLabsProperties(vlabs *vlabs.Properties, api *Properties) {
 		api.ServicePrincipalProfile = &ServicePrincipalProfile{}
 		convertVLabsServicePrincipalProfile(vlabs.ServicePrincipalProfile, api.ServicePrincipalProfile)
 	}
-	if vlabs.CertificateProfile != nil {
-		api.CertificateProfile = &CertificateProfile{}
-		convertVLabsCertificateProfile(vlabs.CertificateProfile, api.CertificateProfile)
-	}
-
-	if vlabs.AADProfile != nil {
-		api.AADProfile = &AADProfile{}
-		convertVLabsAADProfile(vlabs.AADProfile, api.AADProfile)
-	}
-	if vlabs.AzProfile != nil {
-		api.AzProfile = &AzProfile{}
-		convertVLabsAZProfile(vlabs.AzProfile, api.AzProfile)
-	}
-}
-
-func convertVLabsAZProfile(vlabs *vlabs.AzProfile, api *AzProfile) {
-	api.Location = vlabs.Location
-	api.ResourceGroup = vlabs.ResourceGroup
-	api.SubscriptionID = vlabs.SubscriptionID
-	api.TenantID = vlabs.TenantID
 }
 
 func convertVLabsExtensionProfile(vlabs *vlabs.ExtensionProfile, api *ExtensionProfile) {
@@ -228,15 +206,6 @@ func convertCustomFilesToAPI(v *vlabs.MasterProfile, a *MasterProfile) {
 	}
 }
 
-func convertPrivateJumpboxProfileToAPI(v *vlabs.PrivateJumpboxProfile, a *PrivateJumpboxProfile) {
-	a.Name = v.Name
-	a.OSDiskSizeGB = v.OSDiskSizeGB
-	a.VMSize = v.VMSize
-	a.PublicKey = v.PublicKey
-	a.Username = v.Username
-	a.StorageProfile = v.StorageProfile
-}
-
 func convertVLabsMasterProfile(vlabs *vlabs.MasterProfile, api *MasterProfile) {
 	api.Count = vlabs.Count
 	api.DNSPrefix = vlabs.DNSPrefix
@@ -350,31 +319,6 @@ func convertVLabsServicePrincipalProfile(vlabs *vlabs.ServicePrincipalProfile, a
 			SecretVersion: vlabs.KeyvaultSecretRef.SecretVersion,
 		}
 	}
-}
-
-func convertVLabsCertificateProfile(vlabs *vlabs.CertificateProfile, api *CertificateProfile) {
-	api.CaCertificate = vlabs.CaCertificate
-	api.CaPrivateKey = vlabs.CaPrivateKey
-	api.APIServerCertificate = vlabs.APIServerCertificate
-	api.APIServerPrivateKey = vlabs.APIServerPrivateKey
-	api.ClientCertificate = vlabs.ClientCertificate
-	api.ClientPrivateKey = vlabs.ClientPrivateKey
-	api.KubeConfigCertificate = vlabs.KubeConfigCertificate
-	api.KubeConfigPrivateKey = vlabs.KubeConfigPrivateKey
-	api.EtcdServerCertificate = vlabs.EtcdServerCertificate
-	api.EtcdServerPrivateKey = vlabs.EtcdServerPrivateKey
-	api.EtcdClientCertificate = vlabs.EtcdClientCertificate
-	api.EtcdClientPrivateKey = vlabs.EtcdClientPrivateKey
-	api.EtcdPeerCertificates = vlabs.EtcdPeerCertificates
-	api.EtcdPeerPrivateKeys = vlabs.EtcdPeerPrivateKeys
-}
-
-func convertVLabsAADProfile(vlabs *vlabs.AADProfile, api *AADProfile) {
-	api.ClientAppID = vlabs.ClientAppID
-	api.ServerAppID = vlabs.ServerAppID
-	api.TenantID = vlabs.TenantID
-	api.AdminGroupID = vlabs.AdminGroupID
-	api.Authenticator = OIDC
 }
 
 func addDCOSPublicAgentPool(api *Properties) {
