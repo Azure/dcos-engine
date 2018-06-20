@@ -210,6 +210,9 @@
 {{end}}
         "[concat('Microsoft.Network/networkInterfaces/', variables('{{.Name}}VMNamePrefix'), 'nic-', copyIndex(variables('{{.Name}}Offset')))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('{{.Name}}AvailabilitySet'))]"
+{{if and HasBootstrap (not IsHostedBootstrap)}}
+       ,"[concat('Microsoft.Compute/virtualMachines/', variables('bootstrapWinVMName'), '/extensions/bootstrapready')]"
+{{end}}
       ],
       "tags":
       {
@@ -239,7 +242,6 @@
           "adminUsername": "[variables('windowsAdminUsername')]",
           "adminPassword": "[variables('windowsAdminPassword')]",
           {{GetDCOSWindowsAgentCustomData .}}
-
         },
         "storageProfile": {
           {{GetDataDisks .}}
@@ -287,7 +289,11 @@
         "typeHandlerVersion": "1.8",
         "autoUpgradeMinorVersion": true,
         "settings": {
+{{if HasBootstrap}}
+          "commandToExecute": "[variables('windowsAgent2CustomScript')]"
+{{else}}
           "commandToExecute": "[variables('{{.Name}}windowsAgentCustomScript')]"
+{{end}}
         }
       },
       "type": "Microsoft.Compute/virtualMachines/extensions"

@@ -57,6 +57,9 @@
       {{end}}
     {{end}}
     {{template "dcos/bstrap/bootstrapresources.t" .}},
+    {{if .HasWindows}}
+      {{template "dcos/bstrap/bootstrapwinresources.t" .}},
+    {{end}}
     {{template "dcos/bstrap/dcosmasterresources.t" .}}
   ],
   "outputs": {

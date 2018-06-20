@@ -24,7 +24,7 @@ import (
 )
 
 var commonTemplateFiles = []string{agentOutputs, agentParams, classicParams, masterOutputs, iaasOutputs, masterParams, windowsParams}
-var dcos2TemplateFiles = []string{dcos2BaseFile, dcosAgentResourcesVMAS, dcosAgentResourcesVMSS, dcosAgentVars, dcos2MasterResources, dcos2BootstrapResources, dcos2MasterVars, dcosParams, dcosWindowsAgentResourcesVMAS, dcosWindowsAgentResourcesVMSS, dcos2BootstrapVars, dcos2BootstrapParams}
+var dcos2TemplateFiles = []string{dcos2BaseFile, dcosAgentResourcesVMAS, dcosAgentResourcesVMSS, dcosAgentVars, dcos2MasterResources, dcos2BootstrapResources, dcos2BootstrapWinResources, dcos2MasterVars, dcosParams, dcosWindowsAgentResourcesVMAS, dcosWindowsAgentResourcesVMSS, dcos2BootstrapVars, dcos2BootstrapParams}
 
 var keyvaultSecretPathRe *regexp.Regexp
 
@@ -714,9 +714,6 @@ func getDCOSProvisionScript(script string) string {
 func getDCOSAgentProvisionScript(profile *api.AgentPoolProfile, orchProfile *api.OrchestratorProfile, bootstrapIP string) string {
 	// add the provision script
 	scriptname := dcos2Provision
-	if profile.OSType == api.Windows {
-		scriptname = dcosWindowsProvision
-	}
 
 	bp, err := Asset(scriptname)
 	if err != nil {

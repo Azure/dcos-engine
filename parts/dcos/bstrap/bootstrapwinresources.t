@@ -1,18 +1,16 @@
-{{if HasBootstrapPublicIP}}
     {
       "apiVersion": "[variables('apiVersionDefault')]",
       "location": "[variables('location')]",
-      "name": "bootstrapPublicIP",
+      "name": "[variables('bootstrapWinPublicIPAddressName')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       },
       "type": "Microsoft.Network/publicIPAddresses"
     },
-{{end}}
     {
       "apiVersion": "[variables('apiVersionDefault')]",
       "location": "[variables('location')]",
-      "name": "[variables('bootstrapNSGName')]",
+      "name": "[variables('bootstrapWinNSGName')]",
       "properties": {
         "securityRules": [
             {
@@ -20,14 +18,14 @@
                     "priority": 200,
                     "access": "Allow",
                     "direction": "Inbound",
-                    "destinationPortRange": "22",
+                    "destinationPortRange": "3389",
                     "sourcePortRange": "*",
                     "destinationAddressPrefix": "*",
                     "protocol": "Tcp",
-                    "description": "Allow SSH",
+                    "description": "Allow RDP",
                     "sourceAddressPrefix": "*"
                 },
-                "name": "ssh"
+                "name": "rdp"
             },
             {
                 "properties": {
@@ -47,31 +45,44 @@
       },
       "type": "Microsoft.Network/networkSecurityGroups"
     },
+{{if HasWindowsCustomImage}}
+    {"type": "Microsoft.Compute/images",
+      "apiVersion": "2017-12-01",
+      "name": "bootstrap-win-customImage",
+      "location": "[variables('location')]",
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "osType": "Windows",
+            "osState": "Generalized",
+            "blobUri": "[parameters('agentWindowsSourceUrl')]",
+            "storageAccountType": "Standard_LRS"
+          }
+        }
+      }
+    },
+{{end}}
     {
       "apiVersion": "[variables('apiVersionDefault')]",
       "dependsOn": [
 {{if not .MasterProfile.IsCustomVNET}}
         "[variables('vnetID')]",
 {{end}}
-{{if HasBootstrapPublicIP}}
-        "bootstrapPublicIP",
-{{end}}
-        "[variables('bootstrapNSGID')]"
+        "[variables('bootstrapWinNSGID')]",
+        "[variables('bootstrapWinPublicIPAddressName')]"
       ],
       "location": "[variables('location')]",
-      "name": "[concat(variables('bootstrapVMName'), '-nic')]",
+      "name": "[concat(variables('bootstrapWinVMName'), '-nic')]",
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipConfigNode",
             "properties": {
-              "privateIPAddress": "[variables('bootstrapStaticIP')]",
+              "privateIPAddress": "[variables('bootstrapWinStaticIP')]",
               "privateIPAllocationMethod": "Static",
-{{if HasBootstrapPublicIP}}
               "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', 'bootstrapPublicIP')]"
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('bootstrapWinPublicIPAddressName'))]"
               },
-{{end}}
               "subnet": {
                 "id": "[variables('masterVnetSubnetID')]"
               }
@@ -79,7 +90,7 @@
           }
         ],
         "networkSecurityGroup": {
-          "id": "[variables('bootstrapNSGID')]"
+          "id": "[variables('bootstrapWinNSGID')]"
         }
       },
       "type": "Microsoft.Network/networkInterfaces"
@@ -87,7 +98,7 @@
     {
       "apiVersion": "[variables('apiVersionStorageManagedDisks')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('bootstrapVMName'), '-nic')]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('bootstrapWinVMName'), '-nic')]",
 {{if .MasterProfile.IsStorageAccount}}
         "[variables('masterStorageAccountName')]",
 {{end}}
@@ -95,13 +106,10 @@
       ],
       "tags":
       {
-        "creationSource": "[concat('dcos-engine-', variables('bootstrapVMName'))]",
-        "orchestratorName": "dcos",
-        "orchestratorVersion": "[variables('orchestratorVersion')]",
-        "orchestratorNode": "bootstrap"
+        "creationSource" : "[concat('acsengine-', variables('bootstrapWinVMName'))]"
       },
       "location": "[variables('location')]",
-      "name": "[variables('bootstrapVMName')]",
+      "name": "[variables('bootstrapWinVMName')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('bootstrapVMSize')]"
@@ -109,44 +117,34 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('bootstrapVMName'), '-nic'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('bootstrapWinVMName'), '-nic'))]"
             }
           ]
         },
         "osProfile": {
-          "adminUsername": "[variables('adminUsername')]",
-          "computername": "[variables('bootstrapVMName')]",
-          {{GetDCOSBootstrapCustomData}}
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "true",
-            "ssh": {
-                "publicKeys": [
-                    {
-                        "keyData": "[variables('sshRSAPublicKey')]",
-                        "path": "[variables('sshKeyPath')]"
-                    }
-                ]
-            }
-          }
-          {{if .LinuxProfile.HasSecrets}}
-          ,
-          "secrets": "[variables('linuxProfileSecrets')]"
-          {{end}}
+          "computername": "[concat('wbs', variables('nameSuffix'))]",
+          "adminUsername": "[variables('windowsAdminUsername')]",
+          "adminPassword": "[variables('windowsAdminPassword')]",
+          {{GetDCOSBootstrapWindowsCustomData}}
         },
         "storageProfile": {
           "imageReference": {
-            "offer": "[variables('osImageOffer')]",
-            "publisher": "[variables('osImagePublisher')]",
-            "sku": "[variables('osImageSKU')]",
-            "version": "[variables('osImageVersion')]"
+{{if HasWindowsCustomImage}}
+            "id": "[resourceId('Microsoft.Compute/images','bootstrap-win-customImage')]"
+{{else}}
+            "offer": "[variables('agentWindowsOffer')]",
+            "publisher": "[variables('agentWindowsPublisher')]",
+            "sku": "[variables('agentWindowsSKU')]",
+            "version": "[variables('agentWindowsVersion')]"
+{{end}}
           },
           "osDisk": {
-            "caching": "ReadWrite"
+            "caching": "ReadOnly"
             ,"createOption": "FromImage"
 {{if .MasterProfile.IsStorageAccount}}
-            ,"name": "[concat(variables('bootstrapVMName'), '-osdisk')]"
+            ,"name": "[concat(variables('bootstrapWinVMName'), '-osdisk')]"
             ,"vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('masterStorageAccountName')),variables('apiVersionStorage')).primaryEndpoints.blob,'vhds/',variables('bootstrapVMName'),'-osdisk.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('masterStorageAccountName')),variables('apiVersionStorage')).primaryEndpoints.blob,'vhds/',variables('bootstrapWinVMName'),'-osdisk.vhd')]"
             }
 {{end}}
 {{if ne .OrchestratorProfile.DcosConfig.BootstrapProfile.OSDiskSizeGB 0}}
@@ -160,18 +158,19 @@
     {
       "apiVersion": "[variables('apiVersionDefault')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('bootstrapVMName'))]"
+        "[variables('bootstrapWinVMName')]"
       ],
       "location": "[variables('location')]",
-      "name": "[concat(variables('bootstrapVMName'), '/bootstrapready')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('bootstrapWinVMName'),'/bootstrapready')]",
       "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.8",
         "autoUpgradeMinorVersion": true,
-        "publisher": "Microsoft.OSTCExtensions",
-        "settings": {
-          "commandToExecute": "[concat('/bin/bash -c \"until curl -f http://', variables('bootstrapStaticIP'), ':8086/dcos_install.sh > /dev/null; do echo waiting for bootstrap node; sleep 15; done; echo bootstrap node up\"')]"
-        },
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.4"
-      },
-      "type": "Microsoft.Compute/virtualMachines/extensions"
-    }{{WriteLinkedTemplatesForExtensions}}
+        "settings": {},
+        "protectedSettings": {
+          "commandToExecute": "[variables('bootstrapWinScript')]"
+        }
+      }
+    }
