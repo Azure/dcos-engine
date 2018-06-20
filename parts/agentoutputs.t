@@ -1,10 +1,8 @@
 {{if IsPublic .Ports}}
-  {{ if and (not IsKubernetes) (not IsOpenShift)}}
-    "{{.Name}}FQDN": {
-        "type": "string",
-        "value": "[reference(concat('Microsoft.Network/publicIPAddresses/', variables('{{.Name}}IPAddressName'))).dnsSettings.fqdn]"
-    },
-  {{end}}
+  "{{.Name}}FQDN": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.Network/publicIPAddresses/', variables('{{.Name}}IPAddressName'))).dnsSettings.fqdn]"
+  },
 {{end}}
 {{if and .IsAvailabilitySets .IsStorageAccount}}
   "{{.Name}}StorageAccountOffset": {

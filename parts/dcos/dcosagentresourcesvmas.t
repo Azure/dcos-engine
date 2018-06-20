@@ -181,7 +181,7 @@
       ],
       "tags":
       {
-        "creationSource" : "[concat('acsengine-', variables('{{.Name}}VMNamePrefix'), copyIndex(variables('{{.Name}}Offset')))]",
+        "creationSource" : "[concat('dcos-engine-', variables('{{.Name}}VMNamePrefix'), copyIndex(variables('{{.Name}}Offset')))]",
         "orchestratorName": "dcos",
         "orchestratorVersion": "[variables('orchestratorVersion')]",
         "orchestratorNode": "agent"

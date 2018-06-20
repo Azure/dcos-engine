@@ -36,21 +36,6 @@ type DCOSSpecConfig struct {
 	DcosProviderPackageID           string // the id of the dcos-provider-xxx package
 }
 
-//KubernetesSpecConfig is the kubernetes container images used.
-type KubernetesSpecConfig struct {
-	KubernetesImageBase              string
-	TillerImageBase                  string
-	ACIConnectorImageBase            string
-	NVIDIAImageBase                  string
-	EtcdDownloadURLBase              string
-	KubeBinariesSASURLBase           string
-	WindowsPackageSASURLBase         string
-	WindowsTelemetryGUID             string
-	CNIPluginsDownloadURL            string
-	VnetCNILinuxPluginsDownloadURL   string
-	VnetCNIWindowsPluginsDownloadURL string
-}
-
 //AzureEndpointConfig describes an Azure endpoint
 type AzureEndpointConfig struct {
 	ResourceManagerVMDNSSuffix string
@@ -66,11 +51,10 @@ type AzureOSImageConfig struct {
 
 //AzureEnvironmentSpecConfig is the overall configuration differences in different cloud environments.
 type AzureEnvironmentSpecConfig struct {
-	DockerSpecConfig     DockerSpecConfig
-	KubernetesSpecConfig KubernetesSpecConfig
-	DCOSSpecConfig       DCOSSpecConfig
-	EndpointConfig       AzureEndpointConfig
-	OSImageConfig        map[api.Distro]AzureOSImageConfig
+	DockerSpecConfig DockerSpecConfig
+	DCOSSpecConfig   DCOSSpecConfig
+	EndpointConfig   AzureEndpointConfig
+	OSImageConfig    map[api.Distro]AzureOSImageConfig
 }
 
 // Context represents the object that is passed to the package

@@ -24,7 +24,6 @@ import (
 )
 
 var commonTemplateFiles = []string{agentOutputs, agentParams, classicParams, masterOutputs, iaasOutputs, masterParams, windowsParams}
-var dcosTemplateFiles = []string{dcosBaseFile, dcosAgentResourcesVMAS, dcosAgentResourcesVMSS, dcosAgentVars, dcosMasterResources, dcosMasterVars, dcosParams, dcosWindowsAgentResourcesVMAS, dcosWindowsAgentResourcesVMSS}
 var dcos2TemplateFiles = []string{dcos2BaseFile, dcosAgentResourcesVMAS, dcosAgentResourcesVMSS, dcosAgentVars, dcos2MasterResources, dcos2BootstrapResources, dcos2MasterVars, dcosParams, dcosWindowsAgentResourcesVMAS, dcosWindowsAgentResourcesVMSS, dcos2BootstrapVars, dcos2BootstrapParams}
 
 var keyvaultSecretPathRe *regexp.Regexp
@@ -41,8 +40,6 @@ func GenerateClusterID(properties *api.Properties) string {
 	h := fnv.New64a()
 	if properties.MasterProfile != nil {
 		h.Write([]byte(properties.MasterProfile.DNSPrefix))
-	} else if properties.HostedMasterProfile != nil {
-		h.Write([]byte(properties.HostedMasterProfile.DNSPrefix))
 	} else {
 		h.Write([]byte(properties.AgentPoolProfiles[0].Name))
 	}
@@ -94,15 +91,13 @@ func getCloudSpecConfig(location string) AzureEnvironmentSpecConfig {
 // validateDistro checks if the requested orchestrator type is supported on the requested Linux distro.
 func validateDistro(cs *api.ContainerService) bool {
 	// Check Master distro
-	if cs.Properties.MasterProfile != nil && cs.Properties.MasterProfile.Distro == api.RHEL &&
-		(cs.Properties.OrchestratorProfile.OrchestratorType != api.SwarmMode && cs.Properties.OrchestratorProfile.OrchestratorType != api.OpenShift) {
+	if cs.Properties.MasterProfile != nil && cs.Properties.MasterProfile.Distro == api.RHEL {
 		log.Fatalf("Orchestrator type %s not suported on RHEL Master", cs.Properties.OrchestratorProfile.OrchestratorType)
 		return false
 	}
 	// Check Agent distros
 	for _, agentProfile := range cs.Properties.AgentPoolProfiles {
-		if agentProfile.Distro == api.RHEL &&
-			(cs.Properties.OrchestratorProfile.OrchestratorType != api.SwarmMode && cs.Properties.OrchestratorProfile.OrchestratorType != api.OpenShift) {
+		if agentProfile.Distro == api.RHEL {
 			log.Fatalf("Orchestrator type %s not suported on RHEL Agent", cs.Properties.OrchestratorProfile.OrchestratorType)
 			return false
 		}
@@ -190,9 +185,6 @@ func getStorageAccountType(sizeName string) (string, error) {
 
 func makeMasterExtensionScriptCommands(cs *api.ContainerService) string {
 	copyIndex := "',copyIndex(),'"
-	if cs.Properties.OrchestratorProfile.IsKubernetes() || cs.Properties.OrchestratorProfile.IsOpenShift() {
-		copyIndex = "',copyIndex(variables('masterOffset')),'"
-	}
 	return makeExtensionScriptCommands(cs.Properties.MasterProfile.PreprovisionExtension,
 		cs.Properties.ExtensionProfiles, copyIndex)
 }
@@ -284,64 +276,6 @@ func getDCOSDefaultWindowsBootstrapInstallerURL(profile *api.OrchestratorProfile
 			return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-2"
 		case common.DCOSVersion1Dot11Dot0:
 			return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-0"
-		}
-	}
-	return ""
-}
-
-func getDCOSDefaultProviderPackageGUID(orchestratorType string, orchestratorVersion string, masterCount int) string {
-	if orchestratorType == api.DCOS {
-		switch orchestratorVersion {
-		case common.DCOSVersion1Dot10Dot0:
-			switch masterCount {
-			case 1:
-				return "c4ec6210f396b8e435177b82e3280a2cef0ce721"
-			case 3:
-				return "08197947cb57d479eddb077a429fa15c139d7d20"
-			case 5:
-				return "f286ad9d3641da5abb622e4a8781f73ecd8492fa"
-			}
-		case common.DCOSVersion1Dot9Dot0:
-			switch masterCount {
-			case 1:
-				return "bcc883b7a3191412cf41824bdee06c1142187a0b"
-			case 3:
-				return "dcff7e24c0c1827bebeb7f1a806f558054481b33"
-			case 5:
-				return "b41bfa84137a6374b2ff5eb1655364d7302bd257"
-			}
-		case common.DCOSVersion1Dot9Dot8:
-			switch masterCount {
-			case 1:
-				return "e8b0e3fc4a16394dc6dd5b19fc54bf1543bff429"
-			case 3:
-				return "2d36c3f570d9dd7d187c699f9a322ed9d95e7dfa"
-			case 5:
-				return "c03c9587f88929f310b80af4f448b7b51654f1c8"
-			}
-		case common.DCOSVersion1Dot8Dot8:
-			switch masterCount {
-			case 1:
-				return "441385ce2f5942df7e29075c12fb38fa5e92cbba"
-			case 3:
-				return "b1cd359287504efb780257bd12cc3a63704e42d4"
-			case 5:
-				return "d9b61156dfcc9383e014851529738aa550ef57d9"
-			}
-		}
-	}
-	return ""
-}
-
-func getDCOSDefaultRepositoryURL(orchestratorType string, orchestratorVersion string) string {
-	if orchestratorType == api.DCOS {
-		switch orchestratorVersion {
-		case common.DCOSVersion1Dot10Dot0:
-			return "https://dcosio.azureedge.net/dcos/stable/1.10.0"
-		case common.DCOSVersion1Dot9Dot8:
-			return "https://dcosio.azureedge.net/dcos/stable/1.9.8"
-		default:
-			return "https://dcosio.azureedge.net/dcos/stable"
 		}
 	}
 	return ""
@@ -780,12 +714,8 @@ func getDCOSProvisionScript(script string) string {
 func getDCOSAgentProvisionScript(profile *api.AgentPoolProfile, orchProfile *api.OrchestratorProfile, bootstrapIP string) string {
 	// add the provision script
 	scriptname := dcos2Provision
-	if orchProfile.DcosConfig == nil || orchProfile.DcosConfig.BootstrapProfile == nil {
-		if profile.OSType == api.Windows {
-			scriptname = dcosWindowsProvision
-		} else {
-			scriptname = dcosProvision
-		}
+	if profile.OSType == api.Windows {
+		scriptname = dcosWindowsProvision
 	}
 
 	bp, err := Asset(scriptname)
@@ -795,7 +725,7 @@ func getDCOSAgentProvisionScript(profile *api.AgentPoolProfile, orchProfile *api
 
 	provisionScript := string(bp)
 	if strings.Contains(provisionScript, "'") {
-		panic(fmt.Sprintf("BUG: %s may not contain character '", dcosProvision))
+		panic(fmt.Sprintf("BUG: %s may not contain character '", scriptname))
 	}
 
 	// the embedded roleFileContents
@@ -822,9 +752,6 @@ func getDCOSAgentProvisionScript(profile *api.AgentPoolProfile, orchProfile *api
 
 func getDCOSMasterProvisionScript(orchProfile *api.OrchestratorProfile, bootstrapIP string) string {
 	scriptname := dcos2Provision
-	if orchProfile.DcosConfig == nil || orchProfile.DcosConfig.BootstrapProfile == nil {
-		scriptname = dcosProvision
-	}
 
 	// add the provision script
 	bp, err := Asset(scriptname)
@@ -854,14 +781,6 @@ func getDCOSCustomDataTemplate(orchestratorType, orchestratorVersion string) str
 	switch orchestratorType {
 	case api.DCOS:
 		switch orchestratorVersion {
-		case common.DCOSVersion1Dot8Dot8:
-			return dcosCustomData188
-		case common.DCOSVersion1Dot9Dot0:
-			return dcosCustomData190
-		case common.DCOSVersion1Dot9Dot8:
-			return dcosCustomData198
-		case common.DCOSVersion1Dot10Dot0:
-			return dcosCustomData110
 		case common.DCOSVersion1Dot11Dot0:
 			return dcos2CustomData1110
 		case common.DCOSVersion1Dot11Dot2:
@@ -1033,11 +952,6 @@ func getMasterLinkedTemplateText(masterProfile *api.MasterProfile, orchestratorT
 
 	loopCount := "[variables('masterCount')]"
 	loopOffset := ""
-	if orchestratorType == api.Kubernetes || orchestratorType == api.OpenShift {
-		// Due to upgrade k8s sometimes needs to install just some of the nodes.
-		loopCount = "[sub(variables('masterCount'), variables('masterOffset'))]"
-		loopOffset = "variables('masterOffset')"
-	}
 
 	if strings.EqualFold(singleOrAll, "single") {
 		loopCount = "1"
@@ -1177,17 +1091,4 @@ func stringInSlice(a string, list []string) bool {
 		}
 	}
 	return false
-}
-
-func getSwarmVersions(orchestratorVersion, dockerComposeVersion string) string {
-	return fmt.Sprintf("\"orchestratorVersion\": \"%s\",\n\"dockerComposeVersion\": \"%s\",\n", orchestratorVersion, dockerComposeVersion)
-}
-
-func getAddonByName(addons []api.KubernetesAddon, name string) api.KubernetesAddon {
-	for i := range addons {
-		if addons[i].Name == name {
-			return addons[i]
-		}
-	}
-	return api.KubernetesAddon{}
 }

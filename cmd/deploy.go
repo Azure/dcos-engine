@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -16,14 +15,13 @@ import (
 
 	"encoding/json"
 
+	"github.com/Azure/azure-sdk-for-go/arm/graphrbac"
 	"github.com/Azure/dcos-engine/pkg/acsengine"
 	"github.com/Azure/dcos-engine/pkg/acsengine/transform"
 	"github.com/Azure/dcos-engine/pkg/api"
 	"github.com/Azure/dcos-engine/pkg/armhelpers"
 	"github.com/Azure/dcos-engine/pkg/helpers"
 	"github.com/Azure/dcos-engine/pkg/i18n"
-	"github.com/Azure/azure-sdk-for-go/arm/graphrbac"
-	"github.com/Azure/go-autorest/autorest/to"
 )
 
 const (
@@ -159,8 +157,6 @@ func (dc *deployCmd) mergeAPIModel() error {
 }
 
 func (dc *deployCmd) loadAPIModel(cmd *cobra.Command, args []string) error {
-	var caCertificateBytes []byte
-	var caKeyBytes []byte
 	var err error
 
 	apiloader := &api.Apiloader{
@@ -176,32 +172,7 @@ func (dc *deployCmd) loadAPIModel(cmd *cobra.Command, args []string) error {
 	}
 
 	if dc.outputDirectory == "" {
-		if dc.containerService.Properties.MasterProfile != nil {
-			dc.outputDirectory = path.Join("_output", dc.containerService.Properties.MasterProfile.DNSPrefix)
-		} else {
-			dc.outputDirectory = path.Join("_output", dc.containerService.Properties.HostedMasterProfile.DNSPrefix)
-		}
-	}
-
-	// consume dc.caCertificatePath and dc.caPrivateKeyPath
-	if (dc.caCertificatePath != "" && dc.caPrivateKeyPath == "") || (dc.caCertificatePath == "" && dc.caPrivateKeyPath != "") {
-		return errors.New("--ca-certificate-path and --ca-private-key-path must be specified together")
-	}
-
-	if dc.caCertificatePath != "" {
-		if caCertificateBytes, err = ioutil.ReadFile(dc.caCertificatePath); err != nil {
-			return fmt.Errorf(fmt.Sprintf("failed to read CA certificate file: %s", err.Error()))
-		}
-		if caKeyBytes, err = ioutil.ReadFile(dc.caPrivateKeyPath); err != nil {
-			return fmt.Errorf(fmt.Sprintf("failed to read CA private key file: %s", err.Error()))
-		}
-
-		prop := dc.containerService.Properties
-		if prop.CertificateProfile == nil {
-			prop.CertificateProfile = &api.CertificateProfile{}
-		}
-		prop.CertificateProfile.CaCertificate = string(caCertificateBytes)
-		prop.CertificateProfile.CaPrivateKey = string(caKeyBytes)
+		dc.outputDirectory = path.Join("_output", dc.containerService.Properties.MasterProfile.DNSPrefix)
 	}
 
 	if dc.containerService.Location == "" {
@@ -290,9 +261,7 @@ func autofillApimodel(dc *deployCmd) error {
 		return err
 	}
 
-	useManagedIdentity := dc.containerService.Properties.OrchestratorProfile.KubernetesConfig != nil &&
-		dc.containerService.Properties.OrchestratorProfile.KubernetesConfig.UseManagedIdentity
-
+	useManagedIdentity := false
 	if !useManagedIdentity {
 		spp := dc.containerService.Properties.ServicePrincipalProfile
 		if spp != nil && spp.ClientID == "" && spp.Secret == "" && spp.KeyvaultSecretRef == nil && (dc.ClientID.String() == "" || dc.ClientID.String() == "00000000-0000-0000-0000-000000000000") && dc.ClientSecret == "" {
@@ -303,22 +272,7 @@ func autofillApimodel(dc *deployCmd) error {
 			appURL := fmt.Sprintf("https://%s/", appName)
 			var replyURLs *[]string
 			var requiredResourceAccess *[]graphrbac.RequiredResourceAccess
-			if dc.containerService.Properties.OrchestratorProfile.OrchestratorType == api.OpenShift {
-				appName = fmt.Sprintf("%s.%s.cloudapp.azure.com", appName, dc.containerService.Properties.AzProfile.Location)
-				appURL = fmt.Sprintf("https://%s:8443/", appName)
-				replyURLs = to.StringSlicePtr([]string{fmt.Sprintf("https://%s:8443/oauth2callback/Azure%%20AD", appName)})
-				requiredResourceAccess = &[]graphrbac.RequiredResourceAccess{
-					{
-						ResourceAppID: to.StringPtr(aadServicePrincipal),
-						ResourceAccess: &[]graphrbac.ResourceAccess{
-							{
-								ID:   to.StringPtr(aadPermissionUserRead),
-								Type: to.StringPtr("Scope"),
-							},
-						},
-					},
-				}
-			}
+
 			applicationID, servicePrincipalObjectID, secret, err := dc.client.CreateApp(appName, appURL, replyURLs, requiredResourceAccess)
 			if err != nil {
 				return fmt.Errorf("apimodel invalid: ServicePrincipalProfile was empty, and we failed to create valid credentials: %q", err)
@@ -426,11 +380,5 @@ func (dc *deployCmd) run() error {
 		}
 		log.Fatalln(err)
 	}
-
-	if dc.containerService.Properties.OrchestratorProfile.OrchestratorType == api.OpenShift {
-		// TODO: when the Azure client library is updated, read this from the template `masterFQDN` output
-		fmt.Printf("OpenShift web UI available at https://%s.%s.cloudapp.azure.com:8443/\n", dc.containerService.Properties.MasterProfile.DNSPrefix, dc.location)
-	}
-
 	return nil
 }
