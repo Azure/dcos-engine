@@ -46,12 +46,15 @@ const (
 )
 
 const (
-	dcosWindowsProvision    = "dcos/dcosWindowsProvision.ps1"
+	//dcosWindowsProvision    = "dcos/dcosWindowsProvision.ps1"
 	dcosProvisionSource     = "dcos/dcosprovisionsource.sh"
 	dcos2Provision          = "dcos/bstrap/dcosprovision.sh"
 	dcos2BootstrapProvision = "dcos/bstrap/bootstrapprovision.sh"
 	dcos2CustomData1110     = "dcos/bstrap/dcos1.11.0.customdata.t"
 	dcos2CustomData1112     = "dcos/bstrap/dcos1.11.2.customdata.t"
+
+	dcos2BootstrapWindowsProvision = "dcos/bstrap/bootstrapWindowsProvision.ps1"
+	dcos2WindowsProvision          = "dcos/bstrap/dcosWindowsProvision.ps1"
 )
 
 const (
@@ -71,6 +74,7 @@ const (
 	dcos2BootstrapVars            = "dcos/bstrap/bootstrapvars.t"
 	dcos2BootstrapParams          = "dcos/bstrap/bootstrapparams.t"
 	dcos2BootstrapResources       = "dcos/bstrap/bootstrapresources.t"
+	dcos2BootstrapWinResources    = "dcos/bstrap/bootstrapwinresources.t"
 	dcos2BootstrapCustomdata      = "dcos/bstrap/bootstrapcustomdata.yml"
 	dcos2MasterVars               = "dcos/bstrap/dcosmastervars.t"
 	dcos2MasterResources          = "dcos/bstrap/dcosmasterresources.t"
