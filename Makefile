@@ -59,7 +59,7 @@ generate-azure-constants:
 .PHONY: build
 build: generate
 	GOBIN=$(BINDIR) $(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)'
-	cd test/dcos-engine-test; go build $(GOFLAGS)
+	cd test/src; go build -o dcos-engine-test $(GOFLAGS)
 
 build-binary: generate
 	go build $(GOFLAGS) -v -ldflags "${LDFLAGS}" -o ${BINARY_DEST_DIR}/dcos-engine .
