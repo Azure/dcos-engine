@@ -7,61 +7,6 @@ import (
 	"github.com/blang/semver"
 )
 
-// AllKubernetesSupportedVersions is a whitelist map of supported Kubernetes version strings
-var AllKubernetesSupportedVersions = map[string]bool{
-	"1.6.6":          true,
-	"1.6.9":          true,
-	"1.6.11":         true,
-	"1.6.12":         true,
-	"1.6.13":         true,
-	"1.7.0":          true,
-	"1.7.1":          true,
-	"1.7.2":          true,
-	"1.7.4":          true,
-	"1.7.5":          true,
-	"1.7.7":          true,
-	"1.7.9":          true,
-	"1.7.10":         true,
-	"1.7.12":         true,
-	"1.7.13":         true,
-	"1.7.14":         true,
-	"1.7.15":         true,
-	"1.7.16":         true,
-	"1.8.0":          true,
-	"1.8.1":          true,
-	"1.8.2":          true,
-	"1.8.4":          true,
-	"1.8.6":          true,
-	"1.8.7":          true,
-	"1.8.8":          true,
-	"1.8.9":          true,
-	"1.8.10":         true,
-	"1.8.11":         true,
-	"1.8.12":         true,
-	"1.8.13":         true,
-	"1.9.0":          true,
-	"1.9.1":          true,
-	"1.9.2":          true,
-	"1.9.3":          true,
-	"1.9.4":          true,
-	"1.9.5":          true,
-	"1.9.6":          true,
-	"1.9.7":          true,
-	"1.9.8":          true,
-	"1.10.0-beta.2":  true,
-	"1.10.0-beta.4":  true,
-	"1.10.0-rc.1":    true,
-	"1.10.0":         true,
-	"1.10.1":         true,
-	"1.10.2":         true,
-	"1.10.3":         true,
-	"1.10.4":         true,
-	"1.11.0-alpha.1": true,
-	"1.11.0-alpha.2": true,
-	"1.11.0-beta.1":  true,
-	"1.11.0-beta.2":  true,
-}
-
 // GetVersionsGt returns a list of versions greater than a semver string given a list of versions
 // inclusive=true means that we test for equality as well
 // preReleases=true means that we include pre-release versions in the list
@@ -239,13 +184,6 @@ func RationalizeReleaseAndVersion(orchType, orchRel, orchVer string, hasWindows 
 		}
 	}
 	return version
-}
-
-// IsKubernetesVersionGe returns true if actualVersion is greater than or equal to version
-func IsKubernetesVersionGe(actualVersion, version string) bool {
-	v1, _ := semver.Make(actualVersion)
-	v2, _ := semver.Make(version)
-	return v1.GE(v2)
 }
 
 // GetLatestPatchVersion gets the most recent patch version from a list of semver versions given a major.minor string

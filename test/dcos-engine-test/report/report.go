@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azure/acs-engine/pkg/helpers"
+	"github.com/Azure/dcos-engine/pkg/helpers"
 )
 
 // ErrorInfo represents the CI error

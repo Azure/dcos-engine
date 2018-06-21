@@ -4,48 +4,6 @@ import (
 	"testing"
 )
 
-func Test_GetAllSupportedKubernetesVersions(t *testing.T) {
-	responseFromGetter := GetAllSupportedKubernetesVersions()
-
-	if len(AllKubernetesSupportedVersions) != len(responseFromGetter) {
-		t.Errorf("GetAllSupportedKubernetesVersions() returned %d items, expected %d", len(responseFromGetter), len(AllKubernetesSupportedVersions))
-	}
-
-	for _, version := range responseFromGetter {
-		if !AllKubernetesSupportedVersions[version] {
-			t.Errorf("GetAllSupportedKubernetesVersions() returned a version %s that was not in the definitive AllKubernetesSupportedVersions map", version)
-		}
-	}
-}
-
-func Test_GetSupportedKubernetesVersion(t *testing.T) {
-	versions := GetAllSupportedKubernetesVersions()
-	for _, version := range versions {
-		supportedVersion := GetSupportedKubernetesVersion(version, false)
-		if supportedVersion != version {
-			t.Errorf("GetSupportedKubernetesVersion(%s) should return the same passed-in string, instead returned %s", version, supportedVersion)
-		}
-	}
-
-	defaultVersion := GetSupportedKubernetesVersion("", false)
-	if defaultVersion != GetDefaultKubernetesVersion() {
-		t.Errorf("GetSupportedKubernetesVersion(\"\") should return the default version %s, instead returned %s", GetDefaultKubernetesVersion(), defaultVersion)
-	}
-
-	winVersions := GetAllSupportedKubernetesVersionsWindows()
-	for _, version := range winVersions {
-		supportedVersion := GetSupportedKubernetesVersion(version, true)
-		if supportedVersion != version {
-			t.Errorf("GetSupportedKubernetesVersion(%s) should return the same passed-in string, instead returned %s", version, supportedVersion)
-		}
-	}
-
-	defaultWinVersion := GetSupportedKubernetesVersion("", true)
-	if defaultWinVersion != GetDefaultKubernetesVersionWindows() {
-		t.Errorf("GetSupportedKubernetesVersion(\"\") should return the default version for windows %s, instead returned %s", GetDefaultKubernetesVersionWindows(), defaultWinVersion)
-	}
-}
-
 func TestGetVersionsGt(t *testing.T) {
 	versions := []string{"1.1.0-rc.1", "1.2.0-rc.1", "1.2.0", "1.2.1"}
 	expected := []string{"1.1.0-rc.1", "1.2.0-rc.1", "1.2.0", "1.2.1"}
@@ -80,65 +38,6 @@ func TestGetVersionsGt(t *testing.T) {
 	for _, ver := range v {
 		if !expectedMap[ver] {
 			t.Errorf(errStr)
-		}
-	}
-}
-
-func TestIsKubernetesVersionGe(t *testing.T) {
-	cases := []struct {
-		version        string
-		actualVersion  string
-		expectedResult bool
-	}{
-		{
-			version:        "1.6.0",
-			actualVersion:  "1.11.0-alpha.1",
-			expectedResult: true,
-		},
-		{
-			version:        "1.8.0",
-			actualVersion:  "1.7.12",
-			expectedResult: false,
-		},
-		{
-			version:        "1.9.6",
-			actualVersion:  "1.9.6",
-			expectedResult: true,
-		},
-		{
-			version:        "1.9.0",
-			actualVersion:  "1.10.0-beta.2",
-			expectedResult: true,
-		},
-		{
-			version:        "1.7.0",
-			actualVersion:  "1.8.7",
-			expectedResult: true,
-		},
-		{
-			version:        "1.10.0-beta.1",
-			actualVersion:  "1.10.0-beta.2",
-			expectedResult: true,
-		},
-		{
-			version:        "1.11.0-alpha.1",
-			actualVersion:  "1.11.0-beta.1",
-			expectedResult: true,
-		},
-		{
-			version:        "1.10.0-rc.1",
-			actualVersion:  "1.10.0-alpha.1",
-			expectedResult: false,
-		},
-	}
-	for _, c := range cases {
-		if c.expectedResult != IsKubernetesVersionGe(c.actualVersion, c.version) {
-			if c.expectedResult {
-				t.Errorf("Expected version %s to be greater or equal than version %s", c.actualVersion, c.version)
-			} else {
-				t.Errorf("Expected version %s to not be greater or equal than version %s", c.actualVersion, c.version)
-			}
-
 		}
 	}
 }
@@ -320,36 +219,6 @@ func TestGetVersionsBetween(t *testing.T) {
 	}
 }
 
-func Test_GetValidPatchVersion(t *testing.T) {
-	v := GetValidPatchVersion(Kubernetes, "", false)
-	if v != GetDefaultKubernetesVersion() {
-		t.Errorf("It is not the default Kubernetes version")
-	}
-
-	for version, enabled := range AllKubernetesSupportedVersions {
-		if enabled {
-			v = GetValidPatchVersion(Kubernetes, version, false)
-			if v != version {
-				t.Errorf("Expected version %s, instead got version %s", version, v)
-			}
-		}
-	}
-
-	v = GetValidPatchVersion(Kubernetes, "", true)
-	if v != GetDefaultKubernetesVersionWindows() {
-		t.Errorf("It is not the default Kubernetes version")
-	}
-
-	for version, enabled := range AllKubernetesWindowsSupportedVersions {
-		if enabled {
-			v = GetValidPatchVersion(Kubernetes, version, true)
-			if v != version {
-				t.Errorf("Expected version %s, instead got version %s", version, v)
-			}
-		}
-	}
-}
-
 func TestGetLatestPatchVersion(t *testing.T) {
 	expected := "1.1.2"
 	version := GetLatestPatchVersion("1.1", []string{"1.1.1", expected})
@@ -423,90 +292,5 @@ func TestGetMaxVersion(t *testing.T) {
 	max = GetMaxVersion(versions, true)
 	if max != expected {
 		t.Errorf("GetMaxVersion returned the wrong max version, expected %s, got %s", expected, max)
-	}
-}
-
-func Test_RationalizeReleaseAndVersion(t *testing.T) {
-	version := RationalizeReleaseAndVersion(Kubernetes, "", "", false)
-	if version != GetDefaultKubernetesVersion() {
-		t.Errorf("It is not the default Kubernetes version")
-	}
-
-	latest1Dot6Version := GetLatestPatchVersion("1.6", GetAllSupportedKubernetesVersions())
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.6", "", false)
-	if version != latest1Dot6Version {
-		t.Errorf("It is not Kubernetes version %s", latest1Dot6Version)
-	}
-
-	expectedVersion := "1.6.11"
-	version = RationalizeReleaseAndVersion(Kubernetes, "", expectedVersion, false)
-	if version != expectedVersion {
-		t.Errorf("It is not Kubernetes version %s", expectedVersion)
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.6", expectedVersion, false)
-	if version != expectedVersion {
-		t.Errorf("It is not Kubernetes version %s", expectedVersion)
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "", "v"+expectedVersion, false)
-	if version != expectedVersion {
-		t.Errorf("It is not Kubernetes version %s", expectedVersion)
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "v1.6", "v"+expectedVersion, false)
-	if version != expectedVersion {
-		t.Errorf("It is not Kubernetes version %s", expectedVersion)
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.1", "", false)
-	if version != "" {
-		t.Errorf("It is not empty string")
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.1", "1.6.6", false)
-	if version != "" {
-		t.Errorf("It is not empty string")
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "", "", true)
-	if version != GetDefaultKubernetesVersionWindows() {
-		t.Errorf("It is not the default Windows Kubernetes version")
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.6", "", true)
-	if version != "" {
-		t.Errorf("It is not empty string")
-	}
-
-	expectedVersion = "1.8.12"
-	version = RationalizeReleaseAndVersion(Kubernetes, "", expectedVersion, true)
-	if version != expectedVersion {
-		t.Errorf("It is not Kubernetes version %s", expectedVersion)
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.8", expectedVersion, true)
-	if version != expectedVersion {
-		t.Errorf("It is not Kubernetes version %s", expectedVersion)
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "", "v"+expectedVersion, true)
-	if version != expectedVersion {
-		t.Errorf("It is not Kubernetes version %s", expectedVersion)
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "v1.8", "v"+expectedVersion, true)
-	if version != expectedVersion {
-		t.Errorf("It is not Kubernetes version %s", expectedVersion)
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.1", "", true)
-	if version != "" {
-		t.Errorf("It is not empty string")
-	}
-
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.1", "1.6.6", true)
-	if version != "" {
-		t.Errorf("It is not empty string")
 	}
 }

@@ -12,10 +12,6 @@ RUN wget -q https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.ta
 
 RUN curl -fsSL https://get.docker.com/ | sh
 
-ENV KUBECTL_VERSION 1.7.5
-RUN curl "https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" > /usr/local/bin/kubectl \
-    && chmod +x /usr/local/bin/kubectl
-
 ENV GOPATH /gopath
 ENV PATH "${PATH}:${GOPATH}/bin:/usr/local/go/bin"
 
@@ -27,7 +23,7 @@ RUN git clone https://github.com/akesterson/shunit.git /tmp/shunit \
 WORKDIR /gopath/src/github.com/Azure/dcos-engine
 
 # Cache vendor layer
-ADD Makefile test.mk versioning.mk glide.yaml glide.lock /gopath/src/github.com/Azure/dcos-engine/
+ADD Makefile versioning.mk glide.yaml glide.lock /gopath/src/github.com/Azure/dcos-engine/
 RUN make bootstrap
 
 # https://github.com/dotnet/core/blob/master/release-notes/download-archives/2.1.2-sdk-download.md

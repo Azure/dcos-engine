@@ -1,13 +1,10 @@
-# Microsoft Azure Container Service Engine - Builds Docker Enabled Clusters
-[![Coverage Status](https://codecov.io/gh/Azure/dcos-engine/branch/master/graph/badge.svg)](https://codecov.io/gh/Azure/dcos-engine)
-[![CircleCI](https://circleci.com/gh/Azure/dcos-engine/tree/master.svg?style=svg)](https://circleci.com/gh/Azure/dcos-engine/tree/master)
+# Microsoft DC/OS Engine - Builds Docker Enabled DC/OS Clusters
 
 ## Overview
 
-The Azure Container Service Engine (`dcos-engine`) generates ARM (Azure Resource Manager) templates for Docker enabled clusters on Microsoft Azure with your choice of DC/OS, Kubernetes, OpenShift, Swarm Mode, or Swarm orchestrators. The input to the tool is a cluster definition. The cluster definition (or apimodel) is very similar to (in many cases the same as) the ARM template syntax used to deploy a Microsoft Azure Container Service cluster.
+The DC/OS Engine (`dcos-engine`) generates ARM (Azure Resource Manager) templates for Docker enabled clusters on Microsoft Azure with DC/OS orchestrator. The input to the tool is a cluster definition. The cluster definition (or apimodel) is very similar to (in many cases the same as) the ARM template syntax used to deploy a Microsoft Azure Container Service cluster.
 
 The cluster definition file enables you to customize your Docker enabled cluster in many ways including:
-* choice of DC/OS, Kubernetes, OpenShift, Swarm Mode, or Swarm orchestrators
 * multiple agent pools where each agent pool can specify:
    * standard or premium VM Sizes, including GPU optimized VM sizes
    * node count
@@ -19,13 +16,9 @@ The cluster definition file enables you to customize your Docker enabled cluster
 
 ## User guides
 
-* [ACS Engine](docs/acsengine.md) - shows you how to build and use the ACS engine to generate custom Docker enabled container clusters
+* [DC/OS Engine](docs/dcos-engine.md) - shows you how to build and use the DC/OS engine to generate custom Docker enabled container clusters
 * [Cluster Definition](docs/clusterdefinition.md) - describes the components of the cluster definition file
 * [DC/OS Walkthrough](docs/dcos.md) - shows how to create a DC/OS enabled Docker cluster on Azure
-* [Kubernetes Walkthrough](docs/kubernetes.md) - shows how to create a Kubernetes enabled Docker cluster on Azure
-* [OpenShift Walkthrough](docs/openshift.md) - shows how to create an OpenShift enabled Docker cluster on Azure
-* [Swarm Walkthrough](docs/swarm.md) - shows how to create a Swarm enabled Docker cluster on Azure
-* [Swarm Mode Walkthrough](docs/swarmmode.md) - shows how to create a Swarm Mode cluster on Azure
 * [Custom VNET](examples/vnet) - shows how to use a custom VNET
 * [Attached Disks](examples/disks-storageaccount) - shows how to attach up to 4 disks per node
 * [Managed Disks](examples/disks-managed) - shows how to use managed disks
@@ -54,17 +47,15 @@ Please follow these instructions before submitting a PR:
 Usage is best demonstrated with an example:
 
 ```shell
-$ vim examples/classic/kubernetes.classic.json
+$ vim examples/dcos.json
 
 # insert your preferred, unique DNS prefix
 # insert your SSH public key
 
-$ ./dcos-engine generate examples/classic/kubernetes.classic.json
+$ ./dcos-engine generate examples/dcos.json
 ```
 
-This produces a new directory inside `_output/` that contains an ARM template
-for deploying Kubernetes into Azure. (In the case of Kubernetes, some additional
-needed assets are generated and placed in the output directory.)
+This produces a new directory inside `_output/` that contains an ARM template for deploying DC/OS cluster into Azure.
 
 ## Code of conduct
 

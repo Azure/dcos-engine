@@ -2,10 +2,10 @@
 
 ## 概览
 
-微软容器服务引擎（`acs-engine`）用于将一个容器集群描述文件转化成一组ARM（Azure Resource Manager）模板，通过在Azure上部署这些模板，用户可以很方便地在Azure上建立一套基于Docker的容器服务集群。用户可以自由地选择集群编排引擎DC/OS, Kubernetes或者是Swarm/Swarm Mode。集群描述文件使用和ARM模板相同的语法，它们都可以用来部署Azure容器服务。
+微软容器服务引擎（`dcos-engine`）用于将一个容器集群描述文件转化成一组ARM（Azure Resource Manager）模板，通过在Azure上部署这些模板，用户可以很方便地在Azure上建立一套基于Docker的容器服务集群。用户可以自由地选择集群编排引擎DC/OS, Kubernetes或者是Swarm/Swarm Mode。集群描述文件使用和ARM模板相同的语法，它们都可以用来部署Azure容器服务。
 
 集群描述文件提供了一下几个功能：
-* 可以自由选择DC/OS, Kubernetes, Swarm Mode和Swarm等多种编排引擎
+* 可以自由选择DC/OS等多种编排引擎
 * 可以自由定制集群节点的规格，包括：
     * 虚机的规格
     * 节点的数量
@@ -16,12 +16,9 @@
 
 ## 演示链接
 
-* [ACS Engine](docs/acsengine.md) - 演示如何使用ACS引擎来生成基于Docker的容器集群
+* [DC/OS Engine](docs/dcos-engine.md) - 演示如何使用DC/OS引擎来生成基于Docker的容器集群
 * [Cluster Definition](docs/clusterdefinition.md) - 详细介绍集群描述文件的格式
-* [DC/OS Walkthrough](docs/dcos.md) - 演示如何使用ACS引擎在Azure上创建DC/OS集群
-* [Kubernetes Walkthrough](docs/kubernetes.md) - 演示如何使用ACS引擎在Azure上创建Kubernetes集群
-* [Swarm Walkthrough](docs/swarm.md) - 演示如何使用ACS引擎在Azure上创建Swarm集群
-* [Swarm Mode Walkthrough](docs/swarmmode.md) - 演示如何使用ACS引擎在Azure上创建Swarm Mode集群
+* [DC/OS Walkthrough](docs/dcos.md) - 演示如何使用DC/OS引擎在Azure上创建DC/OS集群
 * [Custom VNET](examples/vnet) - 演示如何在用户自定义VNET上创建容器集群
 * [Attached Disks](examples/disks-storageaccount) - 演示如何在一个集群节点上创建4个磁盘
 * [Managed Disks](examples/disks-managed) - 演示如何管理托管磁盘
@@ -37,21 +34,20 @@
 
 ## 使用步骤
 
-通过创建一个容器集群来演示ACS引擎的具体用法：
+通过创建一个容器集群来演示DC/OS引擎的具体用法：
 ```shell
-$ vim examples/kubernetes.classic.json
+$ vim examples/dcos.json
 
 # 修改默认的DNS prefix
 # 修改ssh public key
 
-$ ./acs-engine generate examples/kubernetes.classic.json
+$ ./dcos-engine generate examples/dcos.json
 ```
 
 This produces a new directory inside `_output/` that contains an ARM template
-for deploying Kubernetes into Azure. (In the case of Kubernetes, some additional
-needed assets are generated and placed in the output directory.)
+for deploying DC/OS into Azure.
 
-运行完毕后，项目的根目录下就会产生一个`_output/`的文件夹，这个文件夹中包含了所有的ARM模板，通过部署这些模板就可以在Azure上创建对应的容器集群了。（对于kubernetes来说，_output文件夹中也会生成一些证书之类的文件来供ARM部署时的需要）
+运行完毕后，项目的根目录下就会产生一个`_output/`的文件夹，这个文件夹中包含了所有的ARM模板，通过部署这些模板就可以在Azure上创建对应的容器集群了。
 
 ## 部署方法
 

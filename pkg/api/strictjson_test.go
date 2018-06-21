@@ -4,12 +4,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/Azure/dcos-engine/pkg/api/v20160330"
-	"github.com/Azure/dcos-engine/pkg/api/v20160930"
-	"github.com/Azure/dcos-engine/pkg/api/v20170131"
-	"github.com/Azure/dcos-engine/pkg/api/v20170701"
-	"github.com/Azure/dcos-engine/pkg/api/vlabs"
 )
 
 type SubTestProfile struct {
@@ -192,71 +186,5 @@ func TestCheckFailsOnUnexpectedJSONKeyInArrayAtSubLevelViaPointer(t *testing.T) 
 	}
 	if !strings.Contains(e.Error(), "spy") {
 		t.Errorf("Error message did not name unexpected JSON key 'spy': was %v", e) // TODO: f3[0].spy might be better
-	}
-}
-
-const jsonWithTypo = `
-{
-	"apiVersion": "ignored",
-	"properties": {
-	  "orchestratorProfile": {
-		"orchestratorType": "DCOS"
-	  },
-	  "masterProfile": {
-		"count": 1,
-		"dnsprefix": "masterdns1",
-		"vmsize": "Standard_D2_v2",
-		"ventSubnetID": "/this/attribute/was/mistyped"
-	  },
-	  "agentPoolProfiles": [],
-	  "linuxProfile": {
-		"adminUsername": "azureuser",
-		"ssh": {
-		  "publicKeys": [
-			{
-			  "keyData": "ssh-rsa PUBLICKEY azureuser@linuxvm"
-			}
-		  ]
-		}
-	  },
-	  "servicePrincipalProfile": {
-		"clientId": "ServicePrincipalClientID",
-		"secret": "myServicePrincipalClientSecret"
-	  }
-	}
-}
-`
-
-func TestStrictJSONValidationIsNotAppliedToApiVersions20170701AndEarlier(t *testing.T) {
-	// These API versions existed before we added strict JSON validation:
-	// we cannot apply it retrospectively because it could break existing
-	// customer apimodels.
-	preStrictVersions := []string{v20160330.APIVersion, v20160930.APIVersion, v20170131.APIVersion, v20170701.APIVersion /*, v20170930.APIVersion */}
-	a := &Apiloader{
-		Translator: nil,
-	}
-
-	for _, version := range preStrictVersions {
-		_, e := a.LoadContainerService([]byte(jsonWithTypo), version, true, false, nil)
-		if e != nil {
-			t.Errorf("Expected mistyped 'ventSubnetID' key to be overlooked in version '%s' but it wasn't: error was %v", version, e)
-		}
-	}
-}
-
-func TestStrictJSONValidationIsAppliedToVersionsAbove20170701(t *testing.T) {
-	strictVersions := []string{vlabs.APIVersion}
-	a := &Apiloader{
-		Translator: nil,
-	}
-	for _, version := range strictVersions {
-		_, e := a.LoadContainerService([]byte(jsonWithTypo), version, true, false, nil)
-		if e == nil {
-			t.Error("Expected mistyped 'ventSubnetID' key to be detected but it wasn't")
-		} else {
-			if !strings.Contains(e.Error(), "ventSubnetID") {
-				t.Errorf("Expected error on 'ventSubnetID' but error was %v", e)
-			}
-		}
 	}
 }

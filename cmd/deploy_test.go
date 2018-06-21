@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	"os"
@@ -16,13 +15,12 @@ import (
 const ExampleAPIModel = `{
   "apiVersion": "vlabs",
   "properties": {
-		"orchestratorProfile": { "orchestratorType": "Kubernetes", "kubernetesConfig": { "useManagedIdentity": %s, "etcdVersion" : "2.3.8" } },
+		"orchestratorProfile": { "orchestratorType": "DCOS", "dcosConfig" : { "dcosBootstrapURL": "%s" } },
     "masterProfile": { "count": 1, "dnsPrefix": "", "vmSize": "Standard_D2_v2" },
     "agentPoolProfiles": [ { "name": "linuxpool1", "count": 2, "vmSize": "Standard_D2_v2", "availabilityProfile": "AvailabilitySet" } ],
     "windowsProfile": { "adminUsername": "azureuser", "adminPassword": "replacepassword1234$" },
     "linuxProfile": { "adminUsername": "azureuser", "ssh": { "publicKeys": [ { "keyData": "" } ] }
-    },
-    "servicePrincipalProfile": { "clientId": "%s", "secret": "%s" }
+    }
   }
 }
 `
@@ -30,21 +28,7 @@ const ExampleAPIModel = `{
 const ExampleAPIModelWithDNSPrefix = `{
 	"apiVersion": "vlabs",
 	"properties": {
-		  "orchestratorProfile": { "orchestratorType": "Kubernetes", "kubernetesConfig": { "useManagedIdentity": %s, "etcdVersion" : "2.3.8" } },
-	  "masterProfile": { "count": 1, "dnsPrefix": "mytestcluster", "vmSize": "Standard_D2_v2" },
-	  "agentPoolProfiles": [ { "name": "linuxpool1", "count": 2, "vmSize": "Standard_D2_v2", "availabilityProfile": "AvailabilitySet" } ],
-	  "windowsProfile": { "adminUsername": "azureuser", "adminPassword": "replacepassword1234$" },
-	  "linuxProfile": { "adminUsername": "azureuser", "ssh": { "publicKeys": [ { "keyData": "" } ] }
-	  },
-	  "servicePrincipalProfile": { "clientId": "%s", "secret": "%s" }
-	}
-  }
-  `
-
-const ExampleAPIModelWithoutServicePrincipalProfile = `{
-	"apiVersion": "vlabs",
-	"properties": {
-		  "orchestratorProfile": { "orchestratorType": "Kubernetes", "kubernetesConfig": { "useManagedIdentity": %s, "etcdVersion" : "2.3.8" } },
+		  "orchestratorProfile": { "orchestratorType": "DCOS", "dcosConfig" : { "dcosBootstrapURL": "%s" } },
 	  "masterProfile": { "count": 1, "dnsPrefix": "mytestcluster", "vmSize": "Standard_D2_v2" },
 	  "agentPoolProfiles": [ { "name": "linuxpool1", "count": 2, "vmSize": "Standard_D2_v2", "availabilityProfile": "AvailabilitySet" } ],
 	  "windowsProfile": { "adminUsername": "azureuser", "adminPassword": "replacepassword1234$" },
@@ -54,22 +38,16 @@ const ExampleAPIModelWithoutServicePrincipalProfile = `{
   }
   `
 
-func getExampleAPIModel(useManagedIdentity bool, clientID, clientSecret string) string {
-	return getAPIModel(ExampleAPIModel, useManagedIdentity, clientID, clientSecret)
+func getExampleAPIModel(dcosBootstrapURL string) string {
+	return getAPIModel(ExampleAPIModel, dcosBootstrapURL)
 }
 
-func getAPIModel(baseAPIModel string, useManagedIdentity bool, clientID, clientSecret string) string {
-	return fmt.Sprintf(
-		baseAPIModel,
-		strconv.FormatBool(useManagedIdentity),
-		clientID,
-		clientSecret)
+func getAPIModel(baseAPIModel string, dcosBootstrapURL string) string {
+	return fmt.Sprintf(baseAPIModel, dcosBootstrapURL)
 }
 
-func getAPIModelWithoutServicePrincipalProfile(baseAPIModel string, useManagedIdentity bool) string {
-	return fmt.Sprintf(
-		baseAPIModel,
-		strconv.FormatBool(useManagedIdentity))
+func getAPIModelWithoutServicePrincipalProfile(baseAPIModel string, dcosBootstrapURL string) string {
+	return fmt.Sprintf(baseAPIModel, dcosBootstrapURL)
 }
 
 func TestNewDeployCmd(t *testing.T) {
@@ -78,7 +56,7 @@ func TestNewDeployCmd(t *testing.T) {
 		t.Fatalf("deploy command should have use %s equal %s, short %s equal %s and long %s equal to %s", output.Use, deployName, output.Short, deployShortDescription, output.Long, versionLongDescription)
 	}
 
-	expectedFlags := []string{"api-model", "dns-prefix", "auto-suffix", "output-directory", "ca-private-key-path", "resource-group", "location", "force-overwrite"}
+	expectedFlags := []string{"api-model", "dns-prefix", "auto-suffix", "output-directory", "resource-group", "location", "force-overwrite"}
 	for _, f := range expectedFlags {
 		if output.Flags().Lookup(f) == nil {
 			t.Fatalf("deploy command should have flag %s", f)
@@ -103,69 +81,57 @@ func TestValidate(t *testing.T) {
 	}{
 		{
 			dc: &deployCmd{
-				apimodelPath:      "",
-				dnsPrefix:         "test",
-				outputDirectory:   "output/test",
-				forceOverwrite:    false,
-				caCertificatePath: "test",
-				caPrivateKeyPath:  "test",
+				apimodelPath:    "",
+				dnsPrefix:       "test",
+				outputDirectory: "output/test",
+				forceOverwrite:  false,
 			},
 			args:        []string{},
 			expectedErr: fmt.Errorf("--api-model was not supplied, nor was one specified as a positional argument"),
 		},
 		{
 			dc: &deployCmd{
-				apimodelPath:      "",
-				dnsPrefix:         "test",
-				outputDirectory:   "output/test",
-				caCertificatePath: "test",
-				caPrivateKeyPath:  "test",
+				apimodelPath:    "",
+				dnsPrefix:       "test",
+				outputDirectory: "output/test",
 			},
 			args:        []string{"wrong/path"},
 			expectedErr: fmt.Errorf("specified api model does not exist (wrong/path)"),
 		},
 		{
 			dc: &deployCmd{
-				apimodelPath:      "",
-				dnsPrefix:         "test",
-				outputDirectory:   "output/test",
-				caCertificatePath: "test",
-				caPrivateKeyPath:  "test",
+				apimodelPath:    "",
+				dnsPrefix:       "test",
+				outputDirectory: "output/test",
 			},
 			args:        []string{"test/apimodel.json", "some_random_stuff"},
 			expectedErr: fmt.Errorf("too many arguments were provided to 'deploy'"),
 		},
 		{
 			dc: &deployCmd{
-				apimodelPath:      "",
-				dnsPrefix:         "test",
-				outputDirectory:   "output/test",
-				caCertificatePath: "test",
-				caPrivateKeyPath:  "test",
+				apimodelPath:    "",
+				dnsPrefix:       "test",
+				outputDirectory: "output/test",
 			},
 			args:        []string{apimodelPath},
 			expectedErr: fmt.Errorf("--location must be specified"),
 		},
 		{
 			dc: &deployCmd{
-				apimodelPath:      "",
-				dnsPrefix:         "test",
-				outputDirectory:   "output/test",
-				caCertificatePath: "test",
-				caPrivateKeyPath:  "test",
-				location:          "west europe",
+				apimodelPath:    "",
+				dnsPrefix:       "test",
+				outputDirectory: "output/test",
+				location:        "west europe",
 			},
 			args:        []string{apimodelPath},
 			expectedErr: nil,
 		},
 		{
 			dc: &deployCmd{
-				apimodelPath:      apimodelPath,
-				dnsPrefix:         "test",
-				outputDirectory:   "output/test",
-				caCertificatePath: "test",
-				caPrivateKeyPath:  "test",
-				location:          "canadaeast",
+				apimodelPath:    apimodelPath,
+				dnsPrefix:       "test",
+				outputDirectory: "output/test",
+				location:        "canadaeast",
 			},
 			args:        []string{},
 			expectedErr: nil,
@@ -188,16 +154,12 @@ func TestValidate(t *testing.T) {
 	}
 }
 
-func TestAutofillApimodelWithoutManagedIdentityCreatesCreds(t *testing.T) {
-	testAutodeployCredentialHandling(t, false, "", "")
+func TestAutofillApimodelWithoutDcosBootstrapURL(t *testing.T) {
+	testDeploy(t, "")
 }
 
-func TestAutofillApimodelWithManagedIdentitySkipsCreds(t *testing.T) {
-	testAutodeployCredentialHandling(t, true, "", "")
-}
-
-func TestAutofillApimodelAllowsPrespecifiedCreds(t *testing.T) {
-	testAutodeployCredentialHandling(t, false, "clientID", "clientSecret")
+func TestAutofillApimodelWithDcosBootstrapURL(t *testing.T) {
+	testDeploy(t, "abc.def")
 }
 
 func TestAutoSufixWithDnsPrefixInApiModel(t *testing.T) {
@@ -205,7 +167,7 @@ func TestAutoSufixWithDnsPrefixInApiModel(t *testing.T) {
 		Translator: nil,
 	}
 
-	apimodel := getAPIModel(ExampleAPIModelWithDNSPrefix, false, "clientID", "clientSecret")
+	apimodel := getAPIModel(ExampleAPIModelWithDNSPrefix, "")
 	cs, ver, err := apiloader.DeserializeContainerService([]byte(apimodel), false, false, nil)
 	if err != nil {
 		t.Fatalf("unexpected error deserializing the example apimodel: %s", err)
@@ -235,189 +197,12 @@ func TestAutoSufixWithDnsPrefixInApiModel(t *testing.T) {
 
 }
 
-func TestAPIModelWithoutServicePrincipalProfileAndClientIdAndSecretInCmd(t *testing.T) {
+func testDeploy(t *testing.T, dcosBootstrapURL string) {
 	apiloader := &api.Apiloader{
 		Translator: nil,
 	}
 
-	apimodel := getAPIModelWithoutServicePrincipalProfile(ExampleAPIModelWithoutServicePrincipalProfile, false)
-	TestClientIDInCmd, err := uuid.FromString("DEC923E3-1EF1-4745-9516-37906D56DEC4")
-	if err != nil {
-		t.Fatalf("Invalid ClientID in Test: %s", err)
-	}
-
-	TestClientSecretInCmd := "DEC923E3-1EF1-4745-9516-37906D56DEC4"
-
-	cs, ver, err := apiloader.DeserializeContainerService([]byte(apimodel), false, false, nil)
-	if err != nil {
-		t.Fatalf("unexpected error deserializing the example apimodel: %s", err)
-	}
-	deployCmd := &deployCmd{
-		apimodelPath:     "./this/is/unused.json",
-		outputDirectory:  "_test_output",
-		forceOverwrite:   true,
-		location:         "westus",
-		containerService: cs,
-		apiVersion:       ver,
-
-		client: &armhelpers.MockACSEngineClient{},
-	}
-	deployCmd.ClientID = TestClientIDInCmd
-	deployCmd.ClientSecret = TestClientSecretInCmd
-
-	err = autofillApimodel(deployCmd)
-	if err != nil {
-		t.Fatalf("unexpected error autofilling the example apimodel: %s", err)
-	}
-
-	defer os.RemoveAll(deployCmd.outputDirectory)
-
-	if deployCmd.containerService.Properties.ServicePrincipalProfile == nil || deployCmd.containerService.Properties.ServicePrincipalProfile.ClientID == "" || deployCmd.containerService.Properties.ServicePrincipalProfile.Secret == "" {
-		t.Fatalf("expected service principal profile to be populated from deployment command arguments")
-	}
-
-	if deployCmd.containerService.Properties.ServicePrincipalProfile.ClientID != TestClientIDInCmd.String() {
-		t.Fatalf("expected service principal profile client id to be %s but got %s", TestClientIDInCmd.String(), deployCmd.containerService.Properties.ServicePrincipalProfile.ClientID)
-	}
-
-	if deployCmd.containerService.Properties.ServicePrincipalProfile.Secret != TestClientSecretInCmd {
-		t.Fatalf("expected service principal profile client secret to be %s but got %s", TestClientSecretInCmd, deployCmd.containerService.Properties.ServicePrincipalProfile.Secret)
-	}
-}
-
-func TestAPIModelWithEmptyServicePrincipalProfileAndClientIdAndSecretInCmd(t *testing.T) {
-	apiloader := &api.Apiloader{
-		Translator: nil,
-	}
-
-	apimodel := getAPIModel(ExampleAPIModelWithDNSPrefix, false, "", "")
-	TestClientIDInCmd, err := uuid.FromString("DEC923E3-1EF1-4745-9516-37906D56DEC4")
-	if err != nil {
-		t.Fatalf("Invalid ClientID in Test: %s", err)
-	}
-
-	TestClientSecretInCmd := "DEC923E3-1EF1-4745-9516-37906D56DEC4"
-
-	cs, ver, err := apiloader.DeserializeContainerService([]byte(apimodel), false, false, nil)
-	if err != nil {
-		t.Fatalf("unexpected error deserializing the example apimodel: %s", err)
-	}
-	deployCmd := &deployCmd{
-		apimodelPath:     "./this/is/unused.json",
-		outputDirectory:  "_test_output",
-		forceOverwrite:   true,
-		location:         "westus",
-		containerService: cs,
-		apiVersion:       ver,
-
-		client: &armhelpers.MockACSEngineClient{},
-	}
-	deployCmd.ClientID = TestClientIDInCmd
-	deployCmd.ClientSecret = TestClientSecretInCmd
-	err = autofillApimodel(deployCmd)
-	if err != nil {
-		t.Fatalf("unexpected error autofilling the example apimodel: %s", err)
-	}
-
-	defer os.RemoveAll(deployCmd.outputDirectory)
-
-	if deployCmd.containerService.Properties.ServicePrincipalProfile == nil || deployCmd.containerService.Properties.ServicePrincipalProfile.ClientID == "" || deployCmd.containerService.Properties.ServicePrincipalProfile.Secret == "" {
-		t.Fatalf("expected service principal profile to be populated from deployment command arguments")
-	}
-
-	if deployCmd.containerService.Properties.ServicePrincipalProfile.ClientID != TestClientIDInCmd.String() {
-		t.Fatalf("expected service principal profile client id to be %s but got %s", TestClientIDInCmd.String(), deployCmd.containerService.Properties.ServicePrincipalProfile.ClientID)
-	}
-
-	if deployCmd.containerService.Properties.ServicePrincipalProfile.Secret != TestClientSecretInCmd {
-		t.Fatalf("expected service principal profile client secret to be %s but got %s", TestClientSecretInCmd, deployCmd.containerService.Properties.ServicePrincipalProfile.Secret)
-	}
-}
-
-func TestAPIModelWithoutServicePrincipalProfileAndWithoutClientIdAndSecretInCmd(t *testing.T) {
-	apiloader := &api.Apiloader{
-		Translator: nil,
-	}
-
-	apimodel := getAPIModelWithoutServicePrincipalProfile(ExampleAPIModelWithoutServicePrincipalProfile, false)
-
-	cs, ver, err := apiloader.DeserializeContainerService([]byte(apimodel), false, false, nil)
-	if err != nil {
-		t.Fatalf("unexpected error deserializing the example apimodel: %s", err)
-	}
-	deployCmd := &deployCmd{
-		apimodelPath:     "./this/is/unused.json",
-		outputDirectory:  "_test_output",
-		forceOverwrite:   true,
-		location:         "westus",
-		containerService: cs,
-		apiVersion:       ver,
-
-		client: &armhelpers.MockACSEngineClient{},
-	}
-	err = autofillApimodel(deployCmd)
-	if err != nil {
-		t.Fatalf("unexpected error autofilling the example apimodel: %s", err)
-	}
-
-	defer os.RemoveAll(deployCmd.outputDirectory)
-
-	if deployCmd.containerService.Properties.ServicePrincipalProfile != nil {
-		t.Fatalf("expected service principal profile to be nil for unmanaged identity, where client id and secret are not supplied in api model and deployment command")
-	}
-
-}
-
-func TestAPIModelWithEmptyServicePrincipalProfileAndWithoutClientIdAndSecretInCmd(t *testing.T) {
-	apiloader := &api.Apiloader{
-		Translator: nil,
-	}
-
-	apimodel := getAPIModel(ExampleAPIModelWithDNSPrefix, false, "", "")
-
-	cs, ver, err := apiloader.DeserializeContainerService([]byte(apimodel), false, false, nil)
-	if err != nil {
-		t.Fatalf("unexpected error deserializing the example apimodel: %s", err)
-	}
-	deployCmd := &deployCmd{
-		apimodelPath:     "./this/is/unused.json",
-		outputDirectory:  "_test_output",
-		forceOverwrite:   true,
-		location:         "westus",
-		containerService: cs,
-		apiVersion:       ver,
-
-		client: &armhelpers.MockACSEngineClient{},
-	}
-	err = autofillApimodel(deployCmd)
-	if err != nil {
-		t.Fatalf("unexpected error autofilling the example apimodel: %s", err)
-	}
-
-	defer os.RemoveAll(deployCmd.outputDirectory)
-
-	if deployCmd.containerService.Properties.ServicePrincipalProfile == nil {
-		t.Fatalf("expected service principal profile to be Empty and not nil for unmanaged identity, where client id and secret are not supplied in api model and deployment command")
-	}
-
-	// mockclient returns "app-id" for ClientID when empty
-	if deployCmd.containerService.Properties.ServicePrincipalProfile.ClientID != "app-id" {
-		t.Fatalf("expected service principal profile client id to be empty but got %s", deployCmd.containerService.Properties.ServicePrincipalProfile.ClientID)
-	}
-
-	// mockcliet returns "client-secret" when empty
-	if deployCmd.containerService.Properties.ServicePrincipalProfile.Secret != "client-secret" {
-		t.Fatalf("expected service principal profile client secret to be empty but got %s", deployCmd.containerService.Properties.ServicePrincipalProfile.Secret)
-	}
-
-}
-
-func testAutodeployCredentialHandling(t *testing.T, useManagedIdentity bool, clientID, clientSecret string) {
-	apiloader := &api.Apiloader{
-		Translator: nil,
-	}
-
-	apimodel := getExampleAPIModel(useManagedIdentity, clientID, clientSecret)
+	apimodel := getExampleAPIModel(dcosBootstrapURL)
 	cs, ver, err := apiloader.DeserializeContainerService([]byte(apimodel), false, false, nil)
 	if err != nil {
 		t.Fatalf("unexpected error deserializing the example apimodel: %s", err)
@@ -451,30 +236,18 @@ func testAutodeployCredentialHandling(t *testing.T, useManagedIdentity bool, cli
 	if err != nil {
 		t.Fatalf("unexpected error validating apimodel after populating defaults: %s", err)
 	}
-
-	if useManagedIdentity {
-		if cs.Properties.ServicePrincipalProfile != nil &&
-			(cs.Properties.ServicePrincipalProfile.ClientID != "" || cs.Properties.ServicePrincipalProfile.Secret != "") {
-			t.Fatalf("Unexpected credentials were populated even though MSI was active.")
-		}
-	} else {
-		if cs.Properties.ServicePrincipalProfile == nil ||
-			cs.Properties.ServicePrincipalProfile.ClientID == "" || cs.Properties.ServicePrincipalProfile.Secret == "" {
-			t.Fatalf("Credentials were missing even though MSI was not active.")
-		}
-	}
 }
 
 func testDeployCmdMergeAPIModel(t *testing.T) {
 	d := &deployCmd{}
-	d.apimodelPath = "../pkg/acsengine/testdata/simple/kubernetes.json"
+	d.apimodelPath = "../pkg/acsengine/testdata/simple/dcos.json"
 	err := d.mergeAPIModel()
 	if err != nil {
 		t.Fatalf("unexpected error calling mergeAPIModel with no --set flag defined: %s", err.Error())
 	}
 
 	d = &deployCmd{}
-	d.apimodelPath = "../pkg/acsengine/testdata/simple/kubernetes.json"
+	d.apimodelPath = "../pkg/acsengine/testdata/simple/dcos.json"
 	d.set = []string{"masterProfile.count=3,linuxProfile.adminUsername=testuser"}
 	err = d.mergeAPIModel()
 	if err != nil {
@@ -482,7 +255,7 @@ func testDeployCmdMergeAPIModel(t *testing.T) {
 	}
 
 	d = &deployCmd{}
-	d.apimodelPath = "../pkg/acsengine/testdata/simple/kubernetes.json"
+	d.apimodelPath = "../pkg/acsengine/testdata/simple/dcos.json"
 	d.set = []string{"masterProfile.count=3", "linuxProfile.adminUsername=testuser"}
 	err = d.mergeAPIModel()
 	if err != nil {
@@ -490,7 +263,7 @@ func testDeployCmdMergeAPIModel(t *testing.T) {
 	}
 
 	d = &deployCmd{}
-	d.apimodelPath = "../pkg/acsengine/testdata/simple/kubernetes.json"
+	d.apimodelPath = "../pkg/acsengine/testdata/simple/dcos.json"
 	d.set = []string{"agentPoolProfiles[0].count=1"}
 	err = d.mergeAPIModel()
 	if err != nil {
@@ -511,14 +284,14 @@ func testDeployCmdMLoadAPIModel(t *testing.T) {
 		t.Fatalf("Invalid SubscriptionId in Test: %s", err)
 	}
 
-	d.apimodelPath = "../pkg/acsengine/testdata/simple/kubernetes.json"
+	d.apimodelPath = "../pkg/acsengine/testdata/simple/dcos.json"
 	d.set = []string{"agentPoolProfiles[0].count=1"}
 	d.SubscriptionID = fakeSubscriptionID
 	d.rawSubscriptionID = fakeRawSubscriptionID
 
-	d.validateArgs(r, []string{"../pkg/acsengine/testdata/simple/kubernetes.json"})
+	d.validateArgs(r, []string{"../pkg/acsengine/testdata/simple/dcos.json"})
 	d.mergeAPIModel()
-	err = d.loadAPIModel(r, []string{"../pkg/acsengine/testdata/simple/kubernetes.json"})
+	err = d.loadAPIModel(r, []string{"../pkg/acsengine/testdata/simple/dcos.json"})
 	if err != nil {
 		t.Fatalf("unexpected error loading api model: %s", err.Error())
 	}

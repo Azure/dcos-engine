@@ -20,7 +20,6 @@ type ClusterTopology struct {
 }
 
 // UpgradeCluster upgrades a cluster with Orchestrator version X.X to version Y.Y.
-// Right now upgrades are supported for Kubernetes cluster only.
 type UpgradeCluster struct {
 	Translator *i18n.Translator
 	Logger     *logrus.Entry

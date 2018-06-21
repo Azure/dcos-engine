@@ -50,13 +50,6 @@
       },
       "type": "string"
     },
-    "kubernetesEndpoint": {
-      "defaultValue": "{{.HostedMasterProfile.FQDN}}",
-      "metadata": {
-        "description": "Sets the static IP of the first master"
-      },
-      "type": "string"
-    },
 {{else}}
     "firstConsecutiveStaticIP": {
       "defaultValue": "{{.MasterProfile.FirstConsecutiveStaticIP}}",
