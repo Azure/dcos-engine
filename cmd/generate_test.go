@@ -25,7 +25,7 @@ func TestGenerateCmdValidate(t *testing.T) {
 	r := &cobra.Command{}
 
 	// validate cmd with 1 arg
-	err := g.validate(r, []string{"../pkg/acsengine/testdata/simple/kubernetes.json"})
+	err := g.validate(r, []string{"../pkg/acsengine/testdata/simple/dcos.json"})
 	if err != nil {
 		t.Fatalf("unexpected error validating 1 arg: %s", err.Error())
 	}
@@ -42,7 +42,7 @@ func TestGenerateCmdValidate(t *testing.T) {
 	g = &generateCmd{}
 
 	// validate cmd with more than 1 arg
-	err = g.validate(r, []string{"../pkg/acsengine/testdata/simple/kubernetes.json", "arg1"})
+	err = g.validate(r, []string{"../pkg/acsengine/testdata/simple/dcos.json", "arg1"})
 	t.Logf(err.Error())
 	if err == nil {
 		t.Fatalf("expected error validating multiple args")
@@ -52,14 +52,14 @@ func TestGenerateCmdValidate(t *testing.T) {
 
 func TestGenerateCmdMergeAPIModel(t *testing.T) {
 	g := &generateCmd{}
-	g.apimodelPath = "../pkg/acsengine/testdata/simple/kubernetes.json"
+	g.apimodelPath = "../pkg/acsengine/testdata/simple/dcos.json"
 	err := g.mergeAPIModel()
 	if err != nil {
 		t.Fatalf("unexpected error calling mergeAPIModel with no --set flag defined: %s", err.Error())
 	}
 
 	g = &generateCmd{}
-	g.apimodelPath = "../pkg/acsengine/testdata/simple/kubernetes.json"
+	g.apimodelPath = "../pkg/acsengine/testdata/simple/dcos.json"
 	g.set = []string{"masterProfile.count=3,linuxProfile.adminUsername=testuser"}
 	err = g.mergeAPIModel()
 	if err != nil {
@@ -67,7 +67,7 @@ func TestGenerateCmdMergeAPIModel(t *testing.T) {
 	}
 
 	g = &generateCmd{}
-	g.apimodelPath = "../pkg/acsengine/testdata/simple/kubernetes.json"
+	g.apimodelPath = "../pkg/acsengine/testdata/simple/dcos.json"
 	g.set = []string{"masterProfile.count=3", "linuxProfile.adminUsername=testuser"}
 	err = g.mergeAPIModel()
 	if err != nil {
@@ -75,7 +75,7 @@ func TestGenerateCmdMergeAPIModel(t *testing.T) {
 	}
 
 	g = &generateCmd{}
-	g.apimodelPath = "../pkg/acsengine/testdata/simple/kubernetes.json"
+	g.apimodelPath = "../pkg/acsengine/testdata/simple/dcos.json"
 	g.set = []string{"agentPoolProfiles[0].count=1"}
 	err = g.mergeAPIModel()
 	if err != nil {
@@ -87,12 +87,12 @@ func TestGenerateCmdMLoadAPIModel(t *testing.T) {
 	g := &generateCmd{}
 	r := &cobra.Command{}
 
-	g.apimodelPath = "../pkg/acsengine/testdata/simple/kubernetes.json"
+	g.apimodelPath = "../pkg/acsengine/testdata/simple/dcos.json"
 	g.set = []string{"agentPoolProfiles[0].count=1"}
 
-	g.validate(r, []string{"../pkg/acsengine/testdata/simple/kubernetes.json"})
+	g.validate(r, []string{"../pkg/acsengine/testdata/simple/dcos.json"})
 	g.mergeAPIModel()
-	err := g.loadAPIModel(r, []string{"../pkg/acsengine/testdata/simple/kubernetes.json"})
+	err := g.loadAPIModel(r, []string{"../pkg/acsengine/testdata/simple/dcos.json"})
 	if err != nil {
 		t.Fatalf("unexpected error loading api model: %s", err.Error())
 	}

@@ -41,16 +41,14 @@ const (
 type deployCmd struct {
 	authArgs
 
-	apimodelPath      string
-	dnsPrefix         string
-	autoSuffix        bool
-	outputDirectory   string // can be auto-determined from clusterDefinition
-	forceOverwrite    bool
-	caCertificatePath string
-	caPrivateKeyPath  string
-	classicMode       bool
-	parametersOnly    bool
-	set               []string
+	apimodelPath    string
+	dnsPrefix       string
+	autoSuffix      bool
+	outputDirectory string // can be auto-determined from clusterDefinition
+	forceOverwrite  bool
+	classicMode     bool
+	parametersOnly  bool
+	set             []string
 
 	// derived
 	containerService *api.ContainerService
@@ -92,8 +90,6 @@ func newDeployCmd() *cobra.Command {
 	f.StringVar(&dc.dnsPrefix, "dns-prefix", "", "dns prefix (unique name for the cluster)")
 	f.BoolVar(&dc.autoSuffix, "auto-suffix", false, "automatically append a compressed timestamp to the dnsPrefix to ensure unique cluster name automatically")
 	f.StringVar(&dc.outputDirectory, "output-directory", "", "output directory (derived from FQDN if absent)")
-	f.StringVar(&dc.caCertificatePath, "ca-certificate-path", "", "path to the CA certificate to use for Kubernetes PKI assets")
-	f.StringVar(&dc.caPrivateKeyPath, "ca-private-key-path", "", "path to the CA private key to use for Kubernetes PKI assets")
 	f.StringVarP(&dc.resourceGroup, "resource-group", "g", "", "resource group to deploy to (will use the DNS prefix from the apimodel if not specified)")
 	f.StringVarP(&dc.location, "location", "l", "", "location to deploy to (required)")
 	f.BoolVarP(&dc.forceOverwrite, "force-overwrite", "f", false, "automatically overwrite existing files in the output directory")

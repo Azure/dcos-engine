@@ -62,24 +62,6 @@ const (
 	ManagedDisks = "ManagedDisks"
 )
 
-var (
-	// NetworkPluginValues holds the valid values for network plugin implementation
-	NetworkPluginValues = [...]string{"", "kubenet", "azure", "cilium", "flannel"}
-
-	// NetworkPolicyValues holds the valid values for a network policy
-	// "azure" and "none" are there for backwards-compatibility
-	NetworkPolicyValues = [...]string{"", "calico", "cilium", "azure", "none"}
-
-	// ContainerRuntimeValues holds the valid values for container runtimes
-	ContainerRuntimeValues = [...]string{"", "docker", "clear-containers", "containerd"}
-)
-
-// Kubernetes configuration
-const (
-	// KubernetesMinMaxPods is the minimum valid value for MaxPods, necessary for running kube-system pods
-	KubernetesMinMaxPods = 5
-)
-
 // vlabs default configuration
 const (
 	// DefaultNetworkPlugin defines the network plugin to use by default

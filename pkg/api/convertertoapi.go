@@ -179,9 +179,6 @@ func convertVLabsDcosConfig(vlabs *vlabs.DcosConfig, api *DcosConfig) {
 	if len(vlabs.RegistryPass) > 0 {
 		api.RegistryPass = vlabs.RegistryPass
 	}
-	api.DcosRepositoryURL = vlabs.DcosRepositoryURL
-	api.DcosClusterPackageListID = vlabs.DcosClusterPackageListID
-	api.DcosProviderPackageID = vlabs.DcosProviderPackageID
 
 	if vlabs.BootstrapProfile != nil {
 		api.BootstrapProfile = &BootstrapProfile{
