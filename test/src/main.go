@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Microsoft/mesos-jenkins/DCOS/regression-testing/src/config"
-	"github.com/Microsoft/mesos-jenkins/DCOS/regression-testing/src/metrics"
-	"github.com/Microsoft/mesos-jenkins/DCOS/regression-testing/src/report"
+	"github.com/Azure/dcos-engine/test/src/config"
+	"github.com/Azure/dcos-engine/test/src/metrics"
+	"github.com/Azure/dcos-engine/test/src/report"
 )
 
 const (
