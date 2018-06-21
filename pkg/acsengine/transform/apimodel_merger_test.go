@@ -31,7 +31,7 @@ func TestMergeValuesWithAPIModel(t *testing.T) {
 	values := []string{"masterProfile.count=5", "agentPoolProfiles[0].name=agentpool1", "linuxProfile.adminUsername=admin"}
 
 	MapValues(m, values)
-	tmpFile, _ := MergeValuesWithAPIModel("../testdata/simple/kubernetes.json", m)
+	tmpFile, _ := MergeValuesWithAPIModel("../testdata/simple/dcos.json", m)
 
 	jsonFileContent, err := ioutil.ReadFile(tmpFile)
 	Expect(err).To(BeNil())

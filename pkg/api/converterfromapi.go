@@ -195,9 +195,6 @@ func convertDcosConfigToVLabs(api *DcosConfig, vl *vlabs.DcosConfig) {
 	if api.RegistryPass != "" {
 		vl.RegistryPass = api.RegistryPass
 	}
-	vl.DcosRepositoryURL = api.DcosRepositoryURL
-	vl.DcosClusterPackageListID = api.DcosClusterPackageListID
-	vl.DcosProviderPackageID = api.DcosProviderPackageID
 
 	if api.BootstrapProfile != nil {
 		vl.BootstrapProfile = &vlabs.BootstrapProfile{

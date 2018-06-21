@@ -12,8 +12,6 @@ import (
 
 	"github.com/Azure/dcos-engine/pkg/acsengine/transform"
 	"github.com/Azure/dcos-engine/pkg/api"
-	"github.com/Azure/dcos-engine/pkg/api/v20160330"
-	"github.com/Azure/dcos-engine/pkg/api/vlabs"
 	"github.com/Azure/dcos-engine/pkg/i18n"
 	"github.com/leonelquinteros/gotext"
 )
@@ -45,15 +43,6 @@ func TestExpected(t *testing.T) {
 		if err != nil {
 			t.Errorf("Loading file %s got error: %s", tuple.APIModelFilename, err.Error())
 			continue
-		}
-
-		if version != vlabs.APIVersion && version != v20160330.APIVersion {
-			// Set CertificateProfile here to avoid a new one generated.
-			// Kubernetes template needs certificate profile to match expected template
-			// API versions other than vlabs don't expose CertificateProfile
-			// API versions after v20160330 supports Kubernetes
-			containerService.Properties.CertificateProfile = &api.CertificateProfile{}
-			addTestCertificateProfile(containerService.Properties.CertificateProfile)
 		}
 
 		isClassicMode := false
@@ -145,14 +134,6 @@ func TestExpected(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			if version != vlabs.APIVersion && version != v20160330.APIVersion {
-				// Set CertificateProfile here to avoid a new one generated.
-				// Kubernetes template needs certificate profile to match expected template
-				// API versions other than vlabs don't expose CertificateProfile
-				// API versions after v20160330 supports Kubernetes
-				containerService.Properties.CertificateProfile = &api.CertificateProfile{}
-				addTestCertificateProfile(containerService.Properties.CertificateProfile)
-			}
 		}
 	}
 }
@@ -201,24 +182,6 @@ func IterateTestFilesDirectory(directory string, APIModelTestFiles *[]APIModelTe
 		}
 	}
 	return nil
-}
-
-// addTestCertificateProfile add certificate artifacts for test purpose
-func addTestCertificateProfile(api *api.CertificateProfile) {
-	api.CaCertificate = "caCertificate"
-	api.CaPrivateKey = "caPrivateKey"
-	api.APIServerCertificate = "apiServerCertificate"
-	api.APIServerPrivateKey = "apiServerPrivateKey"
-	api.ClientCertificate = "clientCertificate"
-	api.ClientPrivateKey = "clientPrivateKey"
-	api.KubeConfigCertificate = "kubeConfigCertificate"
-	api.KubeConfigPrivateKey = "kubeConfigPrivateKey"
-	api.EtcdClientCertificate = "etcdClientCertificate"
-	api.EtcdClientPrivateKey = "etcdClientPrivateKey"
-	api.EtcdServerCertificate = "etcdServerCertificate"
-	api.EtcdServerPrivateKey = "etcdServerPrivateKey"
-	api.EtcdPeerCertificates = []string{"etcdPeerCertificate0"}
-	api.EtcdPeerPrivateKeys = []string{"etcdPeerPrivateKey0"}
 }
 
 func TestGetStorageAccountType(t *testing.T) {
@@ -289,7 +252,7 @@ func TestTemplateOutputPresence(t *testing.T) {
 		t.Fatalf("Failed to initialize template generator: %v", err)
 	}
 
-	containerService, _, err := apiloader.LoadContainerServiceFromFile("./testdata/simple/kubernetes.json", true, false, nil)
+	containerService, _, err := apiloader.LoadContainerServiceFromFile("./testdata/simple/dcos.json", true, false, nil)
 	if err != nil {
 		t.Fatalf("Failed to load container service from file: %v", err)
 	}
@@ -308,241 +271,15 @@ func TestTemplateOutputPresence(t *testing.T) {
 		key   string
 		value string
 	}{
-		{key: "resourceGroup", value: "[variables('resourceGroup')]"},
-		{key: "subnetName", value: "[variables('subnetName')]"},
-		{key: "securityGroupName", value: "[variables('nsgName')]"},
-		{key: "virtualNetworkName", value: "[variables('virtualNetworkName')]"},
-		{key: "routeTableName", value: "[variables('routeTableName')]"},
-		{key: "primaryAvailabilitySetName", value: "[variables('primaryAvailabilitySetName')]"},
+		{key: "agentpublicFQDN", value: "[reference(concat('Microsoft.Network/publicIPAddresses/', variables('agentpublicIPAddressName'))).dnsSettings.fqdn]"},
+		{key: "masterFQDN", value: "[reference(concat('Microsoft.Network/publicIPAddresses/', variables('masterPublicIPAddressName'))).dnsSettings.fqdn]"},
 	}
-
 	for _, tc := range tt {
 		element, found := template.Outputs[tc.key]
 		if !found {
 			t.Fatalf("Output key %v not found", tc.key)
 		} else if element.Value != tc.value {
 			t.Fatalf("Expected %q at key %v but got: %q", tc.value, tc.key, element.Value)
-		}
-	}
-}
-
-func TestGetGPUDriversInstallScript(t *testing.T) {
-
-	// VMSize with GPU and NVIDIA agreement for drivers distribution
-	validSkus := []string{
-		"Standard_NC6",
-		"Standard_NC12",
-		"Standard_NC24",
-		"Standard_NC24r",
-		"Standard_NV6",
-		"Standard_NV12",
-		"Standard_NV24",
-		"Standard_NV24r",
-		"Standard_ND6s",
-		"Standard_ND12s",
-		"Standard_ND24s",
-		"Standard_ND24rs",
-		"Standard_NC6s_v2",
-		"Standard_NC12s_v2",
-		"Standard_NC24s_v2",
-		"Standard_NC24rs_v2",
-		"Standard_NC6s_v3",
-		"Standard_NC12s_v3",
-		"Standard_NC24s_v3",
-		"Standard_NC24rs_v3",
-	}
-
-	for _, sku := range validSkus {
-		s := getGPUDriversInstallScript(&api.AgentPoolProfile{VMSize: sku})
-		if s == "" {
-			t.Fatalf("Expected NVIDIA driver install script for sku %v", sku)
-		}
-	}
-
-	// VMSize without GPU
-	s := getGPUDriversInstallScript(&api.AgentPoolProfile{VMSize: "Standard_D2_v2"})
-	if s != "" {
-		t.Fatalf("VMSize without GPU should not receive a script, expected empty string, received %v", s)
-	}
-}
-func TestIsNSeriesSKU(t *testing.T) {
-	// VMSize with GPU
-	validSkus := []string{
-		"Standard_NC12",
-		"Standard_NC12s_v2",
-		"Standard_NC12s_v3",
-		"Standard_NC24",
-		"Standard_NC24r",
-		"Standard_NC24rs_v2",
-		"Standard_NC24rs_v3",
-		"Standard_NC24s_v2",
-		"Standard_NC24s_v3",
-		"Standard_NC6",
-		"Standard_NC6s_v2",
-		"Standard_NC6s_v3",
-		"Standard_ND12s",
-		"Standard_ND24rs",
-		"Standard_ND24s",
-		"Standard_ND6s",
-		"Standard_NV12",
-		"Standard_NV24",
-		"Standard_NV6",
-	}
-
-	invalidSkus := []string{
-		"Standard_A10",
-		"Standard_A11",
-		"Standard_A2",
-		"Standard_A2_v2",
-		"Standard_A2m_v2",
-		"Standard_A3",
-		"Standard_A4",
-		"Standard_A4_v2",
-		"Standard_A4m_v2",
-		"Standard_A5",
-		"Standard_A6",
-		"Standard_A7",
-		"Standard_A8",
-		"Standard_A8_v2",
-		"Standard_A8m_v2",
-		"Standard_A9",
-		"Standard_B2ms",
-		"Standard_B4ms",
-		"Standard_B8ms",
-		"Standard_D11",
-		"Standard_D11_v2",
-		"Standard_D11_v2_Promo",
-		"Standard_D12",
-		"Standard_D12_v2",
-		"Standard_D12_v2_Promo",
-		"Standard_D13",
-		"Standard_D13_v2",
-		"Standard_D13_v2_Promo",
-		"Standard_D14",
-		"Standard_D14_v2",
-		"Standard_D14_v2_Promo",
-		"Standard_D15_v2",
-		"Standard_D16_v3",
-		"Standard_D16s_v3",
-		"Standard_D2",
-		"Standard_D2_v2",
-		"Standard_D2_v2_Promo",
-		"Standard_D2_v3",
-		"Standard_D2s_v3",
-		"Standard_D3",
-		"Standard_D32_v3",
-		"Standard_D32s_v3",
-		"Standard_D3_v2",
-		"Standard_D3_v2_Promo",
-		"Standard_D4",
-		"Standard_D4_v2",
-		"Standard_D4_v2_Promo",
-		"Standard_D4_v3",
-		"Standard_D4s_v3",
-		"Standard_D5_v2",
-		"Standard_D5_v2_Promo",
-		"Standard_D64_v3",
-		"Standard_D64s_v3",
-		"Standard_D8_v3",
-		"Standard_D8s_v3",
-		"Standard_DS11",
-		"Standard_DS11_v2",
-		"Standard_DS11_v2_Promo",
-		"Standard_DS12",
-		"Standard_DS12_v2",
-		"Standard_DS12_v2_Promo",
-		"Standard_DS13",
-		"Standard_DS13-2_v2",
-		"Standard_DS13-4_v2",
-		"Standard_DS13_v2",
-		"Standard_DS13_v2_Promo",
-		"Standard_DS14",
-		"Standard_DS14-4_v2",
-		"Standard_DS14-8_v2",
-		"Standard_DS14_v2",
-		"Standard_DS14_v2_Promo",
-		"Standard_DS15_v2",
-		"Standard_DS3",
-		"Standard_DS3_v2",
-		"Standard_DS3_v2_Promo",
-		"Standard_DS4",
-		"Standard_DS4_v2",
-		"Standard_DS4_v2_Promo",
-		"Standard_DS5_v2",
-		"Standard_DS5_v2_Promo",
-		"Standard_E16_v3",
-		"Standard_E16s_v3",
-		"Standard_E2_v3",
-		"Standard_E2s_v3",
-		"Standard_E32-16s_v3",
-		"Standard_E32-8s_v3",
-		"Standard_E32_v3",
-		"Standard_E32s_v3",
-		"Standard_E4_v3",
-		"Standard_E4s_v3",
-		"Standard_E64-16s_v3",
-		"Standard_E64-32s_v3",
-		"Standard_E64_v3",
-		"Standard_E64s_v3",
-		"Standard_E8_v3",
-		"Standard_E8s_v3",
-		"Standard_F16",
-		"Standard_F16s",
-		"Standard_F16s_v2",
-		"Standard_F2",
-		"Standard_F2s_v2",
-		"Standard_F32s_v2",
-		"Standard_F4",
-		"Standard_F4s",
-		"Standard_F4s_v2",
-		"Standard_F64s_v2",
-		"Standard_F72s_v2",
-		"Standard_F8",
-		"Standard_F8s",
-		"Standard_F8s_v2",
-		"Standard_G1",
-		"Standard_G2",
-		"Standard_G3",
-		"Standard_G4",
-		"Standard_G5",
-		"Standard_GS1",
-		"Standard_GS2",
-		"Standard_GS3",
-		"Standard_GS4",
-		"Standard_GS4-4",
-		"Standard_GS4-8",
-		"Standard_GS5",
-		"Standard_GS5-16",
-		"Standard_GS5-8",
-		"Standard_H16",
-		"Standard_H16m",
-		"Standard_H16mr",
-		"Standard_H16r",
-		"Standard_H8",
-		"Standard_H8m",
-		"Standard_L16s",
-		"Standard_L32s",
-		"Standard_L4s",
-		"Standard_L8s",
-		"Standard_M128-32ms",
-		"Standard_M128-64ms",
-		"Standard_M128ms",
-		"Standard_M128s",
-		"Standard_M64-16ms",
-		"Standard_M64-32ms",
-		"Standard_M64ms",
-		"Standard_M64s",
-	}
-
-	for _, sku := range validSkus {
-		if !isNSeriesSKU(&api.AgentPoolProfile{VMSize: sku}) {
-			t.Fatalf("Expected isNSeriesSKU(%s) to be true", sku)
-		}
-	}
-
-	for _, sku := range invalidSkus {
-		if isNSeriesSKU(&api.AgentPoolProfile{VMSize: sku}) {
-			t.Fatalf("Expected isNSeriesSKU(%s) to be false", sku)
 		}
 	}
 }
@@ -594,42 +331,5 @@ func TestGenerateIpList(t *testing.T) {
 		if ip != expected {
 			t.Fatalf("wrong IP %s. Expected %s", ip, expected)
 		}
-	}
-}
-
-func TestGenerateKubeConfig(t *testing.T) {
-	locale := gotext.NewLocale(path.Join("..", "..", "translations"), "en_US")
-	i18n.Initialize(locale)
-
-	apiloader := &api.Apiloader{
-		Translator: &i18n.Translator{
-			Locale: locale,
-		},
-	}
-
-	testData := "./testdata/simple/kubernetes.json"
-
-	containerService, _, err := apiloader.LoadContainerServiceFromFile(testData, true, false, nil)
-	if err != nil {
-		t.Fatalf("Failed to load container service from file: %v", err)
-	}
-	kubeConfig, err := GenerateKubeConfig(containerService.Properties, "westus2")
-	// TODO add actual kubeconfig validation
-	if len(kubeConfig) < 1 {
-		t.Fatalf("Got unexpected kubeconfig payload: %v", kubeConfig)
-	}
-	if err != nil {
-		t.Fatalf("Failed to call GenerateKubeConfig with simple Kubernetes config from file: %v", testData)
-	}
-
-	p := api.Properties{}
-	_, err = GenerateKubeConfig(&p, "westus2")
-	if err == nil {
-		t.Fatalf("Expected an error result from nil Properties child properties")
-	}
-
-	_, err = GenerateKubeConfig(nil, "westus2")
-	if err == nil {
-		t.Fatalf("Expected an error result from nil Properties child properties")
 	}
 }

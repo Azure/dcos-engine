@@ -97,15 +97,11 @@ ifneq ($(GIT_BASEDIR),)
 endif
 
 test: generate
-	ginkgo -skipPackage test/e2e/dcos,test/e2e/kubernetes,test/e2e/openshift -r .
+	ginkgo -r .
 
 .PHONY: test-style
 test-style:
 	@scripts/validate-go.sh
-
-.PHONY: test-e2e
-test-e2e:
-	@test/e2e.sh
 
 HAS_GLIDE := $(shell command -v glide;)
 HAS_GOX := $(shell command -v gox;)
@@ -151,4 +147,3 @@ devenv:
 	./scripts/devenv.sh
 
 include versioning.mk
-include test.mk

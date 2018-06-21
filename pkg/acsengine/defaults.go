@@ -275,7 +275,7 @@ func setAgentNetworkDefaults(a *api.Properties) {
 // setStorageDefaults for agents
 func setStorageDefaults(a *api.Properties) {
 	if a.MasterProfile != nil && len(a.MasterProfile.StorageProfile) == 0 {
-		a.MasterProfile.StorageProfile = api.StorageAccount
+		a.MasterProfile.StorageProfile = api.ManagedDisks
 	}
 	for _, profile := range a.AgentPoolProfiles {
 		if len(profile.StorageProfile) == 0 {
