@@ -1,6 +1,6 @@
-# Microsoft Azure Container Service Engine - Extensions
+# Microsoft DC/OS Engine - Extensions
 
-Extensions in acs-engine provide an easy way for acs-engine users to add pre-packaged functionality into their cluster.  For example, an extension could configure a monitoring solution on an ACS cluster.  The user would not need to know the details of how to install the monitoring solution.  Rather, the user would simply add the extension into the extensionProfiles section of the template.
+Extensions in dcos-engine provide an easy way for dcos-engine users to add pre-packaged functionality into their cluster.  For example, an extension could configure a monitoring solution on an ACS cluster.  The user would not need to know the details of how to install the monitoring solution.  Rather, the user would simply add the extension into the extensionProfiles section of the template.
 
 # extensionProfiles
 
@@ -103,7 +103,7 @@ In order to install a preprovision extension, there are two required files - sup
 
 |File Name|Description|
 |-----------------------------|---|
-|supported-orchestrators.json |Defines what orchestrators are supported by the extension (Swarm, Dcos, OpenShift or Kubernetes)|
+|supported-orchestrators.json |Defines what orchestrators are supported by the extension (Dcos)|
 |template.json               |The ARM template used to deploy the extension|
 |template-link.json          |The ARM template snippet which will be injected into azuredeploy.json to call template.json|
 |EXTENSION-NAME.sh           |The script file that will execute on the VM itself via Custom Script Extension to perform installation of the extension|
@@ -113,7 +113,7 @@ In order to install a preprovision extension, there are two required files - sup
 The supported-orchestrators.json file is a simple one line file that contains the list of supported orchestrators for which the extension can be installed into.
 
 ``` javascript
-["Kubernetes"]
+["DCOS"]
 ```
 
 # Creating extension template.json
@@ -170,7 +170,7 @@ The following is an example of the template.json file.
    "variables": {  
 		"singleQuote": "'",
 		"sampleStorageAccountName": "[concat(uniqueString(concat(parameters('storageAccountBaseName'), 'sample')), 'aa')]"
-		"initScriptUrl": "https://raw.githubusercontent.com/Azure/acs-engine/master/extensions/EXTENSION-NAME/v1/EXTENSION-NAME.sh"
+		"initScriptUrl": "https://raw.githubusercontent.com/Azure/dcos-engine/master/extensions/EXTENSION-NAME/v1/EXTENSION-NAME.sh"
    },
    "resources": [  
 	{
@@ -210,7 +210,7 @@ The following is an example of the template.json file.
  
 # Creating extension template-link.json
 
-When acs-engine generates the azuredeploy.json file, this JSON snippet will be injected. This code calls the linked template (template.json) defined above.
+When dcos-engine generates the azuredeploy.json file, this JSON snippet will be injected. This code calls the linked template (template.json) defined above.
 
 Any parameters from the main azuredeploy.json file that is needed by template.json must be passed in via the parameters section. The parameter, "extensionParameters" is an optional parameter that is passed in directly by the user in the **extensionProfiles** section as defined in an earlier section. This special parameter can be used to pass in information such as an activation key or access code (as an example). If the extension does not need this capability, this optional parameter can be deleted.
 
@@ -229,7 +229,7 @@ Replace "**EXTENSION-NAME**" with the name of the extension.
     "properties": {
         "mode": "Incremental",
         "templateLink": {
-            "uri": "https://raw.githubusercontent.com/Azure/acs-engine/master/extensions/EXTENSION-NAME/v1/template.json",
+            "uri": "https://raw.githubusercontent.com/Azure/dcos-engine/master/extensions/EXTENSION-NAME/v1/template.json",
             "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -296,7 +296,3 @@ echo $(date) " - Script complete"
 
 # Current list of extensions
 - [hello-world-dcos](../extensions/hello-world-dcos/README.md)
-- [hello-world-k8s](../extensions/hello-world-k8s/README.md)
-
-# Known issues
-Kubernetes extensions that run after provisioning don't currently work if the VM needs to reboot for security reboots. this is a timing issue. the extension script is started before the vm reboots and it will be cutoff before it finishes but will still report success. I've tried to get the provision script to only finish as reboot happens and I haven't gotten that to work. An extension could work most of the time if it cancelled the restart at the start and checked if a restart was needed and scheduled one at the end of its work

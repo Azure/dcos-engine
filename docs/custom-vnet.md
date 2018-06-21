@@ -1,89 +1,39 @@
-# Using a custom virtual network with Azure Container Service
-In this tutorial you are going to learn how to use [ACS Engine](https://github.com/Azure/acs-engine) to deploy a brand new cluster into an existing or pre-created virtual network.
+# Using a custom virtual network with DC/OS Engine
+In this tutorial you are going to learn how to use [DC/OS Engine](https://github.com/Azure/dcos-engine) to deploy a brand new cluster into an existing or pre-created virtual network.
 By doing this, you will be able to control the properties of the virtual network or integrate a new cluster into your existing infrastructure.
-
-*Note: This article describes the procedure with Docker Swarm but it will work in the exact same way with the all the orchestrators available with ACS Engine: Docker Swarm, Kubernetes and DC/OS.*
-
-*For Kubernetes, the cluster should be deployed in the same resource group as the virtual network and the service principal you use for the cluster needs permissions on the VNET resource's group too. Custom VNET for Kubernetes Windows cluster has a [known issue](https://github.com/Azure/acs-engine/issues/1767).*
 
 ## Prerequisites
 You can run this walkthrough on OS X, Windows, or Linux.
 - You need an Azure subscription. If you don't have one, you can [sign up for an account](https://azure.microsoft.com/).
 - Install the [Azure CLI 2.0](/cli/azure/install-az-cli2).
-- Install the [ACS Engine](https://github.com/Azure/acs-engine/blob/master/docs/acsengine.md)
+- Install the [DC/OS Engine](https://github.com/Azure/dcos-engine/blob/master/docs/dcos-engine.md)
 
 ## Create the virtual network
+
+First, you need to create a new resource group
+```bash
+az group create -n <resource group> -l <location>
+```
+
 *You need a virtual network before creating the new cluster. If you already have one, you can skip this step.*
 
-For this example, we deployed a virtual network that contains two subnets:
+For this example, we deployed a virtual network that contains two subnets, one for master nodes and one for agent nodes:
 
 - 10.100.0.0/24
 - 10.200.0.0/24
 
-The first one will be used for the master nodes and the second one for the agent nodes.
-
-The Azure Resource Manager template used to deploy this virtual network is:
-
-```json
-{
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {  },
-  "variables": {  },
-  "resources": [
-    {
-      "apiVersion": "2016-03-30",
-      "location": "[resourceGroup().location]",
-      "name": "ExampleCustomVNET",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "10.100.0.0/24",
-            "10.200.0.0/24"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "ExampleMasterSubnet",
-            "properties": {
-              "addressPrefix": "10.100.0.0/24"
-            }
-          },
-          {
-            "name": "ExampleAgentSubnet",
-            "properties": {
-              "addressPrefix": "10.200.0.0/24"
-            }
-          }
-        ]
-      },
-      "type": "Microsoft.Network/virtualNetworks"
-    }
-  ]
-}
-```
-
-And you can deploy it using the Azure CLI 2.0. First, you need to create a new resource group:
-
 ```bash
-az group create -n acs-custom-vnet -l "westeurope"
-```
-
-Then you can deploy the virtual network using the JSON description above and the following command:
-
-```bash
-az group deployment create -g acs-custom-vnet --name "CustomVNet" --template-file azuredeploy.swarm.vnet.json
+az network vnet create -g <resource group> -n CustomVNET --address-prefixes 10.100.0.0/24 10.200.0.0/24 --subnet-name MasterSubnet --subnet-prefix 10.100.0.0/24
+az network vnet subnet create --name AgentSubnet --address-prefix 10.200.0.0/24 -g <resource group> --vnet-name CustomVNET
 ```
 
 Once the deployment is completed you should see the virtual network in the resource group.
 
 
-## Create the template for ACS Engine
-ACS Engine uses a JSON template in input and generates the ARM template and ARM parameters files in output.
+## Create the template for DC/OS Engine
+DC/OS Engine uses a JSON template in input and generates the ARM template and ARM parameters files in output.
 
-Depending on the orchestrator you want to deploy, the number of agent pools, the machine size you want (etc.) this input template could differ from the one we are going to detail here.
-
-There are a lot of examples available on the [ACS Engine GitHub](https://github.com/Azure/acs-engine/tree/master/examples) and you can find [one dedicated for virtual network](https://github.com/Azure/acs-engine/blob/master/examples/vnet/README.md).
+There are a lot of examples available on the [DC/OS Engine GitHub](https://github.com/Azure/dcos-engine/tree/master/examples) and you can find [one dedicated for virtual network](https://github.com/Azure/dcos-engine/blob/master/examples/vnet/README.md).
 
 In this case, we are going to use the following template:
 
@@ -92,7 +42,7 @@ In this case, we are going to use the following template:
   "apiVersion": "vlabs",
   "properties": {
     "orchestratorProfile": {
-      "orchestratorType": "Swarm"
+      "orchestratorType": "DCOS"
     },
     "masterProfile": {
       "count": 3,
@@ -140,60 +90,21 @@ As you can see, for all node pools definition (master or agents) you can use the
 *Note: Make sure the the vnetSubnetId matches with your subnet, by giving your **SUBSCRIPTION_ID**, **RESOURCE_GROUP_NAME**, virtual network and subnet names. You also need to fill DNS prefix for all the public pools you want to create, give an SSH keys...*
 
 ## Generate the cluster Azure Resource Manager template
-Once your are ready with the cluster definition file, you can use ACS Engine to generate the ARM template that will be used to deploy the cluster on Azure:
+Once your are ready with the cluster definition file, you can use DC/OS Engine to generate the ARM template that will be used to deploy the cluster on Azure:
 
 ```bash
-acs-engine azuredeploy.swarm.clusterdefinition.json
+dcos-engine generate dcos.json
 ```
 
-This command will output three files:
+This command will output three files in `_output/`:
 
-```
-wrote _output/Swarm-12652785/apimodel.json
-wrote _output/Swarm-12652785/azuredeploy.json
-wrote _output/Swarm-12652785/azuredeploy.parameters.json
-acsengine took 37.1384ms
-```
-
-- apimodel.json: this is the cluster definition file you gave to ACS Engine
+- apimodel.json: this is the cluster definition file you gave to DC/OS Engine
 - azuredeploy.json: this is the Azure Resource Manager JSON template that you are going to use to deploy the cluster
 - azuredeploy.parameters.json: this is the parameters file that you are going to use to deploy the cluster
 
 ## Deploy the Azure Container Service cluster
-Now that you have generated the ARM templates and its parameters file using ACS Engine, you can use Azure CLI 2.0 to start the deployment of the cluster:
+Now that you have generated the ARM templates and its parameters file using DC/OS Engine, you can use Azure CLI 2.0 to start the deployment of the cluster:
 
 ```bash
-az group deployment create -g acs-custom-vnet --name "ClusterDeployment" --template-file azuredeploy.json --parameters "@azuredeploy.parameters.json"
+az group deployment create -g <resource group> --name "ClusterDeployment" --template-file azuredeploy.json --parameters "@azuredeploy.parameters.json"
 ```
-
-Depending on the number of agent you have asked for the deployment can take a while.
-
-## Post-Deployment: Attach Cluster Route Table to VNET
-
-For Kubernetes clusters, we need to update the VNET to attach to the route table created by the above `az group deployment create` command. An example in bash form if the VNET is in the same ResourceGroup as the Kubernetes Cluster:
-
-```
-#!/bin/bash
-rt=$(az network route-table list -g acs-custom-vnet -o json | jq -r '.[].id')
-az network vnet subnet update -n KubernetesSubnet \
--g acs-custom-vnet \
---vnet-name KubernetesCustomVNET \
---route-table $rt
-```
-
-... where `KubernetesSubnet` is the name of the vnet subnet, and `KubernetesCustomVNET` is the name of the custom VNET itself.
-
-An example in bash form if the VNET is in a separate ResourceGroup:
-
-```
-#!/bin/bash
-rt=$(az network route-table list -g RESOURCE_GROUP_NAME_KUBE -o json | jq -r '.[].id')
-az network vnet subnet update \
--g RESOURCE_GROUP_NAME_VNET \
---route-table $rt \
---ids "/subscriptions/SUBSCRIPTION_ID/resourceGroups/RESOURCE_GROUP_NAME_VNET/providers/Microsoft.Network/VirtualNetworks/KUBERNETES_CUSTOM_VNET/subnets/KUBERNETES_SUBNET"
-```
-... where `RESOURCE_GROUP_NAME_KUBE` is the name of the Resource Group that contains the Kubernetes cluster, `SUBSCRIPTION_ID` is the id of the Azure subscription that both the VNET & Cluster are in, `RESOURCE_GROUP_NAME_VNET` is the name of the Resource Group that the VNET is in,  `KUBERNETES_SUBNET` is the name of the vnet subnet, and `KUBERNETES_CUSTOM_VNET` is the name of the custom VNET itself.
-
-## Connect to your new cluster
-Once the deployment is completed, you can follow [this documentation](https://docs.microsoft.com/en-us/azure/container-service/container-service-connect) to connect to your new Azure Container Service cluster.
