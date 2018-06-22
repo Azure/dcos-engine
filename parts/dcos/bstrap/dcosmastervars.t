@@ -27,7 +27,6 @@
       ],
 {{end}}
     "orchestratorVersion": "{{.OrchestratorProfile.OrchestratorVersion}}",
-    "oauthEnabled": "{{.OrchestratorProfile.DcosConfig.BootstrapProfile.OAuthEnabled}}",
 {{if .HasWindows}}
     "windowsAdminUsername": "[parameters('windowsAdminUsername')]",
     "windowsAdminPassword": "[parameters('windowsAdminPassword')]",

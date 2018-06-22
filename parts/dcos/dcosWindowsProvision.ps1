@@ -33,10 +33,6 @@ param(
 
     [parameter()]
     [ValidateNotNullOrEmpty()]
-    $oauthEnabled,
-
-    [parameter()]
-    [ValidateNotNullOrEmpty()]
     $subnet,
 
     [parameter()]
@@ -146,7 +142,7 @@ try
     # the output.
     Write-Log "Get the install script"
 
-    Write-Log ("Parameters: -dcosVersion "+$dcosVersion+" -isAgent "+$isAgent+" -oauthEnabled "+$oauthEnabled+" -mastercount "+$masterCount+" -firstMasterIP "+$firstMasterIP+" -bootstrapURI "+$bootstrapUri+" -subnet "+$subnet+" -customAttrs "+$customAttrs+" -preprovisionExtensionParms "+$preprovisionExtensionParams)
+    Write-Log ("Parameters: -dcosVersion "+$dcosVersion+" -isAgent "+$isAgent+" -mastercount "+$masterCount+" -firstMasterIP "+$firstMasterIP+" -bootstrapURI "+$bootstrapUri+" -subnet "+$subnet+" -customAttrs "+$customAttrs+" -preprovisionExtensionParms "+$preprovisionExtensionParams)
 
     # Get the boostrap script
 
@@ -187,6 +183,7 @@ try
     $private_ip = ( Get-NetIPAddress | where { $_.AddressFamily -eq "IPv4" } | where { Check-Subnet $subnet $_.IPAddress } )  # We know the subnet we are on. Makes it easier and more robust
     [Environment]::SetEnvironmentVariable("DCOS_AGENT_IP", $private_ip.IPAddress, "Machine")
 
+    $isOAuthEnabled = $BOOTSTRAP_OAUTH_ENABLED
     if ($isAgent)
     {
         $run_cmd = $global:BootstrapInstallDir+"\DCOSWindowsAgentSetup.ps1 -DcosVersion '$dcosVersion' -MasterIP '$master_json' -AgentPrivateIP "+($private_ip.IPAddress) +" -BootstrapUrl '$bootstrapUri' " 
@@ -194,7 +191,7 @@ try
         {
             $run_cmd += " -isPublic:`$true "
         }
-        if ($oauthEnabled -eq "true")
+        if ($isOAuthEnabled)
         {
             $run_cmd += " -isAuthUsed:`$true "
         }
