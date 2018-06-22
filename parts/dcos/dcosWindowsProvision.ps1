@@ -13,6 +13,10 @@
 param(
     [string]
     [ValidateNotNullOrEmpty()]
+    $dcosVersion,
+
+    [string]
+    [ValidateNotNullOrEmpty()]
     $masterCount,
 
     [string]
@@ -26,6 +30,10 @@ param(
     [parameter()]
     [ValidateNotNullOrEmpty()]
     $isAgent,
+
+    [parameter()]
+    [ValidateNotNullOrEmpty()]
+    $oauthEnabled,
 
     [parameter()]
     [ValidateNotNullOrEmpty()]
@@ -138,7 +146,7 @@ try
     # the output.
     Write-Log "Get the install script"
 
-    Write-Log ("Parameters = isAgent = ["+ $isAgent + "] mastercount = ["+$MasterCount + "] First master ip= [" + $firstMasterIp+ "] boostrap URI = ["+ $bootstrapUri+"] Subnet = ["+ $subnet +"]" + " -customAttrs " + $customAttrs + " -preprovisionExtensionParms = "+ $preprovisionExtensionParams )
+    Write-Log ("Parameters: -dcosVersion "+$dcosVersion+" -isAgent "+$isAgent+" -oauthEnabled "+$oauthEnabled+" -mastercount "+$masterCount+" -firstMasterIP "+$firstMasterIP+" -bootstrapURI "+$bootstrapUri+" -subnet "+$subnet+" -customAttrs "+$customAttrs+" -preprovisionExtensionParms "+$preprovisionExtensionParams)
 
     # Get the boostrap script
 
