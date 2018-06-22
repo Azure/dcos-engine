@@ -1,23 +1,12 @@
-dcos-engine.exe
-dcos-engine
-debug
-_output/
-_input/
 .vscode
 .DS_Store
-test/user.env
-user.env
-test/dcos-engine-test/dcos-engine-test
-.editorconfig
+test/src/dcos-engine-test
 _dist/
+_output/
 bin/
 .env
-.coverprofile
 
-test/junit/
-test/dcos-engine-test/dcos-engine-test.exe
 pkg/operations/junit.xml
-pkg/operations/kubernetesupgrade/junit.xml
 pkg/acsengine/templates.go
 pkg/i18n/translations.go
 

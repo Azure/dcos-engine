@@ -1,0 +1,19 @@
+{
+  "deployments": [
+    {
+      "cluster_definition": "hyb/dcos-m1.lnx2-2.win2-2.json",
+      "orchestratorRelease": "1.11",
+      "location": "centralus"
+    },
+    {
+      "cluster_definition": "hyb/dcos-m3.lnx1-2.win1-2.json",
+      "orchestratorRelease": "1.11",
+      "location": "centralus"
+    },
+    {
+      "cluster_definition": "hyb/dcos-m3.lnx1-2.win1-2.preprov.json",
+      "orchestratorRelease": "1.11",
+      "location": "centralus"
+    }
+  ]
+}
