@@ -21,12 +21,10 @@
       {{template "windowsparams.t"}},
     {{end}}
     {{template "dcos/dcosparams.t" .}}
+    {{template "dcos/bootstrapparams.t" .}},
     {{template "masterparams.t" .}}
   },
   "variables": {
-    "dcosRepositoryURL": "[parameters('dcosRepositoryURL')]",
-    "dcosClusterPackageListID": "[parameters('dcosClusterPackageListID')]",
-    "dcosProviderPackageID": "[parameters('dcosProviderPackageID')]",
     {{range $index, $agent := .AgentPoolProfiles}}
         "{{.Name}}Index": {{$index}},
         {{template "dcos/dcosagentvars.t" .}}
@@ -40,6 +38,7 @@
     {{end}}
 
     {{template "dcos/dcosmastervars.t" .}}
+    {{template "dcos/bootstrapvars.t" .}}
   },
   "resources": [
     {{range .AgentPoolProfiles}}
@@ -57,6 +56,7 @@
         {{end}}
       {{end}}
     {{end}}
+    {{template "dcos/bootstrapresources.t" .}},
     {{template "dcos/dcosmasterresources.t" .}}
   ],
   "outputs": {

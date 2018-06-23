@@ -111,16 +111,11 @@
          "[parameters('location')]"
     ],
     "location": "[variables('locations')[mod(add(2,length(parameters('location'))),add(1,length(parameters('location'))))]]",
-{{if IsDCOS19}}
     "masterSshInboundNatRuleIdPrefix": "[concat(variables('masterLbID'),'/inboundNatRules/SSH-',variables('masterVMNamePrefix'))]",
-    "masterSshPort22InboundNatRuleIdPrefix": "[concat(variables('masterLbID'),'/inboundNatRules/SSHPort22-',variables('masterVMNamePrefix'))]",
     "masterLbInboundNatRules": [
             [
                 {
                     "id": "[concat(variables('masterSshInboundNatRuleIdPrefix'),'0')]"
-                },
-                {
-                    "id": "[concat(variables('masterSshPort22InboundNatRuleIdPrefix'),'0')]"
                 }
             ],
             [
@@ -143,7 +138,4 @@
                     "id": "[concat(variables('masterSshInboundNatRuleIdPrefix'),'4')]"
                 }
             ]
-        ],
-{{end}}
-    "dcosBootstrapURL": "[parameters('dcosBootstrapURL')]"
-
+        ]

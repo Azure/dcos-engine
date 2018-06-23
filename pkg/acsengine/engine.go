@@ -24,7 +24,7 @@ import (
 )
 
 var commonTemplateFiles = []string{agentOutputs, agentParams, classicParams, masterOutputs, iaasOutputs, masterParams, windowsParams}
-var dcos2TemplateFiles = []string{dcos2BaseFile, dcosAgentResourcesVMAS, dcosAgentResourcesVMSS, dcosAgentVars, dcos2MasterResources, dcos2BootstrapResources, dcos2MasterVars, dcosParams, dcosWindowsAgentResourcesVMAS, dcosWindowsAgentResourcesVMSS, dcos2BootstrapVars, dcos2BootstrapParams}
+var dcosTemplateFiles = []string{dcosBaseFile, dcosAgentResourcesVMAS, dcosAgentResourcesVMSS, dcosAgentVars, dcosMasterResources, dcosBootstrapResources, dcosMasterVars, dcosParams, dcosWindowsAgentResourcesVMAS, dcosWindowsAgentResourcesVMSS, dcosBootstrapVars, dcosBootstrapParams}
 
 var keyvaultSecretPathRe *regexp.Regexp
 
@@ -614,7 +614,7 @@ func getDCOSProvisionScript(script string) string {
 
 func getDCOSAgentProvisionScript(profile *api.AgentPoolProfile, orchProfile *api.OrchestratorProfile, bootstrapIP string) string {
 	// add the provision script
-	scriptname := dcos2Provision
+	scriptname := dcosProvision
 	if profile.OSType == api.Windows {
 		scriptname = dcosWindowsProvision
 	}
@@ -652,7 +652,7 @@ func getDCOSAgentProvisionScript(profile *api.AgentPoolProfile, orchProfile *api
 }
 
 func getDCOSMasterProvisionScript(orchProfile *api.OrchestratorProfile, bootstrapIP string) string {
-	scriptname := dcos2Provision
+	scriptname := dcosProvision
 
 	// add the provision script
 	bp, err := Asset(scriptname)
@@ -683,9 +683,9 @@ func getDCOSCustomDataTemplate(orchestratorType, orchestratorVersion string) str
 	case api.DCOS:
 		switch orchestratorVersion {
 		case common.DCOSVersion1Dot11Dot0:
-			return dcos2CustomData1110
+			return dcosCustomData1110
 		case common.DCOSVersion1Dot11Dot2:
-			return dcos2CustomData1112
+			return dcosCustomData1112
 		}
 	default:
 		// it is a bug to get here
