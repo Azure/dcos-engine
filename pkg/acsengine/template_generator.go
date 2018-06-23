@@ -109,7 +109,7 @@ func (t *TemplateGenerator) GenerateTemplate(containerService *api.ContainerServ
 
 func (t *TemplateGenerator) verifyFiles() error {
 	allFiles := commonTemplateFiles
-	allFiles = append(allFiles, dcos2TemplateFiles...)
+	allFiles = append(allFiles, dcosTemplateFiles...)
 	for _, file := range allFiles {
 		if _, err := Asset(file); err != nil {
 			return t.Translator.Errorf("template file %s does not exist", file)
@@ -123,8 +123,8 @@ func (t *TemplateGenerator) prepareTemplateFiles(properties *api.Properties) ([]
 	var baseFile string
 	switch properties.OrchestratorProfile.OrchestratorType {
 	case api.DCOS:
-		files = append(commonTemplateFiles, dcos2TemplateFiles...)
-		baseFile = dcos2BaseFile
+		files = append(commonTemplateFiles, dcosTemplateFiles...)
+		baseFile = dcosBaseFile
 	default:
 		return nil, "", t.Translator.Errorf("orchestrator '%s' is unsupported", properties.OrchestratorProfile.OrchestratorType)
 	}
@@ -180,9 +180,6 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 		"GetDataDisks": func(profile *api.AgentPoolProfile) string {
 			return getDataDisks(profile)
 		},
-		"HasBootstrap": func() bool {
-			return cs.Properties.OrchestratorProfile.DcosConfig != nil && cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile != nil
-		},
 		"HasBootstrapPublicIP": func() bool {
 			return false
 		},
@@ -197,10 +194,10 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 
 			str := getSingleLineDCOSCustomData(
 				cs.Properties.OrchestratorProfile.OrchestratorType,
-				dcos2BootstrapCustomdata, 0,
+				dcosBootstrapCustomdata, 0,
 				map[string]string{
 					"PROVISION_SOURCE_STR":    getDCOSProvisionScript(dcosProvisionSource),
-					"PROVISION_STR":           getDCOSProvisionScript(dcos2BootstrapProvision),
+					"PROVISION_STR":           getDCOSProvisionScript(dcosBootstrapProvision),
 					"MASTER_IP_LIST":          strings.Join(masterIPList, "\n"),
 					"BOOTSTRAP_IP":            cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP,
 					"BOOTSTRAP_OAUTH_ENABLED": strconv.FormatBool(cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.OAuthEnabled)})

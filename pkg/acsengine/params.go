@@ -70,14 +70,8 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 	}
 
 	if strings.HasPrefix(properties.OrchestratorProfile.OrchestratorType, api.DCOS) {
-		dcosBootstrapURL := cloudSpecConfig.DCOSSpecConfig.DCOS188BootstrapDownloadURL
-		dcosWindowsBootstrapURL := cloudSpecConfig.DCOSSpecConfig.DCOSWindowsBootstrapDownloadURL
-
-		switch properties.OrchestratorProfile.OrchestratorType {
-		case api.DCOS:
-			dcosBootstrapURL = getDCOSDefaultBootstrapInstallerURL(properties.OrchestratorProfile)
-			dcosWindowsBootstrapURL = getDCOSDefaultWindowsBootstrapInstallerURL(properties.OrchestratorProfile)
-		}
+		dcosBootstrapURL := getDCOSDefaultBootstrapInstallerURL(properties.OrchestratorProfile)
+		dcosWindowsBootstrapURL := getDCOSDefaultWindowsBootstrapInstallerURL(properties.OrchestratorProfile)
 
 		if properties.OrchestratorProfile.DcosConfig != nil {
 			if properties.OrchestratorProfile.DcosConfig.DcosWindowsBootstrapURL != "" {
@@ -94,9 +88,6 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 
 		addValue(parametersMap, "dcosBootstrapURL", dcosBootstrapURL)
 		addValue(parametersMap, "dcosWindowsBootstrapURL", dcosWindowsBootstrapURL)
-		//addValue(parametersMap, "dcosRepositoryURL", dcosRepositoryURL)
-		//addValue(parametersMap, "dcosClusterPackageListID", dcosClusterPackageListID)
-		//addValue(parametersMap, "dcosProviderPackageID", dcosProviderPackageID)
 
 		if properties.OrchestratorProfile.DcosConfig.BootstrapProfile != nil {
 			addValue(parametersMap, "bootstrapStaticIP", properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP)
