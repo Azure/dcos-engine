@@ -13,6 +13,10 @@
 param(
     [string]
     [ValidateNotNullOrEmpty()]
+    $dcosVersion,
+
+    [string]
+    [ValidateNotNullOrEmpty()]
     $masterCount,
 
     [string]
@@ -138,7 +142,7 @@ try
     # the output.
     Write-Log "Get the install script"
 
-    Write-Log ("Parameters = isAgent = ["+ $isAgent + "] mastercount = ["+$MasterCount + "] First master ip= [" + $firstMasterIp+ "] boostrap URI = ["+ $bootstrapUri+"] Subnet = ["+ $subnet +"]" + " -customAttrs " + $customAttrs + " -preprovisionExtensionParms = "+ $preprovisionExtensionParams )
+    Write-Log ("Parameters: -dcosVersion "+$dcosVersion+" -isAgent "+$isAgent+" -mastercount "+$masterCount+" -firstMasterIP "+$firstMasterIP+" -bootstrapURI "+$bootstrapUri+" -subnet "+$subnet+" -customAttrs "+$customAttrs+" -preprovisionExtensionParms "+$preprovisionExtensionParams)
 
     # Get the boostrap script
 
@@ -181,7 +185,7 @@ try
 
     if ($isAgent)
     {
-        $run_cmd = $global:BootstrapInstallDir+"\DCOSWindowsAgentSetup.ps1 -MasterIP '$master_json' -AgentPrivateIP "+($private_ip.IPAddress) +" -BootstrapUrl '$bootstrapUri' " 
+        $run_cmd = $global:BootstrapInstallDir+"\DCOSWindowsAgentSetup.ps1 -DcosVersion '$dcosVersion' -MasterIP '$master_json' -AgentPrivateIP "+($private_ip.IPAddress) +" -BootstrapUrl '$bootstrapUri' " 
         if ($isPublic) 
         {
             $run_cmd += " -isPublic:`$true "
