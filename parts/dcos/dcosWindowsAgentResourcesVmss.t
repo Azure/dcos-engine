@@ -113,7 +113,7 @@
 {{if IsPublic .Ports}}
        ,"[concat('Microsoft.Network/loadBalancers/', variables('{{.Name}}LbName'))]"
 {{end}}
-{{if and HasBootstrap (not IsHostedBootstrap)}}
+{{if not IsHostedBootstrap}}
        ,"[concat('Microsoft.Compute/virtualMachines/', variables('bootstrapWinVMName'), '/extensions/bootstrapready')]"
 {{end}}
       ],
@@ -215,11 +215,7 @@
                   "typeHandlerVersion": "1.8",
                   "autoUpgradeMinorVersion": true,
                   "settings": {
-{{if HasBootstrap}}
-                     "commandToExecute": "[variables('windowsAgent2CustomScript')]"
-{{else}}
-                     "commandToExecute": "[variables('{{.Name}}windowsAgentCustomScript')]"
-{{end}}
+                  "commandToExecute": "[variables('windowsAgentCustomScript')]"
                   }
                 }
               }

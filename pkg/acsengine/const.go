@@ -46,15 +46,14 @@ const (
 )
 
 const (
-	//dcosWindowsProvision    = "dcos/dcosWindowsProvision.ps1"
-	dcosProvisionSource     = "dcos/dcosprovisionsource.sh"
-	dcos2Provision          = "dcos/bstrap/dcosprovision.sh"
-	dcos2BootstrapProvision = "dcos/bstrap/bootstrapprovision.sh"
-	dcos2CustomData1110     = "dcos/bstrap/dcos1.11.0.customdata.t"
-	dcos2CustomData1112     = "dcos/bstrap/dcos1.11.2.customdata.t"
+	dcosProvisionSource    = "dcos/dcosprovisionsource.sh"
+	dcosProvision          = "dcos/dcosprovision.sh"
+	dcosBootstrapProvision = "dcos/bootstrapprovision.sh"
+	dcosCustomData1110     = "dcos/dcos1.11.0.customdata.t"
+	dcosCustomData1112     = "dcos/dcos1.11.2.customdata.t"
 
-	dcos2BootstrapWindowsProvision = "dcos/bstrap/bootstrapWindowsProvision.ps1"
-	dcos2WindowsProvision          = "dcos/bstrap/dcosWindowsProvision.ps1"
+	dcosBootstrapWindowsProvision = "dcos/bootstrapWindowsProvision.ps1"
+	dcosWindowsProvision          = "dcos/dcosWindowsProvision.ps1"
 )
 
 const (
@@ -66,18 +65,15 @@ const (
 	dcosAgentResourcesVMSS        = "dcos/dcosagentresourcesvmss.t"
 	dcosWindowsAgentResourcesVMSS = "dcos/dcosWindowsAgentResourcesVmss.t"
 	dcosAgentVars                 = "dcos/dcosagentvars.t"
-	dcosBaseFile                  = "dcos/dcosbase.t"
 	dcosParams                    = "dcos/dcosparams.t"
-	dcosMasterResources           = "dcos/dcosmasterresources.t"
+	dcosBaseFile                  = "dcos/dcosbase.t"
+	dcosBootstrapVars             = "dcos/bootstrapvars.t"
+	dcosBootstrapParams           = "dcos/bootstrapparams.t"
+	dcosBootstrapResources        = "dcos/bootstrapresources.t"
+	dcosBootstrapWinResources     = "dcos/bootstrapwinresources.t"
+	dcosBootstrapCustomdata       = "dcos/bootstrapcustomdata.yml"
 	dcosMasterVars                = "dcos/dcosmastervars.t"
-	dcos2BaseFile                 = "dcos/bstrap/dcosbase.t"
-	dcos2BootstrapVars            = "dcos/bstrap/bootstrapvars.t"
-	dcos2BootstrapParams          = "dcos/bstrap/bootstrapparams.t"
-	dcos2BootstrapResources       = "dcos/bstrap/bootstrapresources.t"
-	dcos2BootstrapWinResources    = "dcos/bstrap/bootstrapwinresources.t"
-	dcos2BootstrapCustomdata      = "dcos/bstrap/bootstrapcustomdata.yml"
-	dcos2MasterVars               = "dcos/bstrap/dcosmastervars.t"
-	dcos2MasterResources          = "dcos/bstrap/dcosmasterresources.t"
+	dcosMasterResources           = "dcos/dcosmasterresources.t"
 	iaasOutputs                   = "iaasoutputs.t"
 	masterOutputs                 = "masteroutputs.t"
 	masterParams                  = "masterparams.t"
