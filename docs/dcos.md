@@ -117,11 +117,9 @@ This walk through is inspired by the wonderful digital ocean tutorial: https://w
 
 # DCOS upgrade
 
-Starting from DC/OS 1.11, dcos-engine deploys a bootstrap node as part of DC/OS cluster. This enables upgrade operation on an existing cluster.
-
 To start the upgrade, run this following command:
 ```
-dcos-engine dcos-upgrade \
+dcos-engine upgrade \
     --subscription-id <Azure subscription ID> \
     --resource-group <the resource group the cluster was deployed in> \
     --location <the region the clusetr was deployed in> \

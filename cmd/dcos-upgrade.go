@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	dcosUpgradeName             = "dcos-upgrade"
+	dcosUpgradeName             = "upgrade"
 	dcosUpgradeShortDescription = "Upgrade an existing DC/OS cluster"
 	dcosUpgradeLongDescription  = "Upgrade an existing DC/OS cluster"
 )
