@@ -25,7 +25,7 @@ make build
 
 ```
 # ./bin/dcos-engine 
-DC/OS Engine deploys and manages Kubernetes, OpenShift, Swarm Mode, and DC/OS clusters in Azure
+DC/OS Engine deploys and manages DC/OS clusters in Azure
 
 Usage:
   dcos-engine [command]
@@ -35,8 +35,7 @@ Available Commands:
   generate      Generate an Azure Resource Manager template
   help          Help about any command
   orchestrators Display info about supported orchestrators
-  scale         Scale an existing Kubernetes cluster
-  upgrade       Upgrade an existing Kubernetes cluster
+  upgrade       Upgrade an existing DC/OS cluster
   version       Print the version of DC/OS Engine
 
 Flags:

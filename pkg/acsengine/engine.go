@@ -938,6 +938,9 @@ func getExtensionResource(rootURL, extensionName, version, fileName, query strin
 
 func getExtensionURL(rootURL, extensionName, version, fileName, query string) string {
 	extensionsDir := "extensions"
+	if !strings.HasSuffix(rootURL, "/") {
+		rootURL = rootURL + "/"
+	}
 	url := rootURL + extensionsDir + "/" + extensionName + "/" + version + "/" + fileName
 	if query != "" {
 		url += "?" + query
