@@ -29,8 +29,8 @@ def getDCOSToken():
     chrome_options.add_argument("--headless")
 
     browser = webdriver.Chrome("chromedriver", chrome_options=chrome_options)
-    browser.implicitly_wait(10)
-    browser.set_page_load_timeout(10)
+    browser.implicitly_wait(30)
+    browser.set_page_load_timeout(30)
     browser.get(url + "/login?redirect_uri=urn:ietf:wg:oauth:2.0:oob")
     
     try:
