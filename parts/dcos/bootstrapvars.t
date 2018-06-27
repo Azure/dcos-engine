@@ -4,6 +4,6 @@
     "bootstrapVMSize": "[parameters('bootstrapVMSize')]",
     "bootstrapNSGID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('bootstrapNSGName'))]",
     "bootstrapNSGName": "[concat('bootstrap-nsg-', variables('nameSuffix'))]",
-    "bootstrapVMName": "[concat('bootstrap-', variables('nameSuffix'))]",
+    "bootstrapVMName": "[concat('dcos-bootstrap-', variables('nameSuffix'))]",
     "bootstrapStaticIP": "[parameters('bootstrapStaticIP')]"
 {{end}}
