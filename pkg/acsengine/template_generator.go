@@ -204,6 +204,24 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 
 			return fmt.Sprintf("\"customData\": \"[base64(concat('#cloud-config\\n\\n', '%s'))]\",", str)
 		},
+		"GetDCOSBootstrapWindowsCustomData": func() string {
+			b, err := Asset(dcosBootstrapWindowsProvision)
+			if err != nil {
+				// this should never happen and this is a bug
+				panic(fmt.Sprintf("BUG: %s", err.Error()))
+			}
+			masterIPList := generateIPList(cs.Properties.MasterProfile.Count, cs.Properties.MasterProfile.FirstConsecutiveStaticIP)
+			for i, v := range masterIPList {
+				masterIPList[i] = "- " + v
+			}
+			// translate the parameters
+			csStr := string(b)
+			csStr = strings.Replace(csStr, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.OAuthEnabled), -1)
+			csStr = strings.Replace(csStr, "MASTER_IP_LIST", strings.Join(masterIPList, "\n"), -1)
+			csStr = strings.Replace(csStr, "\r\n", "\n", -1)
+			str := getBase64CustomScriptFromStr(csStr)
+			return fmt.Sprintf("\"customData\": \"%s\"", str)
+		},
 		"GetDCOSMasterCustomData": func() string {
 			masterAttributeContents := getDCOSMasterCustomNodeLabels()
 			masterPreprovisionExtension := ""
@@ -270,9 +288,16 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 				// this should never happen and this is a bug
 				panic(fmt.Sprintf("BUG: %s", err.Error()))
 			}
+			var agentRoleName string
+			if len(profile.Ports) > 0 {
+				agentRoleName = "slave_public"
+			} else {
+				agentRoleName = "slave"
+			}
 			// translate the parameters
 			csStr := string(b)
 			csStr = strings.Replace(csStr, "PREPROVISION_EXTENSION", agentPreprovisionExtension, -1)
+			csStr = strings.Replace(csStr, "ROLENAME", agentRoleName, -1)
 			csStr = strings.Replace(csStr, "\r\n", "\n", -1)
 			str := getBase64CustomScriptFromStr(csStr)
 			return fmt.Sprintf("\"customData\": \"%s\"", str)
