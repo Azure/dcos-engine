@@ -8,14 +8,11 @@ import (
 	"github.com/Azure/dcos-engine/pkg/api"
 )
 
-func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode string, acsengineVersion string) (paramsMap, error) {
+func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode string) (paramsMap, error) {
 	properties := cs.Properties
 	location := cs.Location
 	parametersMap := paramsMap{}
 	cloudSpecConfig := getCloudSpecConfig(location)
-
-	// acsengine Parameters
-	addValue(parametersMap, "acsengineVersion", acsengineVersion)
 
 	// Master Parameters
 	addValue(parametersMap, "location", location)

@@ -1,9 +1,9 @@
 <#
     .SYNOPSIS
-        Provisions VM as a Windows bootstrap node.
+        Provisions VM as a Windows DC/OS ROLENAME node.
 
     .DESCRIPTION
-        Provisions VM as a Windows bootstrap node.
+        Provisions VM as a Windows DC/OS ROLENAME node.
 
      Invoke by:
 
@@ -27,7 +27,7 @@ function Write-Log($message)
 }
 
 try {
-    Write-Log "Setting up Windows Agent node. BootstrapIP:$BootstrapIP"
+    Write-Log "Setting up Windows DC/OS ROLENAME node. BootstrapIP:$BootstrapIP"
 
     $dcosInstallUrl = "http://${BootstrapIP}:8086/dcos_install.ps1"
     & curl.exe $dcosInstallUrl -o $global:BootstrapInstallDir\dcos_install.ps1
@@ -39,9 +39,9 @@ try {
         throw "Failed run DC/OS install script"
     }
 } catch {
-    Write-Log "Failed to provision Windows agent node: $_"
+    Write-Log "Failed to provision Windows DC/OS ROLENAME node: $_"
     exit 1
 }
 
-Write-Log "Successfully provisioned Windows agent node"
+Write-Log "Successfully provisioned Windows DC/OS ROLENAME node"
 exit 0

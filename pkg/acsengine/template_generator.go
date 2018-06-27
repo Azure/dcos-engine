@@ -36,7 +36,7 @@ func InitializeTemplateGenerator(ctx Context, classicMode bool) (*TemplateGenera
 }
 
 // GenerateTemplate generates the template from the API Model
-func (t *TemplateGenerator) GenerateTemplate(containerService *api.ContainerService, generatorCode string, isUpgrade bool, acsengineVersion string) (templateRaw string, parametersRaw string, certsGenerated bool, err error) {
+func (t *TemplateGenerator) GenerateTemplate(containerService *api.ContainerService, generatorCode string, isUpgrade bool) (templateRaw string, parametersRaw string, certsGenerated bool, err error) {
 	// named return values are used in order to set err in case of a panic
 	templateRaw = ""
 	parametersRaw = ""
@@ -53,7 +53,7 @@ func (t *TemplateGenerator) GenerateTemplate(containerService *api.ContainerServ
 	}()
 	setPropertiesDefaults(containerService, isUpgrade)
 
-	templ = template.New("acs template").Funcs(t.getTemplateFuncMap(containerService))
+	templ = template.New("dcos template").Funcs(t.getTemplateFuncMap(containerService))
 
 	files, baseFile, e := t.prepareTemplateFiles(properties)
 	if e != nil {
@@ -94,7 +94,7 @@ func (t *TemplateGenerator) GenerateTemplate(containerService *api.ContainerServ
 	templateRaw = b.String()
 
 	var parametersMap paramsMap
-	if parametersMap, err = getParameters(containerService, t.ClassicMode, generatorCode, acsengineVersion); err != nil {
+	if parametersMap, err = getParameters(containerService, t.ClassicMode, generatorCode); err != nil {
 		return templateRaw, parametersRaw, certsGenerated, err
 	}
 

@@ -13,15 +13,15 @@ import (
 
 const (
 	rootName             = "dcos-engine"
-	rootShortDescription = "ACS-Engine deploys and manages container orchestrators in Azure"
-	rootLongDescription  = "ACS-Engine deploys and manages Kubernetes, OpenShift, Swarm Mode, and DC/OS clusters in Azure"
+	rootShortDescription = "DCOS-Engine deploys and manages DC/OS clusters in Azure"
+	rootLongDescription  = "DCOS-Engine deploys and manages DC/OS clusters in Azure"
 )
 
 var (
 	debug bool
 )
 
-// NewRootCmd returns the root command for ACS-Engine.
+// NewRootCmd returns the root command for DCOS-Engine.
 func NewRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   rootName,
