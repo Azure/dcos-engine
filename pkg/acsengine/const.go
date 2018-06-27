@@ -52,6 +52,7 @@ const (
 	dcosBootstrapProvision = "dcos/bootstrapprovision.sh"
 	dcosCustomData1110     = "dcos/dcos1.11.0.customdata.t"
 	dcosCustomData1112     = "dcos/dcos1.11.2.customdata.t"
+	dcosCustomData1113     = "dcos/dcos1.11.2.customdata.t"
 )
 
 const (
