@@ -12,34 +12,19 @@ var _ = Describe("The orchestrators command", func() {
 		Expect(output.Use).Should(Equal(orchestratorsName))
 		Expect(output.Short).Should(Equal(orchestratorsShortDescription))
 		Expect(output.Long).Should(Equal(orchestratorsLongDescription))
-		Expect(output.Flags().Lookup("orchestrator")).NotTo(BeNil())
 		Expect(output.Flags().Lookup("version")).NotTo(BeNil())
 	})
 
 	It("should fail on unsupported orchestrator", func() {
-		command := &orchestratorsCmd{
-			orchestrator: "unsupported",
-		}
+		command := &orchestratorsCmd{}
 
 		err := command.run(nil, nil)
-		Expect(err).NotTo(BeNil())
-		Expect(err.Error()).To(Equal("Unsupported orchestrator 'unsupported'"))
-	})
-
-	It("should fail on unprovided orchestrator", func() {
-		command := &orchestratorsCmd{
-			version: "1.1.1",
-		}
-
-		err := command.run(nil, nil)
-		Expect(err).NotTo(BeNil())
-		Expect(err.Error()).To(Equal("Must specify orchestrator for version '1.1.1'"))
+		Expect(err).To(BeNil())
 	})
 
 	It("should fail on unsupported version", func() {
 		command := &orchestratorsCmd{
-			orchestrator: "dcos",
-			version:      "0.1.1",
+			version: "0.1.1",
 		}
 
 		err := command.run(nil, nil)
@@ -49,8 +34,7 @@ var _ = Describe("The orchestrators command", func() {
 
 	It("should succeed", func() {
 		command := &orchestratorsCmd{
-			orchestrator: "dcos",
-			version:      "1.11.0",
+			version: "1.11.0",
 		}
 
 		err := command.run(nil, nil)

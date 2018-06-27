@@ -9,11 +9,11 @@ func TestConfigParse(t *testing.T) {
   [
     {
       "cluster_definition":"examples/dcos-1.8.json",
-      "location":"westus",
+      "location":"westus"
     },
     {
       "cluster_definition":"examples/dcos-1.9.json",
-      "location":"eastus",
+      "location":"eastus"
     },
     {
       "cluster_definition":"examples/dcos-1.10.json",
