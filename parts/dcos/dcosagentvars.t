@@ -4,11 +4,11 @@
 {{if .IsWindows}}
     "winResourceNamePrefix" : "[substring(variables('nameSuffix'), 0, 5)]",
     {{if IsPublic .Ports}}
-        "{{.Name}}VMNamePrefix": "[concat('wp', variables('winResourceNamePrefix'), add(900,variables('{{.Name}}Index')))]",
+        "{{.Name}}VMNamePrefix": "[concat('dcos-p', variables('winResourceNamePrefix'), add(900,variables('{{.Name}}Index')))]",
         "{{.Name}}windowsAgentCustomAttributes": "[concat(' -customAttrs ', variables('doubleSingleQuote'), '{{GetDCOSWindowsAgentCustomNodeAttributes . }}', variables('doubleSingleQuote') )]",
         "{{.Name}}windowsAgentCustomScriptArguments": "[concat('$arguments = ', variables('singleQuote'), '-DcosVersion ', variables('orchestratorVersion'), ' -subnet ', variables('{{.Name}}Subnet'), ' -MasterCount ', variables('masterCount'), ' -firstMasterIP ', parameters('firstConsecutiveStaticIP'), ' -bootstrapUri ', '\"', variables('dcosWindowsBootstrapURL'), '\"', ' -isAgent $true -isPublic $true ',  variables('{{.Name}}windowsAgentCustomAttributes'), ' -preprovisionExtensionParams ', variables('doubleSingleQuote'), '{{GetDCOSWindowsAgentPreprovisionParameters .}}', variables('doubleSingleQuote'),  variables('singleQuote'), ' ; ')]",
     {{else}}
-        "{{.Name}}VMNamePrefix": "[concat('w', variables('winResourceNamePrefix'), add(900,variables('{{.Name}}Index')))]",
+        "{{.Name}}VMNamePrefix": "[concat('dcos-', variables('winResourceNamePrefix'), add(900,variables('{{.Name}}Index')))]",
         "{{.Name}}windowsAgentCustomAttributes": "[concat(' -customAttrs ', variables('doubleSingleQuote'), '{{GetDCOSWindowsAgentCustomNodeAttributes . }}', variables('doubleSingleQuote') )]",
         "{{.Name}}windowsAgentCustomScriptArguments": "[concat('$arguments = ', variables('singleQuote'), '-DcosVersion ', variables('orchestratorVersion'), ' -subnet ', variables('{{.Name}}Subnet'),' -MasterCount ', variables('masterCount'), ' -firstMasterIP ', parameters('firstConsecutiveStaticIP'), ' -bootstrapUri ', '\"', variables('dcosWindowsBootstrapURL'), '\"', ' -isAgent $true -isPublic $false ',  variables('{{.Name}}windowsAgentCustomAttributes'), ' -preprovisionExtensionParams ', variables('doubleSingleQuote'), '{{GetDCOSWindowsAgentPreprovisionParameters .}}', variables('doubleSingleQuote'), variables('singleQuote'), ' ; ')]",
     {{end}}
