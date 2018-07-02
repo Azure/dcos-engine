@@ -168,7 +168,7 @@
         "autoUpgradeMinorVersion": true,
         "publisher": "Microsoft.OSTCExtensions",
         "settings": {
-          "commandToExecute": "[concat('/bin/bash -c \"until curl -f http://', variables('bootstrapStaticIP'), ':8086/dcos_install.sh > /dev/null; do echo waiting for bootstrap node; sleep 15; done; echo bootstrap node up\"')]"
+          "commandToExecute": "[concat('/bin/bash -c \"secs=600; SECONDS=0; while (( SECONDS < secs )); do if curl -f http://', variables('bootstrapStaticIP'), ':8086/dcos_install.sh > /dev/null; then echo bootstrap node up; exit 0; fi; echo waiting for bootstrap node; sleep 15; done; echo bootstrap node failed; exit 1\"')]"
         },
         "type": "CustomScriptForLinux",
         "typeHandlerVersion": "1.4"
