@@ -21,8 +21,10 @@ function retry_download() {
         continue
       fi
     fi
+    echo "Successfully downloaded $url ($checksum) after $i attempts"
     return 0
   done
+  echo "Failed to download $url ($checksum) after $retries attempts"
   return 1
 }
 

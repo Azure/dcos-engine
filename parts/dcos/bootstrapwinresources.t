@@ -1,3 +1,4 @@
+{{if HasBootstrapPublicIP}}
     {
       "apiVersion": "[variables('apiVersionDefault')]",
       "location": "[variables('location')]",
@@ -7,6 +8,7 @@
       },
       "type": "Microsoft.Network/publicIPAddresses"
     },
+{{end}}
     {
       "apiVersion": "[variables('apiVersionDefault')]",
       "location": "[variables('location')]",
@@ -68,8 +70,10 @@
 {{if not .MasterProfile.IsCustomVNET}}
         "[variables('vnetID')]",
 {{end}}
-        "[variables('bootstrapWinNSGID')]",
-        "[variables('bootstrapWinPublicIPAddressName')]"
+{{if HasBootstrapPublicIP}}
+        "[variables('bootstrapWinPublicIPAddressName')]",
+{{end}}
+        "[variables('bootstrapWinNSGID')]"
       ],
       "location": "[variables('location')]",
       "name": "[concat(variables('bootstrapWinVMName'), '-nic')]",
@@ -80,9 +84,11 @@
             "properties": {
               "privateIPAddress": "[variables('bootstrapWinStaticIP')]",
               "privateIPAllocationMethod": "Static",
+{{if HasBootstrapPublicIP}}
               "publicIpAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('bootstrapWinPublicIPAddressName'))]"
               },
+{{end}}
               "subnet": {
                 "id": "[variables('masterVnetSubnetID')]"
               }

@@ -348,7 +348,7 @@
         "autoUpgradeMinorVersion": true,
         "publisher": "Microsoft.OSTCExtensions",
         "settings": {
-          "commandToExecute": "sh -c 'until ping -c1 leader.mesos;do echo waiting for leader.mesos;sleep 15;done;echo leader.mesos up'"
+          "commandToExecute": "/bin/bash -c 'secs=600; SECONDS=0; while (( SECONDS < secs )); do if ping -c1 leader.mesos; then echo leader.mesos up; exit 0; fi; echo waiting for leader.mesos; sleep 15; done; echo leader.mesos failed; exit 1'"
         },
         "type": "CustomScriptForLinux",
         "typeHandlerVersion": "1.4"

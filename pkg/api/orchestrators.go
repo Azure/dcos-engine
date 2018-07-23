@@ -2,55 +2,37 @@ package api
 
 import (
 	"fmt"
-	"strings"
+	"strconv"
 
 	"github.com/Azure/dcos-engine/pkg/api/common"
 	"github.com/Azure/dcos-engine/pkg/api/vlabs"
+	"github.com/blang/semver"
 )
 
-type orchestratorsFunc func(*OrchestratorProfile) ([]*OrchestratorVersionProfile, error)
-
-var funcmap map[string]orchestratorsFunc
-var versionsMap map[string][]string
-
-func init() {
-	funcmap = map[string]orchestratorsFunc{
-		DCOS: dcosInfo,
+func validate(version string) error {
+	// for empty
+	if len(version) == 0 {
+		return nil
 	}
-	versionsMap = map[string][]string{
-		DCOS: common.GetAllSupportedDCOSVersions(),
+	if !isVersionSupported(version) {
+		return fmt.Errorf("DCOS version %s is not supported", version)
 	}
+	return nil
 }
 
-func validate(orchestrator, version string) (string, error) {
-	switch {
-	case strings.EqualFold(orchestrator, DCOS):
-		return DCOS, nil
-	case orchestrator == "":
-		if version != "" {
-			return "", fmt.Errorf("Must specify orchestrator for version '%s'", version)
-		}
-	default:
-		return "", fmt.Errorf("Unsupported orchestrator '%s'", orchestrator)
-	}
-	return "", nil
-}
+func isVersionSupported(version string) bool {
+	for _, ver := range common.GetAllSupportedDCOSVersions() {
 
-func isVersionSupported(csOrch *OrchestratorProfile) bool {
-	supported := false
-	for _, version := range versionsMap[csOrch.OrchestratorType] {
-
-		if version == csOrch.OrchestratorVersion {
-			supported = true
-			break
+		if ver == version {
+			return true
 		}
 	}
-	return supported
+	return false
 }
 
 // GetOrchestratorVersionProfileListVLabs returns vlabs OrchestratorVersionProfileList object per (optionally) specified orchestrator and version
-func GetOrchestratorVersionProfileListVLabs(orchestrator, version string) (*vlabs.OrchestratorVersionProfileList, error) {
-	apiOrchs, err := getOrchestratorVersionProfileList(orchestrator, version)
+func GetOrchestratorVersionProfileListVLabs(version string) (*vlabs.OrchestratorVersionProfileList, error) {
+	apiOrchs, err := getOrchestratorVersionProfileList(version)
 	if err != nil {
 		return nil, err
 	}
@@ -62,25 +44,13 @@ func GetOrchestratorVersionProfileListVLabs(orchestrator, version string) (*vlab
 	return orchList, nil
 }
 
-func getOrchestratorVersionProfileList(orchestrator, version string) ([]*OrchestratorVersionProfile, error) {
-	var err error
-	if orchestrator, err = validate(orchestrator, version); err != nil {
+func getOrchestratorVersionProfileList(version string) ([]*OrchestratorVersionProfile, error) {
+	if err := validate(version); err != nil {
 		return nil, err
 	}
-	orchs := []*OrchestratorVersionProfile{}
-	if len(orchestrator) == 0 {
-		// return all orchestrators
-		for _, f := range funcmap {
-			arr, err := f(&OrchestratorProfile{})
-			if err != nil {
-				return nil, err
-			}
-			orchs = append(orchs, arr...)
-		}
-	} else {
-		if orchs, err = funcmap[orchestrator](&OrchestratorProfile{OrchestratorType: orchestrator, OrchestratorVersion: version}); err != nil {
-			return nil, err
-		}
+	orchs, err := dcosInfo(&OrchestratorProfile{OrchestratorType: DCOS, OrchestratorVersion: version})
+	if err != nil {
+		return nil, err
 	}
 	return orchs, nil
 }
@@ -92,7 +62,7 @@ func GetOrchestratorVersionProfile(orch *OrchestratorProfile) (*OrchestratorVers
 	}
 	switch orch.OrchestratorType {
 	case DCOS:
-		arr, err := funcmap[orch.OrchestratorType](orch)
+		arr, err := dcosInfo(orch)
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +96,7 @@ func dcosInfo(csOrch *OrchestratorProfile) ([]*OrchestratorVersionProfile, error
 				})
 		}
 	} else {
-		if !isVersionSupported(csOrch) {
+		if !isVersionSupported(csOrch.OrchestratorVersion) {
 			return nil, fmt.Errorf("DCOS version %s is not supported", csOrch.OrchestratorVersion)
 		}
 
@@ -151,11 +121,16 @@ func dcosInfo(csOrch *OrchestratorProfile) ([]*OrchestratorVersionProfile, error
 func dcosUpgrades(csOrch *OrchestratorProfile) ([]*OrchestratorProfile, error) {
 	ret := []*OrchestratorProfile{}
 
-	switch csOrch.OrchestratorVersion {
-	case common.DCOSVersion1Dot11Dot0:
+	currentVer, err := semver.Make(csOrch.OrchestratorVersion)
+	if err != nil {
+		return nil, err
+	}
+	nextNextMinorString := strconv.FormatUint(currentVer.Major, 10) + "." + strconv.FormatUint(currentVer.Minor+2, 10) + ".0"
+	upgradeableVersions := common.GetVersionsBetween(common.GetAllSupportedDCOSVersions(), csOrch.OrchestratorVersion, nextNextMinorString, false, false)
+	for _, ver := range upgradeableVersions {
 		ret = append(ret, &OrchestratorProfile{
 			OrchestratorType:    DCOS,
-			OrchestratorVersion: common.DCOSVersion1Dot11Dot2,
+			OrchestratorVersion: ver,
 		})
 	}
 	return ret, nil

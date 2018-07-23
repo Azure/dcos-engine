@@ -181,7 +181,7 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			return getDataDisks(profile)
 		},
 		"HasBootstrapPublicIP": func() bool {
-			return false
+			return true
 		},
 		"IsHostedBootstrap": func() bool {
 			return false
