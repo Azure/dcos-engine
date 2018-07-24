@@ -140,6 +140,10 @@ try
     # c:\AzureData\dcosProvisionScript.log, and then you can RDP 
     # to the windows machine, and run the script manually to watch
     # the output.
+    Write-Log "Run preprovision extension (if present)"
+
+    PREPROVISION_EXTENSION
+
     Write-Log "Get the install script"
 
     Write-Log ("Parameters: -dcosVersion "+$dcosVersion+" -isAgent "+$isAgent+" -mastercount "+$masterCount+" -firstMasterIP "+$firstMasterIP+" -bootstrapURI "+$bootstrapUri+" -subnet "+$subnet+" -customAttrs "+$customAttrs+" -preprovisionExtensionParms "+$preprovisionExtensionParams)
@@ -205,8 +209,6 @@ try
         Write-Log "run setup script $run_cmd"
         Invoke-Expression $run_cmd
     }
-
-    PREPROVISION_EXTENSION
 
     Write-Log "Provisioning script succeeded"
 }
