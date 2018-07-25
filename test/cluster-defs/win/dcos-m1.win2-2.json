@@ -3,7 +3,10 @@
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "DCOS",
-      "orchestratorRelease": ""
+      "orchestratorRelease": "",
+      "dcosConfig": {
+        "dcosWindowsBootstrapURL": "https://brcampdevstorage.blob.core.windows.net/dcos-artifacts/testing/dcos_generate_config.windows.tar.xz"
+      }
     },
     "masterProfile": {
       "count": 1,
