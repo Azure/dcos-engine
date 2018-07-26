@@ -102,7 +102,7 @@ powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
 
     $runasargs = "/fix /type:4 /user:$env:computername\$adminUser /password:$password /command:'$cmd'"
     Invoke-Expression -command ("c:\AzureData\runasxbox.exe "+$runasargs)
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed run DC/OS install script"
     }
@@ -115,5 +115,3 @@ powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
 Set-PSDebug -Off
 Write-Log "Successfully provisioned Windows agent node"
 exit 0
-
-

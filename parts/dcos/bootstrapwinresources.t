@@ -112,7 +112,10 @@
       ],
       "tags":
       {
-        "creationSource" : "[concat('acsengine-', variables('bootstrapWinVMName'))]"
+        "creationSource" : "[concat('dcos-engine-', variables('bootstrapWinVMName'))]",
+        "orchestratorName": "dcos",
+        "orchestratorVersion": "[variables('orchestratorVersion')]",
+        "orchestratorNode": "bootstrap"
       },
       "location": "[variables('location')]",
       "name": "[variables('bootstrapWinVMName')]",
@@ -154,7 +157,9 @@
             }
 {{end}}
 {{if ne .OrchestratorProfile.DcosConfig.BootstrapProfile.OSDiskSizeGB 0}}
-            ,"diskSizeGB": "60"
+            ,"diskSizeGB": {{.OrchestratorProfile.DcosConfig.BootstrapProfile.OSDiskSizeGB}}
+{{else}}
+            ,"diskSizeGB": "120"
 {{end}}
           }
         }
