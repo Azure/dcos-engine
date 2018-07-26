@@ -35,7 +35,11 @@ try {
     Write-Log "Admin user is $adminUser"
     Write-Log "User Domain is $env:computername"
 
-# First up, download the runasxbox util
+    Write-Log "Run preprovision extension (if present)"
+
+    PREPROVISION_EXTENSION
+
+    # First up, download the runasxbox util
     curl.exe -fLsS -o c:\AzureData\runasxbox.exe https://dcosdevstorage.blob.core.windows.net/tmp/RunAsXbox.exe
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to download windows runasxbox.exe"
@@ -69,13 +73,11 @@ try {
     $setcred_content | out-file -encoding ascii c:\AzureData\setcreds.ps1
     # prime the credential cache
     Set-PSDebug -trace 1
- get-wmiobject -class Win32_UserAccount
+    get-wmiobject -class Win32_UserAccount
  
     # Add all the known dcos users (2do)
 
-    $unattend_txt = Get-Content "c:\unattend.xml"
-    $unattend =  [System.Xml.XmlDocument] $unattend_txt
-    $password = $unattend.unattend.settings.component.UserAccounts.AdministratorPassword.Value
+    $password = "ADMIN_PASSWORD"
 
   #  $adminUser = "dcos-service"   # Overwriting the arg
     & net user $adminUser $password /add /yes

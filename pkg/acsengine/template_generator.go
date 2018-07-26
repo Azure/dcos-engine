@@ -298,6 +298,7 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			csStr := string(b)
 			csStr = strings.Replace(csStr, "PREPROVISION_EXTENSION", agentPreprovisionExtension, -1)
 			csStr = strings.Replace(csStr, "ROLENAME", agentRoleName, -1)
+			csStr = strings.Replace(csStr, "ADMIN_PASSWORD", cs.Properties.WindowsProfile.AdminPassword, -1)
 			csStr = strings.Replace(csStr, "\r\n", "\n", -1)
 			str := getBase64CustomScriptFromStr(csStr)
 			return fmt.Sprintf("\"customData\": \"%s\"", str)
