@@ -5,7 +5,7 @@
       "orchestratorType": "DCOS",
       "orchestratorRelease": "",
       "dcosConfig": {
-        "dcosWindowsBootstrapURL": "https://brcampdevstorage.blob.core.windows.net/dcos-artifacts/testing/dcos_generate_config.windows.tar.xz"
+        "dcosWindowsBootstrapURL": "https://dcosdevstorage.blob.core.windows.net/dcos-build/testing/paulall/dcos_generate_config.windows.tar.xz"
       }
     },
     "masterProfile": {
