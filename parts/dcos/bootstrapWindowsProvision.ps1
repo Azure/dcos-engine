@@ -58,6 +58,11 @@ function CreateIpDetect($fileName)
 try {
     Write-Log "Setting up Windows bootstrap node. BootstrapURL:$BootstrapURL BootstrapIP:$BootstrapIP"
 
+    # Resize C: partition to 60 GB
+    $newSize = 64420315136
+    $systempart = (Get-Partition | where { $_.driveletter -eq "C" })
+    $systempart | Resize-Partition -size $newSize
+
     New-item -itemtype directory -erroraction silentlycontinue c:\temp
     cd c:\temp
     New-item -itemtype directory -erroraction silentlycontinue c:\temp\genconf
