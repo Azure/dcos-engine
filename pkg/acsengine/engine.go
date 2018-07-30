@@ -262,12 +262,14 @@ func getDCOSWindowsAgentPreprovisionParameters(cs *api.ContainerService, profile
 func getDCOSDefaultBootstrapInstallerURL(profile *api.OrchestratorProfile) string {
 	if profile.OrchestratorType == api.DCOS {
 		switch profile.OrchestratorVersion {
+		case common.DCOSVersion1Dot11Dot4:
+			return "https://dcos-mirror.azureedge.net/dcos/1-11-4/dcos_generate_config.sh"
 		case common.DCOSVersion1Dot11Dot3:
-			return "https://dcos-mirror.azureedge.net/dcos-1-11-3/dcos_generate_config.sh"
+			return "https://dcos-mirror.azureedge.net/dcos/1-11-3/dcos_generate_config.sh"
 		case common.DCOSVersion1Dot11Dot2:
-			return "https://dcos-mirror.azureedge.net/dcos-1-11-2/dcos_generate_config.sh"
+			return "https://dcos-mirror.azureedge.net/dcos/1-11-2/dcos_generate_config.sh"
 		case common.DCOSVersion1Dot11Dot0:
-			return "https://dcos-mirror.azureedge.net/dcos-1-11-0/dcos_generate_config.sh"
+			return "https://dcos-mirror.azureedge.net/dcos/1-11-0/dcos_generate_config.sh"
 		}
 	}
 	return ""
@@ -276,7 +278,7 @@ func getDCOSDefaultBootstrapInstallerURL(profile *api.OrchestratorProfile) strin
 func getDCOSDefaultWindowsBootstrapInstallerURL(profile *api.OrchestratorProfile) string {
 	if profile.OrchestratorType == api.DCOS {
 		switch profile.OrchestratorVersion {
-		case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3:
+		case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
 			return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-2"
 		case common.DCOSVersion1Dot11Dot0:
 			return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-0"
@@ -688,10 +690,8 @@ func getDCOSCustomDataTemplate(orchestratorType, orchestratorVersion string) str
 		switch orchestratorVersion {
 		case common.DCOSVersion1Dot11Dot0:
 			return dcosCustomData1110
-		case common.DCOSVersion1Dot11Dot2:
+		case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
 			return dcosCustomData1112
-		case common.DCOSVersion1Dot11Dot3:
-			return dcosCustomData1113
 		}
 	default:
 		// it is a bug to get here
