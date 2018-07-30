@@ -1,6 +1,6 @@
 FROM alpine:3.7
 
-ARG DCOSENGINE_VERSION=0.16.0
+ARG DCOSENGINE_VERSION=0.1.0
 ARG BUILD_DATE
 
 # Metadata as defined at http://label-schema.org
