@@ -165,7 +165,7 @@
             ]
           },
           "osProfile": {
-            "computerNamePrefix": "[concat(substring(variables('nameSuffix'), 0, 5), 'dcos')]",
+            "computerNamePrefix": "[concat('dcos-', substring(variables('nameSuffix'), 0, 4))]",
             "adminUsername": "[variables('windowsAdminUsername')]",
             "adminPassword": "[variables('windowsAdminPassword')]",
             {{GetDCOSWindowsAgentCustomData .}}

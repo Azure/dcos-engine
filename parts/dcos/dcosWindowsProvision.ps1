@@ -44,10 +44,10 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to download windows runasxbox.exe"
     }
-    
+
     # Create the setcreds script
     $setcred_content = @'
-     # usage: setcreds.ps1 -adminUser domain\user -password password 
+     # usage: setcreds.ps1 -adminUser domain\user -password password
     [CmdletBinding(DefaultParameterSetName="Standard")]
        param(
             [string]
@@ -69,12 +69,12 @@ try {
 
     New-StoredCredential -Target dcos/app -Username "$domain\$user" -Password $password -Type GENERIC -Persist LocalMachine
 
-'@  
+'@
     $setcred_content | out-file -encoding ascii c:\AzureData\setcreds.ps1
     # prime the credential cache
     Set-PSDebug -trace 1
     get-wmiobject -class Win32_UserAccount
- 
+
     # Add all the known dcos users (2do)
 
     $password = "ADMIN_PASSWORD"
@@ -82,7 +82,7 @@ try {
   #  $adminUser = "dcos-service"   # Overwriting the arg
     & net user $adminUser $password /add /yes
     & net localgroup administrators $adminUser /add
-    c:\AzureData\setcreds.ps1 -User $adminUser -Password $password -Domain $env:computername 
+    c:\AzureData\setcreds.ps1 -User $adminUser -Password $password -Domain $env:computername
 
     $dcosInstallUrl = "http://${BootstrapIP}:8086/dcos_install.ps1"
     & curl.exe $dcosInstallUrl -o $global:BootstrapInstallDir\dcos_install.ps1

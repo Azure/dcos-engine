@@ -18,8 +18,6 @@ for f in \
   extensions/preprovision-master-linux/v1/preprovision-master-linux.sh \
   extensions/preprovision-agent-linux-public/v1/preprovision-agent-linux-public.sh \
   extensions/preprovision-agent-linux-private/v1/preprovision-agent-linux-private.sh \
-  extensions/preprovision-agent-windows/v1/preprovision-agent-windows-ci-setup.ps1 \
-  extensions/preprovision-agent-windows/v1/preprovision-agent-windows.ps1 \
-  extensions/preprovision-agent-windows/v1/preprovision-agent-windows-mesos-credentials.ps1; do
+  extensions/preprovision-agent-windows/v1/preprovision-agent-windows.ps1; do
   az storage blob upload --container-name preprovision --file $f --name $f --account-name ${storage_account} --account-key $key
 done
