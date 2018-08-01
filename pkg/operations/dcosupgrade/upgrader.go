@@ -28,7 +28,7 @@ if [ ! -e /opt/azure/dcos/upgrade/NEW_VERSION/upgrade_url ]; then
   mkdir -p /opt/azure/dcos/upgrade/NEW_VERSION/genconf
   cp /opt/azure/dcos/genconf/config.yaml /opt/azure/dcos/genconf/ip-detect /opt/azure/dcos/upgrade/NEW_VERSION/genconf/
   cd /opt/azure/dcos/upgrade/NEW_VERSION/
-  curl -s -O https://dcos-mirror.azureedge.net/dcos-NEW_DASHED_VERSION/dcos_generate_config.sh
+  curl -s -O https://dcos-mirror.azureedge.net/dcos/NEW_DASHED_VERSION/dcos_generate_config.sh
   bash dcos_generate_config.sh --generate-node-upgrade-script CURR_VERSION | tee /opt/azure/dcos/upgrade/NEW_VERSION/log
   process=\$(docker ps -f ancestor=nginx -q)
   if [ ! -z "\$process" ]; then
