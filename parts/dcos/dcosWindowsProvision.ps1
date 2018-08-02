@@ -105,7 +105,6 @@ try {
 '@
     $setcred_content | out-file -encoding ascii c:\AzureData\setcreds.ps1
     # prime the credential cache
-    Set-PSDebug -trace 1
     get-wmiobject -class Win32_UserAccount
 
     # Add all the known dcos users (2do)
@@ -141,10 +140,8 @@ powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
     }
 } catch {
     Write-Log "Failed to provision Windows agent node: $_"
-    Set-PSDebug -Off
     exit 1
 }
 
-Set-PSDebug -Off
 Write-Log "Successfully provisioned Windows agent node"
 exit 0
