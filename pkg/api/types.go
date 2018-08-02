@@ -142,7 +142,7 @@ type OrchestratorVersionProfile struct {
 	// Whether this orchestrator version is deployed by default if orchestrator release is not specified
 	Default bool `json:"default,omitempty"`
 	// List of available upgrades for this orchestrator version
-	Upgrades []*OrchestratorProfile `json:"upgrades,omitempty"`
+	Upgrades []string `json:"upgrades,omitempty"`
 }
 
 // PrivateCluster defines the configuration for a private cluster

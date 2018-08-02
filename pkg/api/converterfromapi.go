@@ -46,12 +46,8 @@ func ConvertOrchestratorVersionProfileToVLabs(api *OrchestratorVersionProfile) *
 	vlabsProfile.OrchestratorVersion = api.OrchestratorVersion
 	vlabsProfile.Default = api.Default
 	if api.Upgrades != nil {
-		vlabsProfile.Upgrades = make([]*vlabs.OrchestratorProfile, len(api.Upgrades))
-		for i, h := range api.Upgrades {
-			vlabsProfile.Upgrades[i] = &vlabs.OrchestratorProfile{
-				OrchestratorVersion: h.OrchestratorVersion,
-			}
-		}
+		vlabsProfile.Upgrades = make([]string, len(api.Upgrades))
+		copy(vlabsProfile.Upgrades, api.Upgrades)
 	}
 	return vlabsProfile
 }

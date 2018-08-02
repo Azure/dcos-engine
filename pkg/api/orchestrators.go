@@ -118,8 +118,8 @@ func dcosInfo(csOrch *OrchestratorProfile) ([]*OrchestratorVersionProfile, error
 	return orchs, nil
 }
 
-func dcosUpgrades(csOrch *OrchestratorProfile) ([]*OrchestratorProfile, error) {
-	ret := []*OrchestratorProfile{}
+func dcosUpgrades(csOrch *OrchestratorProfile) ([]string, error) {
+	ret := []string{}
 
 	currentVer, err := semver.Make(csOrch.OrchestratorVersion)
 	if err != nil {
@@ -128,10 +128,7 @@ func dcosUpgrades(csOrch *OrchestratorProfile) ([]*OrchestratorProfile, error) {
 	nextNextMinorString := strconv.FormatUint(currentVer.Major, 10) + "." + strconv.FormatUint(currentVer.Minor+2, 10) + ".0"
 	upgradeableVersions := common.GetVersionsBetween(common.GetAllSupportedDCOSVersions(), csOrch.OrchestratorVersion, nextNextMinorString, false, false)
 	for _, ver := range upgradeableVersions {
-		ret = append(ret, &OrchestratorProfile{
-			OrchestratorType:    DCOS,
-			OrchestratorVersion: ver,
-		})
+		ret = append(ret, ver)
 	}
 	return ret, nil
 }

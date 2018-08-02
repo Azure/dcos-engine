@@ -150,7 +150,7 @@ function create_resource_group() {
 	[[ ! -z "${RESOURCE_GROUP:-}" ]] || exit_with_msg "Must specify RESOURCE_GROUP"
 
 	# Create resource group if doesn't exist
-	rg=$(az group show --name="${RESOURCE_GROUP}")
+	rg=$(az group show --name ${RESOURCE_GROUP} --query id -o tsv || echo "")
 	if [ -z "$rg" ]; then
 		az group create --name="${RESOURCE_GROUP}" --location="${LOCATION}" --tags "type=${RESOURCE_GROUP_TAG_TYPE:-}" "now=$(date +%s)" "job=${JOB_BASE_NAME:-}" "buildno=${BUILD_NUMBER:-}"
 		sleep 3 # TODO: investigate why this is needed (eventual consistency in ARM)

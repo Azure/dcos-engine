@@ -10,7 +10,7 @@ func TestReportParse(t *testing.T) {
 	jobName := "TestJob"
 	buildNum := "001"
 	nDeploys := 4
-	fileName := "../../dcos-engine-errors.json"
+	fileName := "../dcos-engine-errors.json"
 	dummy := New(jobName, buildNum, nDeploys, fileName)
 
 	txt := "Error loading command module"

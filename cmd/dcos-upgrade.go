@@ -160,14 +160,12 @@ func (uc *dcosUpgradeCmd) loadCluster(cmd *cobra.Command) error {
 		return fmt.Errorf("error getting list of available upgrades: %s", err.Error())
 	}
 	// add the current version if upgrade has failed
-	orchestratorInfo.Upgrades = append(orchestratorInfo.Upgrades, &api.OrchestratorProfile{
-		OrchestratorType:    uc.containerService.Properties.OrchestratorProfile.OrchestratorType,
-		OrchestratorVersion: uc.containerService.Properties.OrchestratorProfile.OrchestratorVersion})
+	orchestratorInfo.Upgrades = append(orchestratorInfo.Upgrades, uc.containerService.Properties.OrchestratorProfile.OrchestratorVersion)
 
 	// validate desired upgrade version and set goal state
 	found := false
 	for _, up := range orchestratorInfo.Upgrades {
-		if up.OrchestratorVersion == uc.upgradeVersion {
+		if up == uc.upgradeVersion {
 			uc.containerService.Properties.OrchestratorProfile.OrchestratorVersion = uc.upgradeVersion
 			found = true
 			break
