@@ -9,14 +9,19 @@ import (
 	"github.com/Azure/dcos-engine/pkg/operations"
 )
 
-type nodeHealthReport struct {
-	IP     string `json:"host_ip"`
-	Role   string `json:"role"`
-	Health int    `json:"health"`
+type agentAttr struct {
+	OS       string `json:"os"`
+	PublicIP string `json:"public_ip,omitempty"`
 }
 
-type healthReport struct {
-	Nodes []nodeHealthReport `json:"nodes"`
+type agentInfo struct {
+	ID         string    `json:"id"`
+	Hostname   string    `json:"hostname"`
+	Attributes agentAttr `json:"attributes"`
+}
+
+type agentList struct {
+	Agents []agentInfo `json:"slaves"`
 }
 
 var bootstrapUpgradeScript = `#!/bin/bash
@@ -69,13 +74,38 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	dashedVersion := strings.Replace(newVersion, ".", "-", -1)
 
 	masterDNS := acsengine.FormatAzureProdFQDN(uc.ClusterTopology.DataModel.Properties.MasterProfile.DNSPrefix, uc.ClusterTopology.DataModel.Location)
+
+	// get the agents
+	out, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey,
+		fmt.Sprintf("curl -s http://%s:5050/slaves", uc.ClusterTopology.DataModel.Properties.MasterProfile.FirstConsecutiveStaticIP))
+	if err != nil {
+		uc.Logger.Errorf(out)
+		return err
+	}
+	agents := &agentList{}
+	if err = json.Unmarshal([]byte(out), agents); err != nil {
+		return err
+	}
+
+	var hasWindowsAgents bool
+	for _, agent := range agents.Agents {
+		if strings.Compare(agent.Attributes.OS, "Windows") == 0 {
+			hasWindowsAgents = true
+			break
+		}
+	}
+
 	masterCount := uc.ClusterTopology.DataModel.Properties.MasterProfile.Count
 	bootstrapIP := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP
-	uc.Logger.Infof("masterDNS:%s masterCount:%d bootstrapIP:%s", masterDNS, masterCount, bootstrapIP)
+	uc.Logger.Infof("masterDNS:%s masterCount:%d", masterDNS, masterCount)
+	uc.Logger.Infof("bootstrapIP:%s", bootstrapIP)
 
+	if hasWindowsAgents {
+		return fmt.Errorf("DC/OS upgrade for Windows agents is currently unsupported")
+	}
 	// copy SSH key to master
 	uc.Logger.Infof("Copy SSH key to master")
-	out, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > .ssh/id_rsa_cluster\n%s\nEND\n", string(uc.SSHKey)))
+	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > .ssh/id_rsa_cluster\n%s\nEND\n", string(uc.SSHKey)))
 	if err != nil {
 		uc.Logger.Errorf(out)
 		return err
@@ -104,19 +134,8 @@ func (uc *UpgradeCluster) runUpgrade() error {
 		return err
 	}
 
-	// get the node list
-	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, "curl -s http://localhost:1050/system/health/v1/nodes")
-	if err != nil {
-		uc.Logger.Errorf(out)
-		return err
-	}
-	uc.Logger.Info(out)
-	nodes := &healthReport{}
-	if err = json.Unmarshal([]byte(out), nodes); err != nil {
-		return err
-	}
 	// upgrade agent nodes
-	return uc.upgradeAgentNodes(masterDNS, nodes)
+	return uc.upgradeAgentNodes(masterDNS, agents)
 }
 
 func (uc *UpgradeCluster) upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrapScript string) (string, error) {
@@ -204,15 +223,12 @@ func (uc *UpgradeCluster) upgradeMasterNodes(masterDNS string, masterCount int, 
 	return nil
 }
 
-func (uc *UpgradeCluster) upgradeAgentNodes(masterDNS string, nodes *healthReport) error {
-	for _, node := range nodes.Nodes {
-		if node.Role == "master" {
-			continue
-		}
-		uc.Logger.Infof("Upgrading %s %s", node.Role, node.IP)
+func (uc *UpgradeCluster) upgradeAgentNodes(masterDNS string, agents *agentList) error {
+	for _, agent := range agents.Agents {
+		uc.Logger.Infof("Upgrading %s agent %s", agent.Attributes.OS, agent.Hostname)
 
 		// check current version
-		cmd := fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s grep version /opt/mesosphere/etc/dcos-version.json | cut -d '\"' -f 4", node.IP)
+		cmd := fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s grep version /opt/mesosphere/etc/dcos-version.json | cut -d '\"' -f 4", agent.Hostname)
 		out, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 		if err != nil {
 			uc.Logger.Errorf(out)
@@ -223,14 +239,14 @@ func (uc *UpgradeCluster) upgradeAgentNodes(masterDNS string, nodes *healthRepor
 			continue
 		}
 		// copy script to the node
-		cmd = fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no node_upgrade.sh %s:", node.IP)
+		cmd = fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no node_upgrade.sh %s:", agent.Hostname)
 		out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 		if err != nil {
 			uc.Logger.Errorf(out)
 			return err
 		}
 		// run the script
-		cmd = fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s sudo ./node_upgrade.sh", node.IP)
+		cmd = fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s sudo ./node_upgrade.sh", agent.Hostname)
 		out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 		if err != nil {
 			uc.Logger.Errorf(out)
