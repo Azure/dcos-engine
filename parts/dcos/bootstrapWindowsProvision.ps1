@@ -64,7 +64,7 @@ function InstallOpehSSH()
     Start-Service sshd
 
     Write-Log "Creating authorized key"
-    $path = "c:\temp\authorized_keys"
+    $path = "C:\AzureData\authorized_keys"
     Set-Content -Path $path -Value "SSH_PUB_KEY" -Encoding Ascii
 
     (Get-Content C:\ProgramData\ssh\sshd_config) -replace "AuthorizedKeysFile(\s+).ssh/authorized_keys", "AuthorizedKeysFile $path" | Set-Content C:\ProgramData\ssh\sshd_config
@@ -94,11 +94,11 @@ try {
     $systempart = (Get-Partition | where { $_.driveletter -eq "C" })
     $systempart | Resize-Partition -size $newSize
 
+    InstallOpehSSH
+
     New-item -itemtype directory -erroraction silentlycontinue c:\temp
     cd c:\temp
     New-item -itemtype directory -erroraction silentlycontinue c:\temp\genconf
-
-    InstallOpehSSH
 
     CreateDcosConfig "c:\temp\genconf\config.yaml"
 
