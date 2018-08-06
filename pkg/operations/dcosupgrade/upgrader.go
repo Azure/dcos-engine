@@ -225,7 +225,7 @@ func (uc *UpgradeCluster) upgradeMasterNodes(masterDNS string, masterCount int, 
 
 func (uc *UpgradeCluster) upgradeAgentNodes(masterDNS string, agents *agentList) error {
 	for _, agent := range agents.Agents {
-		uc.Logger.Infof("Upgrading %s", agent.Hostname)
+		uc.Logger.Infof("Upgrading %s agent %s", agent.Attributes.OS, agent.Hostname)
 
 		// check current version
 		cmd := fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s grep version /opt/mesosphere/etc/dcos-version.json | cut -d '\"' -f 4", agent.Hostname)
