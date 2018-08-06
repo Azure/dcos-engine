@@ -30,6 +30,37 @@ function Write-Log($message)
     Write-Output $msg
 }
 
+function InstallOpehSSH()
+{
+    Write-Log "Installing OpehSSH"
+    $list = (Get-WindowsCapability -Online | ? Name -like 'OpenSSH.Server*')
+    Add-WindowsCapability -Online -Name $list.Name
+    Install-Module -Force OpenSSHUtils
+    Start-Service sshd
+
+    Write-Log "Creating authorized key"
+    $path = "C:\AzureData\authorized_keys"
+    Set-Content -Path $path -Value "SSH_PUB_KEY" -Encoding Ascii
+
+    (Get-Content C:\ProgramData\ssh\sshd_config) -replace "AuthorizedKeysFile(\s+).ssh/authorized_keys", "AuthorizedKeysFile $path" | Set-Content C:\ProgramData\ssh\sshd_config
+    $acl = Get-Acl -Path $path
+    $acl.SetAccessRuleProtection($True, $True)
+    $acl | Set-Acl -Path $path
+
+    $acl = Get-Acl -Path $path
+    $rules = $acl.Access
+    $usersToRemove = @("Everyone","BUILTIN\Users","NT AUTHORITY\Authenticated Users")
+    foreach ($u in $usersToRemove) {
+        $targetrule = $rules | where IdentityReference -eq $u
+        if ($targetrule) {
+            $acl.RemoveAccessRule($targetrule)
+        }
+    }
+    $acl | Set-Acl -Path $path
+
+    Restart-Service sshd
+}
+
 try {
     Write-Log "Setting up Windows Agent node. BootstrapIP:$BootstrapIP"
     Write-Log "Admin user is $adminUser"
@@ -38,6 +69,8 @@ try {
     Write-Log "Run preprovision extension (if present)"
 
     PREPROVISION_EXTENSION
+
+    InstallOpehSSH
 
     # First up, download the runasxbox util
     curl.exe -fLsS -o c:\AzureData\runasxbox.exe https://dcosdevstorage.blob.core.windows.net/tmp/RunAsXbox.exe
