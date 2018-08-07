@@ -114,9 +114,9 @@ try {
         throw "Failed to untar dcos_generate_config.windows.tar.xz"
     }
 
-    & .\install_bootstrap_windows.ps1
+    & .\dcos_generate_config.ps1
     if ($LASTEXITCODE -ne 0) {
-        throw "Failed to run install_bootstrap_windows.ps1"
+        throw "Failed to run dcos_generate_config.ps1"
     }
 
     # Run docker container with nginx
