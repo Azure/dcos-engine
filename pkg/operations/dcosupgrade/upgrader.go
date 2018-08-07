@@ -22,7 +22,7 @@ type agentInfo struct {
 }
 
 type agentList struct {
-	Agents []agentInfo `json:"slaves"`
+	Agents []*agentInfo `json:"slaves"`
 }
 
 var bootstrapUpgradeScript = `#!/bin/bash
@@ -262,7 +262,18 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	}
 
 	// upgrade agent nodes
-	return uc.upgradeAgentNodes(masterDNS, agents)
+	for _, agent := range agents.Agents {
+		if strings.Compare(agent.Attributes.OS, "Windows") == 0 {
+			if err = uc.upgradeWindowsAgent(masterDNS, agent); err != nil {
+				return err
+			}
+		} else {
+			if err = uc.upgradeLinuxAgent(masterDNS, agent); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (uc *UpgradeCluster) upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrapScript string) (string, error) {
@@ -393,36 +404,39 @@ func (uc *UpgradeCluster) upgradeMasterNodes(masterDNS string, masterCount int, 
 	return nil
 }
 
-func (uc *UpgradeCluster) upgradeAgentNodes(masterDNS string, agents *agentList) error {
-	for _, agent := range agents.Agents {
-		uc.Logger.Infof("Upgrading %s agent %s", agent.Attributes.OS, agent.Hostname)
+func (uc *UpgradeCluster) upgradeLinuxAgent(masterDNS string, agent *agentInfo) error {
+	uc.Logger.Infof("Upgrading Linux agent %s", agent.Hostname)
 
-		// check current version
-		cmd := fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s grep version /opt/mesosphere/etc/dcos-version.json | cut -d '\"' -f 4", agent.Hostname)
-		out, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
-		if err != nil {
-			uc.Logger.Errorf(out)
-			return err
-		}
-		if strings.TrimSpace(out) == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
-			uc.Logger.Infof("Agent node is up-to-date. Skipping upgrade")
-			continue
-		}
-		// copy script to the node
-		cmd = fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no node_upgrade.sh %s:", agent.Hostname)
-		out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
-		if err != nil {
-			uc.Logger.Errorf(out)
-			return err
-		}
-		// run the script
-		cmd = fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s sudo ./node_upgrade.sh", agent.Hostname)
-		out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
-		if err != nil {
-			uc.Logger.Errorf(out)
-			return err
-		}
-		uc.Logger.Info(out)
+	// check current version
+	cmd := fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s grep version /opt/mesosphere/etc/dcos-version.json | cut -d '\"' -f 4", agent.Hostname)
+	out, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	if err != nil {
+		uc.Logger.Errorf(out)
+		return err
 	}
+	if strings.TrimSpace(out) == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
+		uc.Logger.Infof("Agent node is up-to-date. Skipping upgrade")
+		return nil
+	}
+	// copy script to the node
+	cmd = fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no node_upgrade.sh %s:", agent.Hostname)
+	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	if err != nil {
+		uc.Logger.Errorf(out)
+		return err
+	}
+	// run the script
+	cmd = fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s sudo ./node_upgrade.sh", agent.Hostname)
+	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	if err != nil {
+		uc.Logger.Errorf(out)
+		return err
+	}
+	uc.Logger.Info(out)
+	return nil
+}
+
+func (uc *UpgradeCluster) upgradeWindowsAgent(masterDNS string, agent *agentInfo) error {
+	uc.Logger.Infof("Upgrading Windows agent %s", agent.Hostname)
 	return nil
 }
