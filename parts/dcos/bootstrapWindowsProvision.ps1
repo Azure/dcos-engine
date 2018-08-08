@@ -104,7 +104,7 @@ try {
 
     CreateIpDetect "c:\temp\genconf\ip-detect.ps1"
 
-    & curl.exe --keepalive-time 2 -fLsSv --retry 20 -Y 100000 -y 60 -o c:\temp\dcos_generate_config.windows.tar.xz $BootstrapURL
+    & curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o c:\temp\dcos_generate_config.windows.tar.xz $BootstrapURL
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to download $BootstrapURL"
     }
@@ -123,12 +123,12 @@ try {
     New-item -itemtype directory -erroraction silentlycontinue c:\docker
     cd c:\docker
 
-    & curl.exe --keepalive-time 2 -fLsSv --retry 20 -Y 100000 -y 60 -o c:\docker\dockerfile https://dcos-mirror.azureedge.net/winbootstrap/dockerfile
+    & curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o c:\docker\dockerfile https://dcos-mirror.azureedge.net/winbootstrap/dockerfile
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to download dockerfile"
     }
 
-    & curl.exe --keepalive-time 2 -fLsSv --retry 20 -Y 100000 -y 60 -o c:\docker\nginx.conf https://dcos-mirror.azureedge.net/winbootstrap/nginx.conf
+    & curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o c:\docker\nginx.conf https://dcos-mirror.azureedge.net/winbootstrap/nginx.conf
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to download nginx.conf"
     }
