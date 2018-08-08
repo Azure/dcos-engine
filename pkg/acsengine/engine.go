@@ -259,18 +259,17 @@ func getDCOSWindowsAgentPreprovisionParameters(cs *api.ContainerService, profile
 	return parms
 }
 
-func getDCOSDefaultBootstrapInstallerURL(profile *api.OrchestratorProfile) string {
-	if profile.OrchestratorType == api.DCOS {
-		switch profile.OrchestratorVersion {
-		case common.DCOSVersion1Dot11Dot4:
-			return "https://dcos-mirror.azureedge.net/dcos/1-11-4/dcos_generate_config.sh"
-		case common.DCOSVersion1Dot11Dot3:
-			return "https://dcos-mirror.azureedge.net/dcos/1-11-3/dcos_generate_config.sh"
-		case common.DCOSVersion1Dot11Dot2:
-			return "https://dcos-mirror.azureedge.net/dcos/1-11-2/dcos_generate_config.sh"
-		case common.DCOSVersion1Dot11Dot0:
-			return "https://dcos-mirror.azureedge.net/dcos/1-11-0/dcos_generate_config.sh"
-		}
+// GetDCOSDefaultBootstrapInstallerURL returns default DCOS Bootstrap installer URL
+func GetDCOSDefaultBootstrapInstallerURL(orchestratorVersion string) string {
+	switch orchestratorVersion {
+	case common.DCOSVersion1Dot11Dot4:
+		return "https://dcos-mirror.azureedge.net/dcos/1-11-4/dcos_generate_config.sh"
+	case common.DCOSVersion1Dot11Dot3:
+		return "https://dcos-mirror.azureedge.net/dcos/1-11-3/dcos_generate_config.sh"
+	case common.DCOSVersion1Dot11Dot2:
+		return "https://dcos-mirror.azureedge.net/dcos/1-11-2/dcos_generate_config.sh"
+	case common.DCOSVersion1Dot11Dot0:
+		return "https://dcos-mirror.azureedge.net/dcos/1-11-0/dcos_generate_config.sh"
 	}
 	return ""
 }
@@ -601,6 +600,42 @@ func getBase64CustomScriptFromStr(str string) string {
 	w.Write([]byte(str))
 	w.Close()
 	return base64.StdEncoding.EncodeToString(gzipB.Bytes())
+}
+
+// GetDCOSBootstrapConfig returns DCOS bootstrap config
+func GetDCOSBootstrapConfig(cs *api.ContainerService) string {
+	if cs.Properties.OrchestratorProfile.OrchestratorType != api.DCOS {
+		panic(fmt.Sprintf("BUG: invalid orchestrator %s", cs.Properties.OrchestratorProfile.OrchestratorType))
+	}
+	var configFName string
+	switch cs.Properties.OrchestratorProfile.OrchestratorVersion {
+	case common.DCOSVersion1Dot11Dot0, common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
+		configFName = dcosBootstrapConfig111
+	default:
+		panic(fmt.Sprintf("BUG: invalid orchestrator version %s", cs.Properties.OrchestratorProfile.OrchestratorVersion))
+	}
+
+	bp, err := Asset(configFName)
+	if err != nil {
+		panic(fmt.Sprintf("BUG: %s", err.Error()))
+	}
+
+	masterIPList := generateIPList(cs.Properties.MasterProfile.Count, cs.Properties.MasterProfile.FirstConsecutiveStaticIP)
+	for i, v := range masterIPList {
+		masterIPList[i] = "- " + v
+	}
+
+	config := string(bp)
+	config = strings.Replace(config, "MASTER_IP_LIST", strings.Join(masterIPList, "\n"), -1)
+	config = strings.Replace(config, "BOOTSTRAP_IP", cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP, -1)
+	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.OAuthEnabled), -1)
+
+	return config
+}
+
+func getDCOSBootstrapConfig(cs *api.ContainerService) string {
+	config := GetDCOSBootstrapConfig(cs)
+	return strings.Replace(strings.Replace(config, "\r\n", "\n", -1), "\n", "\n\n    ", -1)
 }
 
 func getDCOSProvisionScript(script string) string {
