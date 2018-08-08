@@ -603,6 +603,36 @@ func getBase64CustomScriptFromStr(str string) string {
 	return base64.StdEncoding.EncodeToString(gzipB.Bytes())
 }
 
+func getDCOSBootstrapConfig(cs *api.ContainerService) string {
+	if cs.Properties.OrchestratorProfile.OrchestratorType != api.DCOS {
+		panic(fmt.Sprintf("BUG: invalid orchestrator %s", cs.Properties.OrchestratorProfile.OrchestratorType))
+	}
+	var configFName string
+	switch cs.Properties.OrchestratorProfile.OrchestratorVersion {
+	case common.DCOSVersion1Dot11Dot0, common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
+		configFName = dcosBootstrapConfig111
+	default:
+		panic(fmt.Sprintf("BUG: invalid orchestrator version %s", cs.Properties.OrchestratorProfile.OrchestratorVersion))
+	}
+
+	bp, err := Asset(configFName)
+	if err != nil {
+		panic(fmt.Sprintf("BUG: %s", err.Error()))
+	}
+
+	masterIPList := generateIPList(cs.Properties.MasterProfile.Count, cs.Properties.MasterProfile.FirstConsecutiveStaticIP)
+	for i, v := range masterIPList {
+		masterIPList[i] = "- " + v
+	}
+
+	config := string(bp)
+	config = strings.Replace(config, "MASTER_IP_LIST", strings.Join(masterIPList, "\n"), -1)
+	config = strings.Replace(config, "BOOTSTRAP_IP", cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP, -1)
+	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.OAuthEnabled), -1)
+
+	return strings.Replace(strings.Replace(config, "\r\n", "\n", -1), "\n", "\n\n    ", -1)
+}
+
 func getDCOSProvisionScript(script string) string {
 	// add the provision script
 	bp, err := Asset(script)
