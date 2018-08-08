@@ -31,9 +31,12 @@ if [ ! -e /opt/azure/dcos/upgrade/NEW_VERSION/upgrade_url ]; then
   echo "Setting up bootstrap node"
   rm -rf /opt/azure/dcos/upgrade/NEW_VERSION
   mkdir -p /opt/azure/dcos/upgrade/NEW_VERSION/genconf
-  cp /opt/azure/dcos/genconf/config.yaml /opt/azure/dcos/genconf/ip-detect /opt/azure/dcos/upgrade/NEW_VERSION/genconf/
+  cp /opt/azure/dcos/genconf/ip-detect /opt/azure/dcos/upgrade/NEW_VERSION/genconf/ip-detect
+  cp config.NEW_VERSION.yaml /opt/azure/dcos/upgrade/NEW_VERSION/genconf/config.yaml
+  dns=\$(grep search /etc/resolv.conf | cut -d " " -f 2)
+  sed -i "/dns_search:/c dns_search: \$dns" /opt/azure/dcos/upgrade/NEW_VERSION/genconf/config.yaml
   cd /opt/azure/dcos/upgrade/NEW_VERSION/
-  curl -s -O https://dcos-mirror.azureedge.net/dcos/NEW_DASHED_VERSION/dcos_generate_config.sh
+  curl -fsSL -O BOOTSTRAP_URL
   bash dcos_generate_config.sh --generate-node-upgrade-script CURR_VERSION | tee /opt/azure/dcos/upgrade/NEW_VERSION/log
   process=\$(docker ps -f ancestor=nginx -q)
   if [ ! -z "\$process" ]; then
@@ -71,8 +74,6 @@ func (uc *UpgradeCluster) runUpgrade() error {
 		return fmt.Errorf("BootstrapProfile is not set")
 	}
 	newVersion := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion
-	dashedVersion := strings.Replace(newVersion, ".", "-", -1)
-
 	masterDNS := acsengine.FormatAzureProdFQDN(uc.ClusterTopology.DataModel.Properties.MasterProfile.DNSPrefix, uc.ClusterTopology.DataModel.Location)
 
 	// get the agents
@@ -118,7 +119,7 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	// upgrade bootstrap node
 	bootstrapScript := strings.Replace(bootstrapUpgradeScript, "CURR_VERSION", uc.CurrentDcosVersion, -1)
 	bootstrapScript = strings.Replace(bootstrapScript, "NEW_VERSION", newVersion, -1)
-	bootstrapScript = strings.Replace(bootstrapScript, "NEW_DASHED_VERSION", dashedVersion, -1)
+	bootstrapScript = strings.Replace(bootstrapScript, "BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.DcosBootstrapURL, -1)
 
 	upgradeScriptURL, err := uc.upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrapScript)
 	if err != nil {
@@ -162,9 +163,26 @@ func (uc *UpgradeCluster) upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrap
 		uc.Logger.Errorf(out)
 		return "", err
 	}
+	// copy bootstrap config to master
+	configFilename := fmt.Sprintf("config.%s.yaml", uc.DataModel.Properties.OrchestratorProfile.OrchestratorVersion)
+	uc.Logger.Infof("Copy bootstrap config to master")
+	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > %s\n%s\nEND\n",
+		configFilename, acsengine.GetDCOSBootstrapConfig(uc.DataModel)))
+	if err != nil {
+		uc.Logger.Errorf(out)
+		return "", err
+	}
 	// copy bootstrap script to the bootstrap node
 	uc.Logger.Infof("Copy bootstrap script to the bootstrap node")
 	cmd := fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no bootstrap_upgrade.sh %s:", bootstrapIP)
+	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	if err != nil {
+		uc.Logger.Errorf(out)
+		return "", err
+	}
+	// copy bootstrap config to the bootstrap node
+	uc.Logger.Infof("Copy bootstrap config to the bootstrap node")
+	cmd = fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s %s:", configFilename, bootstrapIP)
 	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 	if err != nil {
 		uc.Logger.Errorf(out)
