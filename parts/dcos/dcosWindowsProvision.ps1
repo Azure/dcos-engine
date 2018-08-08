@@ -133,7 +133,7 @@ powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
     [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_PASSWORD", $password, "Process")
 
     $runasargs = "/fix /type:4 /user:$env:computername\$adminUser /password:$password /command:'$cmd'"
-    Invoke-Expression -command ("c:\AzureData\runasxbox.exe "+$runasargs)
+    Invoke-Expression -command ("c:\AzureData\runasxbox.exe "+$runasargs) >c:/azuredata/xxx.log 2>&1
 
     if ($LASTEXITCODE -ne 0) {
         throw "Failed run DC/OS install script"

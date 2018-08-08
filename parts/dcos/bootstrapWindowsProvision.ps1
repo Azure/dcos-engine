@@ -16,6 +16,8 @@ param(
     $BootstrapURL
 )
 
+import-module dism
+
 filter Timestamp {"[$(Get-Date -Format o)] $_"}
 
 function Write-Log($message)
@@ -43,10 +45,14 @@ function CreateIpDetect($fileName)
 function InstallOpehSSH()
 {
     Write-Log "Installing OpehSSH"
-    $list = (Get-WindowsCapability -Online | ? Name -like 'OpenSSH.Server*')
-    Add-WindowsCapability -Online -Name $list.Name
-    Install-Module -Force OpenSSHUtils
-    Start-Service sshd
+
+    $rslt = ( get-service | where { $.name -like "sshd" } )
+    if ( $rslt.count -eq 0) {
+        $list = (Get-WindowsCapability -Online | ? Name -like 'OpenSSH.Server*')
+        Add-WindowsCapability -Online -Name $list.Name
+        Install-Module -Force OpenSSHUtils
+        Start-Service sshd
+    }
 
     Write-Log "Creating authorized key"
     $path = "C:\AzureData\authorized_keys"
