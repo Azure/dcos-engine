@@ -35,6 +35,8 @@ type dcosUpgradeCmd struct {
 	upgradeVersion      string
 	location            string
 	sshPrivateKeyPath   string
+	lnxBootstrapURL     string
+	winBootstrapURL     string
 
 	// derived
 	containerService   *api.ContainerService
@@ -64,6 +66,8 @@ func newDcosUpgradeCmd() *cobra.Command {
 	f.StringVar(&uc.deploymentDirectory, "deployment-dir", "", "the location of the output from `generate` (required)")
 	f.StringVar(&uc.sshPrivateKeyPath, "ssh-private-key-path", "", "ssh private key path (default: <deployment-dir>/id_rsa)")
 	f.StringVar(&uc.upgradeVersion, "upgrade-version", "", "desired DC/OS version (required)")
+	f.StringVar(&uc.lnxBootstrapURL, "linux-bootstrap-url", "", "Linux bootstrap installer URL (optional)")
+	f.StringVar(&uc.winBootstrapURL, "windows-bootstrap-url", "", "Windows bootstrap installer URL (optional)")
 	addAuthFlags(&uc.authArgs, f)
 
 	return dcosUpgradeCmd
@@ -93,6 +97,20 @@ func (uc *dcosUpgradeCmd) validate(cmd *cobra.Command) error {
 	if len(uc.upgradeVersion) == 0 {
 		cmd.Usage()
 		return fmt.Errorf("--upgrade-version must be specified")
+	}
+
+	if len(uc.lnxBootstrapURL) == 0 {
+		uc.lnxBootstrapURL = acsengine.GetDCOSDefaultBootstrapInstallerURL(uc.upgradeVersion)
+	}
+	if len(uc.lnxBootstrapURL) == 0 {
+		return fmt.Errorf("DCOS %s is not supported", uc.upgradeVersion)
+	}
+
+	if len(uc.winBootstrapURL) == 0 {
+		uc.winBootstrapURL = acsengine.GetDCOSDefaultWindowsBootstrapInstallerURL(uc.upgradeVersion)
+	}
+	if len(uc.winBootstrapURL) == 0 {
+		return fmt.Errorf("DCOS %s is not supported", uc.upgradeVersion)
 	}
 
 	if len(uc.deploymentDirectory) == 0 {
@@ -174,6 +192,12 @@ func (uc *dcosUpgradeCmd) loadCluster(cmd *cobra.Command) error {
 	if !found {
 		return fmt.Errorf("upgrade to DCOS %s is not supported", uc.upgradeVersion)
 	}
+
+	if uc.containerService.Properties.OrchestratorProfile.DcosConfig == nil {
+		uc.containerService.Properties.OrchestratorProfile.DcosConfig = &api.DcosConfig{}
+	}
+	uc.containerService.Properties.OrchestratorProfile.DcosConfig.DcosBootstrapURL = uc.lnxBootstrapURL
+	uc.containerService.Properties.OrchestratorProfile.DcosConfig.DcosWindowsBootstrapURL = uc.winBootstrapURL
 
 	// Read name suffix to identify nodes in the resource group that belong
 	// to this cluster.

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -187,20 +186,16 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			return false
 		},
 		"GetDCOSBootstrapCustomData": func() string {
-			masterIPList := generateIPList(cs.Properties.MasterProfile.Count, cs.Properties.MasterProfile.FirstConsecutiveStaticIP)
-			for i, v := range masterIPList {
-				masterIPList[i] = "    - " + v
-			}
+			bootstrapConfig := getDCOSBootstrapConfig(cs)
 
 			str := getSingleLineDCOSCustomData(
 				cs.Properties.OrchestratorProfile.OrchestratorType,
 				dcosBootstrapCustomdata, 0,
 				map[string]string{
-					"PROVISION_SOURCE_STR":    getDCOSProvisionScript(dcosProvisionSource),
-					"PROVISION_STR":           getDCOSProvisionScript(dcosBootstrapProvision),
-					"MASTER_IP_LIST":          strings.Join(masterIPList, "\n"),
-					"BOOTSTRAP_IP":            cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP,
-					"BOOTSTRAP_OAUTH_ENABLED": strconv.FormatBool(cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.OAuthEnabled)})
+					"BOOTSTRAP_CONFIG_STR": bootstrapConfig,
+					"PROVISION_SOURCE_STR": getDCOSProvisionScript(dcosProvisionSource),
+					"PROVISION_STR":        getDCOSProvisionScript(dcosBootstrapProvision),
+				})
 
 			return fmt.Sprintf("\"customData\": \"[base64(concat('#cloud-config\\n\\n', '%s'))]\",", str)
 		},
@@ -210,14 +205,9 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 				// this should never happen and this is a bug
 				panic(fmt.Sprintf("BUG: %s", err.Error()))
 			}
-			masterIPList := generateIPList(cs.Properties.MasterProfile.Count, cs.Properties.MasterProfile.FirstConsecutiveStaticIP)
-			for i, v := range masterIPList {
-				masterIPList[i] = "- " + v
-			}
 			// translate the parameters
 			csStr := string(b)
-			csStr = strings.Replace(csStr, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.OAuthEnabled), -1)
-			csStr = strings.Replace(csStr, "MASTER_IP_LIST", strings.Join(masterIPList, "\n"), -1)
+			csStr = strings.Replace(csStr, "BOOTSTRAP_WIN_CONFIG", GetDCOSWindowsBootstrapConfig(cs), -1)
 			csStr = strings.Replace(csStr, "SSH_PUB_KEY", cs.Properties.LinuxProfile.SSH.PublicKeys[0].KeyData, -1)
 			csStr = strings.Replace(csStr, "\r\n", "\n", -1)
 			str := getBase64CustomScriptFromStr(csStr)

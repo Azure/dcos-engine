@@ -13,10 +13,7 @@
 param(
     [string]
     [ValidateNotNullOrEmpty()]
-    $BootstrapURL,
-    [string]
-    [ValidateNotNullOrEmpty()]
-    $BootstrapIP
+    $BootstrapURL
 )
 
 filter Timestamp {"[$(Get-Date -Format o)] $_"}
@@ -29,19 +26,7 @@ function Write-Log($message)
 
 function CreateDcosConfig($fileName)
 {
-    $config = "bootstrap_url: http://${BootstrapIP}:8086
-cluster_name: azure-dcos
-exhibitor_storage_backend: static
-master_discovery: static
-oauth_enabled: BOOTSTRAP_OAUTH_ENABLED
-ip_detect_public_filename: genconf/ip-detect.ps1
-master_list:
-MASTER_IP_LIST
-resolvers:
-- 168.63.129.16
-- 8.8.4.4
-- 8.8.8.8
-"
+    $config = "BOOTSTRAP_WIN_CONFIG"
 
     Set-Content -Path $fileName -Value $config
 }
@@ -87,7 +72,7 @@ function InstallOpehSSH()
 }
 
 try {
-    Write-Log "Setting up Windows bootstrap node. BootstrapURL:$BootstrapURL BootstrapIP:$BootstrapIP"
+    Write-Log "Setting up Windows bootstrap node. BootstrapURL:$BootstrapURL"
 
     # Resize C: partition to 60 GB
     $newSize = 64420315136

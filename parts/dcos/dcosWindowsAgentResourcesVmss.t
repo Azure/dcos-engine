@@ -114,7 +114,7 @@
        ,"[concat('Microsoft.Network/loadBalancers/', variables('{{.Name}}LbName'))]"
 {{end}}
 {{if not IsHostedBootstrap}}
-       ,"[concat('Microsoft.Compute/virtualMachines/', variables('bootstrapWinVMName'), '/extensions/bootstrapready')]"
+       ,"[concat('Microsoft.Compute/virtualMachines/', variables('bootstrapWinVMName'), '/extensions/winbootstrapready')]"
 {{end}}
       ],
       "tags":

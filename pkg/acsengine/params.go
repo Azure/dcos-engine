@@ -67,8 +67,8 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 	}
 
 	if strings.HasPrefix(properties.OrchestratorProfile.OrchestratorType, api.DCOS) {
-		dcosBootstrapURL := getDCOSDefaultBootstrapInstallerURL(properties.OrchestratorProfile)
-		dcosWindowsBootstrapURL := getDCOSDefaultWindowsBootstrapInstallerURL(properties.OrchestratorProfile)
+		dcosBootstrapURL := GetDCOSDefaultBootstrapInstallerURL(properties.OrchestratorProfile.OrchestratorVersion)
+		dcosWindowsBootstrapURL := GetDCOSDefaultWindowsBootstrapInstallerURL(properties.OrchestratorProfile.OrchestratorVersion)
 
 		if properties.OrchestratorProfile.DcosConfig != nil {
 			if properties.OrchestratorProfile.DcosConfig.DcosWindowsBootstrapURL != "" {

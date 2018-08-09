@@ -173,7 +173,7 @@
       ],
       "location": "[variables('location')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('bootstrapWinVMName'),'/bootstrapready')]",
+      "name": "[concat(variables('bootstrapWinVMName'),'/winbootstrapready')]",
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",

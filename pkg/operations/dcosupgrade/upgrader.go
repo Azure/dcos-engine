@@ -32,9 +32,12 @@ if [ ! -e /opt/azure/dcos/upgrade/NEW_VERSION/upgrade_url ]; then
   echo "Setting up bootstrap node"
   rm -rf /opt/azure/dcos/upgrade/NEW_VERSION
   mkdir -p /opt/azure/dcos/upgrade/NEW_VERSION/genconf
-  cp /opt/azure/dcos/genconf/config.yaml /opt/azure/dcos/genconf/ip-detect /opt/azure/dcos/upgrade/NEW_VERSION/genconf/
+  cp /opt/azure/dcos/genconf/ip-detect /opt/azure/dcos/upgrade/NEW_VERSION/genconf/ip-detect
+  cp config.NEW_VERSION.yaml /opt/azure/dcos/upgrade/NEW_VERSION/genconf/config.yaml
+  dns=\$(grep search /etc/resolv.conf | cut -d " " -f 2)
+  sed -i "/dns_search:/c dns_search: \$dns" /opt/azure/dcos/upgrade/NEW_VERSION/genconf/config.yaml
   cd /opt/azure/dcos/upgrade/NEW_VERSION/
-  curl -s -O https://dcos-mirror.azureedge.net/dcos/NEW_DASHED_VERSION/dcos_generate_config.sh
+  curl -fsSL -O BOOTSTRAP_URL
   bash dcos_generate_config.sh --generate-node-upgrade-script CURR_VERSION | tee /opt/azure/dcos/upgrade/NEW_VERSION/log
   process=\$(docker ps -f ancestor=nginx -q)
   if [ ! -z "\$process" ]; then
@@ -66,114 +69,12 @@ bash ./dcos_node_upgrade.sh
 
 `
 
-var winBootstrapUpgradeScript = `
-filter Timestamp {"[\$(Get-Date -Format o)] \$_"}
-
-function Write-Log(\$message)
-{
-    \$msg = \$message | Timestamp
-    Write-Output \$msg
-}
-
-try {
-	Write-Log "Starting upgrade configuration"
-	\$BootstrapURL = "https://dcosdevstorage.blob.core.windows.net/dcos-build/testing/paulall/dcos_generate_config.windows.tar.xz"
-	\$upgradeDir = "C:\AzureData\upgrade\NEW_VERSION"
-	\$genconfDir = Join-Path \$upgradeDir "genconf"
-	\$logPath = Join-Path \$upgradeDir "dcos_generate_config.log"
-	\$upgradeUrlPath = Join-Path \$upgradeDir "upgrade_url"
-
-	if ( -Not (Test-Path \$upgradeUrlPath)) {
-		Write-Log "Setting up Windows bootstrap node for upgrade"
-		Remove-Item -Recurse -Force -ErrorAction SilentlyContinue \$upgradeDir
-		New-Item -ItemType Directory -Force -Path \$genconfDir
-		cp "c:\temp\genconf\config.yaml" \$genconfDir
-		cp "c:\temp\genconf\ip-detect.ps1" \$genconfDir
-		cd \$upgradeDir
-
-		\$path = Join-Path \$upgradeDir "dcos_generate_config.windows.tar.xz"
-		& curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o \$path \$BootstrapURL
-		if (\$LASTEXITCODE -ne 0) {
-			throw "Failed to download \$BootstrapURL"
-		}
-
-		& tar -xvf .\dcos_generate_config.windows.tar.xz
-		if (\$LASTEXITCODE -ne 0) {
-			throw "Failed to untar dcos_generate_config.windows.tar.xz"
-		}
-
-		& .\dcos_generate_config.ps1 --generate-node-upgrade-script CURR_VERSION > \$logPath
-		if (\$LASTEXITCODE -ne 0) {
-			throw "Failed to run dcos_generate_config.ps1"
-		}
-
-		# Fetch upgrade script URL
-		\$match = Select-String -Path \$logPath -Pattern "Node upgrade script URL:" -CaseSensitive
-		if (-Not \$match) {
-			throw "Missing Node upgrade script URL in \$logPath"
-		}
-		\$url = ($match.Line -replace 'Node upgrade script URL:','').Trim()
-		if (-Not \$url) {
-			throw "Bad Node upgrade script URL in \$logPath"
-		}
-
-		# Stop docker container
-		\$process = docker ps -q
-		if (\$process) {
-			Write-Log "Stopping nginx service \$process"
-			& docker.exe kill \$process
-		}
-		Write-Log "Starting nginx service"
-
-		# Run docker container with nginx
-		cd c:\docker
-
-		# only create customnat if it does not exist
-		\$a = docker network ls | select-string -pattern "customnat"
-		if (\$a.count -eq 0)
-		{
-			& docker.exe network create --driver="nat" --opt "com.docker.network.windowsshim.disable_gatewaydns=true" "customnat"
-			if (\$LASTEXITCODE -ne 0) {
-				throw "Failed to create customnat docker network"
-			}
-		}
-
-		& docker.exe build --network customnat -t nginx:1803 c:\docker
-		if (\$LASTEXITCODE -ne 0) {
-			throw "Failed to build docker image"
-		}
-
-		\$volume = (\$genconfDir+"/serve/:c:/nginx/html:ro")
-		& docker.exe run --rm -d --network customnat -p 8086:80 -v \$volume nginx:1803
-		if (\$LASTEXITCODE -ne 0) {
-			throw "Failed to run docker image"
-		}
-
-		Set-Content -Path \$upgradeUrlPath -Value \$url -Encoding Ascii
-	}
-	\$url = Get-Content -Path \$upgradeUrlPath -Encoding Ascii
-	if (-Not \$url) {
-		Remove-Item $upgradeUrlPath -Force
-		throw "Failed to set up bootstrap node. Please try again"
-	} else {
-		Write-Output "Setting up bootstrap node completed. Node upgrade script URL \$url"
-	}
-} catch {
-    Write-Log "Failed to upgrade Windows bootstrap node: \$_"
-    exit 1
-}
-Write-Output "Setting up bootstrap node completed"
-exit 0
-`
-
 func (uc *UpgradeCluster) runUpgrade() error {
 	if uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig == nil ||
 		uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile == nil {
 		return fmt.Errorf("BootstrapProfile is not set")
 	}
 	newVersion := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion
-	dashedVersion := strings.Replace(newVersion, ".", "-", -1)
-
 	masterDNS := acsengine.FormatAzureProdFQDN(uc.ClusterTopology.DataModel.Properties.MasterProfile.DNSPrefix, uc.ClusterTopology.DataModel.Location)
 
 	// get the agents
@@ -202,6 +103,7 @@ func (uc *UpgradeCluster) runUpgrade() error {
 
 	var winBootstrapIP string
 	if hasWindowsAgents {
+		//TODO - use winBootstrapIP from the model
 		// winBootstrapIP is next to bootstrapIP
 		ip := net.ParseIP(bootstrapIP)
 		if ip == nil {
@@ -213,7 +115,7 @@ func (uc *UpgradeCluster) runUpgrade() error {
 		}
 		ip[3]++ // check for rollover
 		winBootstrapIP = ip.String()
-		uc.Logger.Infof("Windows bootstrap IP:%s", winBootstrapIP)
+		uc.Logger.Infof("Windows bootstrapIP:%s", winBootstrapIP)
 	}
 
 	// copy SSH key to master
@@ -232,7 +134,7 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	// upgrade bootstrap node
 	bootstrapScript := strings.Replace(bootstrapUpgradeScript, "CURR_VERSION", uc.CurrentDcosVersion, -1)
 	bootstrapScript = strings.Replace(bootstrapScript, "NEW_VERSION", newVersion, -1)
-	bootstrapScript = strings.Replace(bootstrapScript, "NEW_DASHED_VERSION", dashedVersion, -1)
+	bootstrapScript = strings.Replace(bootstrapScript, "BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.DcosBootstrapURL, -1)
 
 	upgradeScriptURL, err := uc.upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrapScript)
 	if err != nil {
@@ -244,9 +146,9 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	if hasWindowsAgents {
 		winBootstrapScript := strings.Replace(winBootstrapUpgradeScript, "CURR_VERSION", uc.CurrentDcosVersion, -1)
 		winBootstrapScript = strings.Replace(winBootstrapScript, "NEW_VERSION", newVersion, -1)
-		winBootstrapScript = strings.Replace(winBootstrapScript, "NEW_DASHED_VERSION", dashedVersion, -1)
+		winBootstrapScript = strings.Replace(winBootstrapScript, "WIN_BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.DcosWindowsBootstrapURL, -1)
 
-		winUpgradeScriptURL, err = uc.upgradeWinBootstrapNode(masterDNS, winBootstrapIP, winBootstrapScript)
+		winUpgradeScriptURL, err = uc.upgradeWindowsBootstrapNode(masterDNS, winBootstrapIP, winBootstrapScript)
 		if err != nil {
 			return err
 		}
@@ -290,6 +192,15 @@ func (uc *UpgradeCluster) upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrap
 		uc.Logger.Errorf(out)
 		return "", err
 	}
+	// copy bootstrap config to master
+	configFilename := fmt.Sprintf("config.%s.yaml", uc.DataModel.Properties.OrchestratorProfile.OrchestratorVersion)
+	uc.Logger.Infof("Copy bootstrap config to master")
+	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > %s\n%s\nEND\n",
+		configFilename, acsengine.GetDCOSBootstrapConfig(uc.DataModel)))
+	if err != nil {
+		uc.Logger.Errorf(out)
+		return "", err
+	}
 	// copy bootstrap script to the bootstrap node
 	uc.Logger.Infof("Copy bootstrap script to the bootstrap node")
 	cmd := fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no bootstrap_upgrade.sh %s:", bootstrapIP)
@@ -298,52 +209,17 @@ func (uc *UpgradeCluster) upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrap
 		uc.Logger.Errorf(out)
 		return "", err
 	}
+	// copy bootstrap config to the bootstrap node
+	uc.Logger.Infof("Copy bootstrap config to the bootstrap node")
+	cmd = fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s %s:", configFilename, bootstrapIP)
+	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	if err != nil {
+		uc.Logger.Errorf(out)
+		return "", err
+	}
 	// run bootstrap script
 	uc.Logger.Infof("Run bootstrap upgrade script")
 	cmd = fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s sudo ./bootstrap_upgrade.sh", bootstrapIP)
-	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
-	if err != nil {
-		uc.Logger.Errorf(out)
-		return "", err
-	}
-	uc.Logger.Info(out)
-	// retrieve upgrade script URL
-	var url string
-	arr := strings.Split(out, "\n")
-	prefix := "Setting up bootstrap node completed. Node upgrade script URL"
-	for _, str := range arr {
-		if strings.HasPrefix(str, prefix) {
-			url = strings.TrimSpace(str[len(prefix):])
-			break
-		}
-	}
-	if len(url) == 0 {
-		return "", fmt.Errorf("Undefined upgrade script URL")
-	}
-	return url, nil
-}
-
-func (uc *UpgradeCluster) upgradeWinBootstrapNode(masterDNS, winBootstrapIP, winBootstrapScript string) (string, error) {
-	// copy bootstrap script to master
-	uc.Logger.Infof("Copy Windows bootstrap script to master")
-	out, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > winBootstrapUpgrade.ps1\n%s\nEND\n", winBootstrapScript))
-	if err != nil {
-		uc.Logger.Errorf(out)
-		return "", err
-	}
-	// copy bootstrap script to the bootstrap node
-	uc.Logger.Infof("Copy Windows bootstrap script to Windows bootstrap node")
-	cmd := fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no winBootstrapUpgrade.ps1 %s:C:\\\\AzureData\\\\winBootstrapUpgrade.ps1",
-		winBootstrapIP)
-	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
-	if err != nil {
-		uc.Logger.Errorf(out)
-		return "", err
-	}
-	// run bootstrap script
-	uc.Logger.Infof("Run Windows bootstrap upgrade script")
-	cmd = fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s powershell.exe -ExecutionPolicy Unrestricted -command \"C:\\\\AzureData\\\\winBootstrapUpgrade.ps1\"",
-		winBootstrapIP)
 	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 	if err != nil {
 		uc.Logger.Errorf(out)
@@ -415,7 +291,7 @@ func (uc *UpgradeCluster) upgradeLinuxAgent(masterDNS string, agent *agentInfo) 
 		return err
 	}
 	if strings.TrimSpace(out) == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
-		uc.Logger.Infof("Agent node is up-to-date. Skipping upgrade")
+		uc.Logger.Infof("Agent node %s is up-to-date. Skipping upgrade", agent.Hostname)
 		return nil
 	}
 	// copy script to the node
@@ -433,10 +309,5 @@ func (uc *UpgradeCluster) upgradeLinuxAgent(masterDNS string, agent *agentInfo) 
 		return err
 	}
 	uc.Logger.Info(out)
-	return nil
-}
-
-func (uc *UpgradeCluster) upgradeWindowsAgent(masterDNS string, agent *agentInfo) error {
-	uc.Logger.Infof("Upgrading Windows agent %s", agent.Hostname)
 	return nil
 }
