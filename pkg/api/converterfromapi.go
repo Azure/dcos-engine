@@ -169,38 +169,30 @@ func convertOrchestratorProfileToVLabs(api *OrchestratorProfile, o *vlabs.Orches
 		sv, _ := semver.Make(o.OrchestratorVersion)
 		o.OrchestratorRelease = fmt.Sprintf("%d.%d", sv.Major, sv.Minor)
 	}
-
-	if api.DcosConfig != nil {
-		o.DcosConfig = &vlabs.DcosConfig{}
-		convertDcosConfigToVLabs(api.DcosConfig, o.DcosConfig)
-	}
-}
-
-func convertDcosConfigToVLabs(api *DcosConfig, vl *vlabs.DcosConfig) {
-	vl.DcosBootstrapURL = api.DcosBootstrapURL
-	vl.DcosWindowsBootstrapURL = api.DcosWindowsBootstrapURL
-
-	if api.Registry != "" {
-		vl.Registry = api.Registry
-	}
-
-	if api.RegistryUser != "" {
-		vl.RegistryUser = api.RegistryUser
-	}
-
-	if api.RegistryPass != "" {
-		vl.RegistryPass = api.RegistryPass
-	}
-
-	if api.BootstrapProfile != nil {
-		vl.BootstrapProfile = &vlabs.BootstrapProfile{
-			VMSize:       api.BootstrapProfile.VMSize,
-			OSDiskSizeGB: api.BootstrapProfile.OSDiskSizeGB,
-			OAuthEnabled: api.BootstrapProfile.OAuthEnabled,
-			StaticIP:     api.BootstrapProfile.StaticIP,
-			Subnet:       api.BootstrapProfile.Subnet,
+	o.OAuthEnabled = api.OAuthEnabled
+	if api.LinuxBootstrapProfile != nil {
+		o.LinuxBootstrapProfile = &vlabs.BootstrapProfile{
+			BootstrapURL: api.LinuxBootstrapProfile.BootstrapURL,
+			External:     api.LinuxBootstrapProfile.External,
+			VMSize:       api.LinuxBootstrapProfile.VMSize,
+			OSDiskSizeGB: api.LinuxBootstrapProfile.OSDiskSizeGB,
+			StaticIP:     api.LinuxBootstrapProfile.StaticIP,
+			Subnet:       api.LinuxBootstrapProfile.Subnet,
 		}
 	}
+	if api.WindowsBootstrapProfile != nil {
+		o.WindowsBootstrapProfile = &vlabs.BootstrapProfile{
+			BootstrapURL: api.WindowsBootstrapProfile.BootstrapURL,
+			External:     api.WindowsBootstrapProfile.External,
+			VMSize:       api.WindowsBootstrapProfile.VMSize,
+			OSDiskSizeGB: api.WindowsBootstrapProfile.OSDiskSizeGB,
+			StaticIP:     api.WindowsBootstrapProfile.StaticIP,
+			Subnet:       api.WindowsBootstrapProfile.Subnet,
+		}
+	}
+	o.Registry = api.Registry
+	o.RegistryUser = api.RegistryUser
+	o.RegistryPass = api.RegistryPass
 }
 
 func convertCustomFilesToVlabs(a *MasterProfile, v *vlabs.MasterProfile) {

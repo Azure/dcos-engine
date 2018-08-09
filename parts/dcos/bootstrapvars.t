@@ -1,4 +1,4 @@
-{{if .OrchestratorProfile.DcosConfig.BootstrapProfile}}
+{{if .OrchestratorProfile.LinuxBootstrapProfile}}
     ,
     "dcosBootstrapURL": "[parameters('dcosBootstrapURL')]",
     "bootstrapVMSize": "[parameters('bootstrapVMSize')]",

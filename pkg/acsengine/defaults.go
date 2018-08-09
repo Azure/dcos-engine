@@ -156,17 +156,17 @@ func setOrchestratorDefaults(cs *api.ContainerService) {
 
 	switch o.OrchestratorType {
 	case api.DCOS:
-		if o.DcosConfig == nil {
-			o.DcosConfig = &api.DcosConfig{}
-		}
 		dcosSemVer, _ := semver.Make(o.OrchestratorVersion)
 		dcosBootstrapSemVer, _ := semver.Make(common.DCOSVersion1Dot11Dot0)
 		if !dcosSemVer.LT(dcosBootstrapSemVer) {
-			if o.DcosConfig.BootstrapProfile == nil {
-				o.DcosConfig.BootstrapProfile = &api.BootstrapProfile{}
+			if o.LinuxBootstrapProfile == nil {
+				o.LinuxBootstrapProfile = &api.BootstrapProfile{}
 			}
-			if len(o.DcosConfig.BootstrapProfile.VMSize) == 0 {
-				o.DcosConfig.BootstrapProfile.VMSize = "Standard_D2s_v3"
+			if len(o.LinuxBootstrapProfile.VMSize) == 0 {
+				o.LinuxBootstrapProfile.VMSize = "Standard_D2s_v3"
+			}
+			if o.WindowsBootstrapProfile == nil {
+				o.WindowsBootstrapProfile = &api.BootstrapProfile{}
 			}
 		}
 	}
@@ -201,9 +201,9 @@ func setMasterNetworkDefaults(a *api.Properties, isUpgrade bool) {
 			if !isUpgrade || len(a.MasterProfile.FirstConsecutiveStaticIP) == 0 {
 				a.MasterProfile.FirstConsecutiveStaticIP = DefaultDCOSFirstConsecutiveStaticIP
 			}
-			if a.OrchestratorProfile.DcosConfig != nil && a.OrchestratorProfile.DcosConfig.BootstrapProfile != nil {
-				if !isUpgrade || len(a.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP) == 0 {
-					a.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP = DefaultDCOSBootstrapStaticIP
+			if a.OrchestratorProfile.LinuxBootstrapProfile != nil {
+				if !isUpgrade || len(a.OrchestratorProfile.LinuxBootstrapProfile.StaticIP) == 0 {
+					a.OrchestratorProfile.LinuxBootstrapProfile.StaticIP = DefaultDCOSBootstrapStaticIP
 				}
 			}
 		}

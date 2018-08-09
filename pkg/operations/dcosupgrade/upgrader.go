@@ -69,9 +69,8 @@ bash ./dcos_node_upgrade.sh
 `
 
 func (uc *UpgradeCluster) runUpgrade() error {
-	if uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig == nil ||
-		uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile == nil {
-		return fmt.Errorf("BootstrapProfile is not set")
+	if uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.LinuxBootstrapProfile == nil {
+		return fmt.Errorf("LinuxBootstrapProfile is not set")
 	}
 	newVersion := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion
 	masterDNS := acsengine.FormatAzureProdFQDN(uc.ClusterTopology.DataModel.Properties.MasterProfile.DNSPrefix, uc.ClusterTopology.DataModel.Location)
@@ -97,7 +96,7 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	}
 
 	masterCount := uc.ClusterTopology.DataModel.Properties.MasterProfile.Count
-	bootstrapIP := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP
+	bootstrapIP := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP
 	uc.Logger.Infof("masterDNS:%s masterCount:%d bootstrapIP:%s", masterDNS, masterCount, bootstrapIP)
 
 	if hasWindowsAgents {
@@ -119,7 +118,7 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	// upgrade bootstrap node
 	bootstrapScript := strings.Replace(bootstrapUpgradeScript, "CURR_VERSION", uc.CurrentDcosVersion, -1)
 	bootstrapScript = strings.Replace(bootstrapScript, "NEW_VERSION", newVersion, -1)
-	bootstrapScript = strings.Replace(bootstrapScript, "BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.DcosBootstrapURL, -1)
+	bootstrapScript = strings.Replace(bootstrapScript, "BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.LinuxBootstrapProfile.BootstrapURL, -1)
 
 	upgradeScriptURL, err := uc.upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrapScript)
 	if err != nil {
