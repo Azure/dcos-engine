@@ -627,8 +627,8 @@ func GetDCOSBootstrapConfig(cs *api.ContainerService) string {
 
 	config := string(bp)
 	config = strings.Replace(config, "MASTER_IP_LIST", strings.Join(masterIPList, "\n"), -1)
-	config = strings.Replace(config, "BOOTSTRAP_IP", cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP, -1)
-	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.OAuthEnabled), -1)
+	config = strings.Replace(config, "BOOTSTRAP_IP", cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP, -1)
+	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.OAuthEnabled), -1)
 
 	return config
 }
@@ -685,7 +685,7 @@ func getDCOSAgentProvisionScript(profile *api.AgentPoolProfile, orchProfile *api
 	b.WriteString(provisionScript)
 	b.WriteString("\n")
 
-	if len(orchProfile.DcosConfig.Registry) == 0 {
+	if len(orchProfile.Registry) == 0 {
 		b.WriteString("rm /etc/docker.tar.gz\n")
 	}
 

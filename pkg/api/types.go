@@ -130,9 +130,14 @@ const (
 
 // OrchestratorProfile contains Orchestrator properties
 type OrchestratorProfile struct {
-	OrchestratorType    string      `json:"orchestratorType"`
-	OrchestratorVersion string      `json:"orchestratorVersion"`
-	DcosConfig          *DcosConfig `json:"dcosConfig,omitempty"`
+	OrchestratorType        string            `json:"orchestratorType"`
+	OrchestratorVersion     string            `json:"orchestratorVersion"`
+	OAuthEnabled            bool              `json:"oauthEnabled,omitempty"`
+	LinuxBootstrapProfile   *BootstrapProfile `json:"linuxBootstrapProfile,omitempty"`
+	WindowsBootstrapProfile *BootstrapProfile `json:"windowsBootstrapProfile,omitempty"`
+	Registry                string            `json:"registry,omitempty"`
+	RegistryUser            string            `json:"registryUser,omitempty"`
+	RegistryPass            string            `json:"registryPassword,omitempty"`
 }
 
 // OrchestratorVersionProfile contains information of a supported orchestrator version:
@@ -159,21 +164,12 @@ type CustomFile struct {
 
 // BootstrapProfile represents the definition of the DCOS bootstrap node used to deploy the cluster
 type BootstrapProfile struct {
+	BootstrapURL string `json:"bootstrapURL,omitempty"`
+	External     bool   `json:"external,omitempty"`
 	VMSize       string `json:"vmSize,omitempty"`
 	OSDiskSizeGB int    `json:"osDiskSizeGB,omitempty"`
-	OAuthEnabled bool   `json:"oauthEnabled,omitempty"`
 	StaticIP     string `json:"staticIP,omitempty"`
 	Subnet       string `json:"subnet,omitempty"`
-}
-
-// DcosConfig Configuration for DC/OS
-type DcosConfig struct {
-	DcosBootstrapURL        string            `json:"dcosBootstrapURL,omitempty"`
-	DcosWindowsBootstrapURL string            `json:"dcosWindowsBootstrapURL,omitempty"`
-	Registry                string            `json:"registry,omitempty"`
-	RegistryUser            string            `json:"registryUser,omitempty"`
-	RegistryPass            string            `json:"registryPassword,omitempty"`
-	BootstrapProfile        *BootstrapProfile `json:"bootstrapProfile,omitempty"`
 }
 
 // MasterProfile represents the definition of the master cluster

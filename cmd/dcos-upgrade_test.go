@@ -20,6 +20,7 @@ var _ = Describe("the upgrade command", func() {
 		Expect(output.Long).Should(Equal(dcosUpgradeLongDescription))
 		Expect(output.Flags().Lookup("location")).NotTo(BeNil())
 		Expect(output.Flags().Lookup("resource-group")).NotTo(BeNil())
+		Expect(output.Flags().Lookup("subscription-id")).NotTo(BeNil())
 		Expect(output.Flags().Lookup("deployment-dir")).NotTo(BeNil())
 		Expect(output.Flags().Lookup("ssh-private-key-path")).NotTo(BeNil())
 		Expect(output.Flags().Lookup("upgrade-version")).NotTo(BeNil())
@@ -38,7 +39,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "",
 					deploymentDirectory: "_output/test",
-					upgradeVersion:      "1.8.9",
+					upgradeVersion:      "1.11.0",
 					location:            "centralus",
 					sshPrivateKeyPath:   privKey.Name(),
 					authArgs: authArgs{
@@ -51,7 +52,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "test",
 					deploymentDirectory: "_output/test",
-					upgradeVersion:      "1.8.9",
+					upgradeVersion:      "1.11.0",
 					location:            "",
 					sshPrivateKeyPath:   privKey.Name(),
 					authArgs: authArgs{
@@ -77,20 +78,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "test",
 					deploymentDirectory: "",
-					upgradeVersion:      "1.9.0",
-					location:            "southcentralus",
-					sshPrivateKeyPath:   privKey.Name(),
-					authArgs: authArgs{
-						rawSubscriptionID: "99999999-0000-0000-0000-000000000000",
-					},
-				},
-				expectedErr: fmt.Errorf("--deployment-dir must be specified"),
-			},
-			{
-				uc: &dcosUpgradeCmd{
-					resourceGroupName:   "test",
-					deploymentDirectory: "",
-					upgradeVersion:      "1.9.0",
+					upgradeVersion:      "1.11.0",
 					location:            "southcentralus",
 					sshPrivateKeyPath:   privKey.Name(),
 					authArgs: authArgs{
@@ -103,7 +91,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "test",
 					deploymentDirectory: "_output/mydir",
-					upgradeVersion:      "1.9.0",
+					upgradeVersion:      "1.11.0",
 					location:            "southcentralus",
 					sshPrivateKeyPath:   privKey.Name(),
 					authArgs:            authArgs{},
@@ -114,7 +102,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "test",
 					deploymentDirectory: "_output/mydir",
-					upgradeVersion:      "1.9.0",
+					upgradeVersion:      "1.11.0",
 					location:            "southcentralus",
 					authArgs:            authArgs{},
 				},
@@ -124,7 +112,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "test",
 					deploymentDirectory: "_output/mydir",
-					upgradeVersion:      "1.9.0",
+					upgradeVersion:      "1.11.0",
 					location:            "southcentralus",
 					sshPrivateKeyPath:   privKey.Name(),
 					authArgs: authArgs{

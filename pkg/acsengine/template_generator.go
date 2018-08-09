@@ -138,10 +138,7 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			return false
 		},
 		"HasPrivateRegistry": func() bool {
-			if cs.Properties.OrchestratorProfile.DcosConfig != nil {
-				return len(cs.Properties.OrchestratorProfile.DcosConfig.Registry) > 0
-			}
-			return false
+			return len(cs.Properties.OrchestratorProfile.Registry) > 0
 		},
 		"RequiresFakeAgentOutput": func() bool {
 			return false
@@ -207,8 +204,8 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 				masterPreprovisionExtension += makeMasterExtensionScriptCommands(cs)
 			}
 			var bootstrapIP string
-			if cs.Properties.OrchestratorProfile.DcosConfig != nil && cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile != nil {
-				bootstrapIP = cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP
+			if cs.Properties.OrchestratorProfile.LinuxBootstrapProfile != nil {
+				bootstrapIP = cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP
 			}
 
 			str := getSingleLineDCOSCustomData(
@@ -237,8 +234,8 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			} else {
 				agentRoleName = "slave"
 			}
-			if cs.Properties.OrchestratorProfile.DcosConfig != nil && cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile != nil {
-				bootstrapIP = cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP
+			if cs.Properties.OrchestratorProfile.LinuxBootstrapProfile != nil {
+				bootstrapIP = cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP
 			}
 
 			str := getSingleLineDCOSCustomData(

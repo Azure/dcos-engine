@@ -3,11 +3,9 @@
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "DCOS",
-      "dcosConfig" : {
-        "registry" : "",
-        "registryUser" : "",
-        "registryPassword" : ""
-      }
+      "registry" : "",
+      "registryUser" : "",
+      "registryPassword" : ""
     },
     "masterProfile": {
       "count": 1,

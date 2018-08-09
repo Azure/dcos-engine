@@ -70,25 +70,25 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 		dcosBootstrapURL := GetDCOSDefaultBootstrapInstallerURL(properties.OrchestratorProfile.OrchestratorVersion)
 		dcosWindowsBootstrapURL := getDCOSDefaultWindowsBootstrapInstallerURL(properties.OrchestratorProfile)
 
-		if properties.OrchestratorProfile.DcosConfig != nil {
-			if properties.OrchestratorProfile.DcosConfig.DcosWindowsBootstrapURL != "" {
-				dcosWindowsBootstrapURL = properties.OrchestratorProfile.DcosConfig.DcosWindowsBootstrapURL
-			}
-			if properties.OrchestratorProfile.DcosConfig.DcosBootstrapURL != "" {
-				dcosBootstrapURL = properties.OrchestratorProfile.DcosConfig.DcosBootstrapURL
-			}
-			if len(properties.OrchestratorProfile.DcosConfig.Registry) > 0 {
-				addValue(parametersMap, "registry", properties.OrchestratorProfile.DcosConfig.Registry)
-				addValue(parametersMap, "registryKey", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", properties.OrchestratorProfile.DcosConfig.RegistryUser, properties.OrchestratorProfile.DcosConfig.RegistryPass))))
-			}
+		if len(properties.OrchestratorProfile.Registry) > 0 {
+			addValue(parametersMap, "registry", properties.OrchestratorProfile.Registry)
+			addValue(parametersMap, "registryKey", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", properties.OrchestratorProfile.RegistryUser, properties.OrchestratorProfile.RegistryPass))))
 		}
 
 		addValue(parametersMap, "dcosBootstrapURL", dcosBootstrapURL)
 		addValue(parametersMap, "dcosWindowsBootstrapURL", dcosWindowsBootstrapURL)
 
-		if properties.OrchestratorProfile.DcosConfig.BootstrapProfile != nil {
-			addValue(parametersMap, "bootstrapStaticIP", properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP)
-			addValue(parametersMap, "bootstrapVMSize", properties.OrchestratorProfile.DcosConfig.BootstrapProfile.VMSize)
+		if properties.OrchestratorProfile.LinuxBootstrapProfile != nil {
+			if len(properties.OrchestratorProfile.LinuxBootstrapProfile.BootstrapURL) > 0 {
+				dcosBootstrapURL = properties.OrchestratorProfile.LinuxBootstrapProfile.BootstrapURL
+			}
+			addValue(parametersMap, "bootstrapStaticIP", properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP)
+			addValue(parametersMap, "bootstrapVMSize", properties.OrchestratorProfile.LinuxBootstrapProfile.VMSize)
+		}
+		if properties.OrchestratorProfile.WindowsBootstrapProfile != nil {
+			if len(properties.OrchestratorProfile.WindowsBootstrapProfile.BootstrapURL) > 0 {
+				dcosWindowsBootstrapURL = properties.OrchestratorProfile.WindowsBootstrapProfile.BootstrapURL
+			}
 		}
 	}
 
