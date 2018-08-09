@@ -161,7 +161,7 @@ func convertVLabsOrchestratorProfile(vp *vlabs.Properties, api *OrchestratorProf
 		if vlabscs.LinuxBootstrapProfile != nil {
 			api.LinuxBootstrapProfile = &BootstrapProfile{
 				BootstrapURL: vlabscs.LinuxBootstrapProfile.BootstrapURL,
-				External:     vlabscs.LinuxBootstrapProfile.External,
+				Hosted:       vlabscs.LinuxBootstrapProfile.Hosted,
 				VMSize:       vlabscs.LinuxBootstrapProfile.VMSize,
 				OSDiskSizeGB: vlabscs.LinuxBootstrapProfile.OSDiskSizeGB,
 				StaticIP:     vlabscs.LinuxBootstrapProfile.StaticIP,
@@ -171,7 +171,7 @@ func convertVLabsOrchestratorProfile(vp *vlabs.Properties, api *OrchestratorProf
 		if vlabscs.WindowsBootstrapProfile != nil {
 			api.WindowsBootstrapProfile = &BootstrapProfile{
 				BootstrapURL: vlabscs.WindowsBootstrapProfile.BootstrapURL,
-				External:     vlabscs.WindowsBootstrapProfile.External,
+				Hosted:       vlabscs.WindowsBootstrapProfile.Hosted,
 				VMSize:       vlabscs.WindowsBootstrapProfile.VMSize,
 				OSDiskSizeGB: vlabscs.WindowsBootstrapProfile.OSDiskSizeGB,
 				StaticIP:     vlabscs.WindowsBootstrapProfile.StaticIP,
@@ -210,7 +210,6 @@ func convertVLabsMasterProfile(vlabs *vlabs.MasterProfile, api *MasterProfile) {
 	api.FQDN = vlabs.FQDN
 	api.StorageProfile = vlabs.StorageProfile
 	api.HTTPSourceAddressPrefix = vlabs.HTTPSourceAddressPrefix
-	api.OAuthEnabled = vlabs.OAuthEnabled
 	// by default vlabs will use managed disks as it has encryption at rest
 	if len(api.StorageProfile) == 0 {
 		api.StorageProfile = ManagedDisks

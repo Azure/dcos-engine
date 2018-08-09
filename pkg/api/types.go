@@ -165,7 +165,7 @@ type CustomFile struct {
 // BootstrapProfile represents the definition of the DCOS bootstrap node used to deploy the cluster
 type BootstrapProfile struct {
 	BootstrapURL string `json:"bootstrapURL,omitempty"`
-	External     bool   `json:"external,omitempty"`
+	Hosted       bool   `json:"hosted,omitempty"`
 	VMSize       string `json:"vmSize,omitempty"`
 	OSDiskSizeGB int    `json:"osDiskSizeGB,omitempty"`
 	StaticIP     string `json:"staticIP,omitempty"`
@@ -186,7 +186,6 @@ type MasterProfile struct {
 	IPAddressCount           int             `json:"ipAddressCount,omitempty"`
 	StorageProfile           string          `json:"storageProfile,omitempty"`
 	HTTPSourceAddressPrefix  string          `json:"HTTPSourceAddressPrefix,omitempty"`
-	OAuthEnabled             bool            `json:"oauthEnabled"`
 	PreprovisionExtension    *Extension      `json:"preProvisionExtension"`
 	Extensions               []Extension     `json:"extensions"`
 	Distro                   Distro          `json:"distro,omitempty"`

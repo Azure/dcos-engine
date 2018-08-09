@@ -173,7 +173,7 @@ func convertOrchestratorProfileToVLabs(api *OrchestratorProfile, o *vlabs.Orches
 	if api.LinuxBootstrapProfile != nil {
 		o.LinuxBootstrapProfile = &vlabs.BootstrapProfile{
 			BootstrapURL: api.LinuxBootstrapProfile.BootstrapURL,
-			External:     api.LinuxBootstrapProfile.External,
+			Hosted:       api.LinuxBootstrapProfile.Hosted,
 			VMSize:       api.LinuxBootstrapProfile.VMSize,
 			OSDiskSizeGB: api.LinuxBootstrapProfile.OSDiskSizeGB,
 			StaticIP:     api.LinuxBootstrapProfile.StaticIP,
@@ -183,7 +183,7 @@ func convertOrchestratorProfileToVLabs(api *OrchestratorProfile, o *vlabs.Orches
 	if api.WindowsBootstrapProfile != nil {
 		o.WindowsBootstrapProfile = &vlabs.BootstrapProfile{
 			BootstrapURL: api.WindowsBootstrapProfile.BootstrapURL,
-			External:     api.WindowsBootstrapProfile.External,
+			Hosted:       api.WindowsBootstrapProfile.Hosted,
 			VMSize:       api.WindowsBootstrapProfile.VMSize,
 			OSDiskSizeGB: api.WindowsBootstrapProfile.OSDiskSizeGB,
 			StaticIP:     api.WindowsBootstrapProfile.StaticIP,
