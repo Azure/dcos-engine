@@ -128,10 +128,15 @@ const (
 
 // OrchestratorProfile contains Orchestrator properties
 type OrchestratorProfile struct {
-	OrchestratorType    string      `json:"orchestratorType" validate:"required"`
-	OrchestratorRelease string      `json:"orchestratorRelease,omitempty"`
-	OrchestratorVersion string      `json:"orchestratorVersion,omitempty"`
-	DcosConfig          *DcosConfig `json:"dcosConfig,omitempty"`
+	OrchestratorType        string            `json:"orchestratorType" validate:"required"`
+	OrchestratorRelease     string            `json:"orchestratorRelease,omitempty"`
+	OrchestratorVersion     string            `json:"orchestratorVersion,omitempty"`
+	OAuthEnabled            bool              `json:"oauthEnabled,omitempty"`
+	LinuxBootstrapProfile   *BootstrapProfile `json:"linuxBootstrapProfile,omitempty"`
+	WindowsBootstrapProfile *BootstrapProfile `json:"windowsBootstrapProfile,omitempty"`
+	Registry                string            `json:"registry,omitempty"`
+	RegistryUser            string            `json:"registryUser,omitempty"`
+	RegistryPass            string            `json:"registryPassword,omitempty"`
 }
 
 // UnmarshalJSON unmarshal json using the default behavior
@@ -169,21 +174,12 @@ type CustomFile struct {
 
 // BootstrapProfile represents the definition of the DCOS bootstrap node used to deploy the cluster
 type BootstrapProfile struct {
+	BootstrapURL string `json:"bootstrapURL,omitempty"`
+	Hosted       bool   `json:"hosted,omitempty"`
 	VMSize       string `json:"vmSize,omitempty"`
 	OSDiskSizeGB int    `json:"osDiskSizeGB,omitempty"`
-	OAuthEnabled bool   `json:"oauthEnabled,omitempty"`
 	StaticIP     string `json:"staticIP,omitempty"`
 	Subnet       string `json:"subnet,omitempty"`
-}
-
-// DcosConfig Configuration for DC/OS
-type DcosConfig struct {
-	DcosBootstrapURL        string            `json:"dcosBootstrapURL,omitempty"`
-	DcosWindowsBootstrapURL string            `json:"dcosWindowsBootstrapURL,omitempty"`
-	Registry                string            `json:"registry,omitempty"`
-	RegistryUser            string            `json:"registryUser,omitempty"`
-	RegistryPass            string            `json:"registryPassword,omitempty"`
-	BootstrapProfile        *BootstrapProfile `json:"bootstrapProfile,omitempty"`
 }
 
 // MasterProfile represents the definition of the master cluster
@@ -199,7 +195,6 @@ type MasterProfile struct {
 	IPAddressCount           int             `json:"ipAddressCount,omitempty" validate:"min=0,max=256"`
 	StorageProfile           string          `json:"storageProfile,omitempty" validate:"eq=StorageAccount|eq=ManagedDisks|len=0"`
 	HTTPSourceAddressPrefix  string          `json:"HTTPSourceAddressPrefix,omitempty"`
-	OAuthEnabled             bool            `json:"oauthEnabled"`
 	PreProvisionExtension    *Extension      `json:"preProvisionExtension"`
 	Extensions               []Extension     `json:"extensions"`
 	Distro                   Distro          `json:"distro,omitempty"`

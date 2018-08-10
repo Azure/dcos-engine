@@ -628,8 +628,8 @@ func GetDCOSBootstrapConfig(cs *api.ContainerService) string {
 
 	config := string(bp)
 	config = strings.Replace(config, "MASTER_IP_LIST", strings.Join(masterIPList, "\n"), -1)
-	config = strings.Replace(config, "BOOTSTRAP_IP", cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP, -1)
-	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.OAuthEnabled), -1)
+	config = strings.Replace(config, "BOOTSTRAP_IP", cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP, -1)
+	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.OAuthEnabled), -1)
 
 	return config
 }
@@ -657,23 +657,10 @@ func GetDCOSWindowsBootstrapConfig(cs *api.ContainerService) string {
 		masterIPList[i] = "- " + v
 	}
 
-	//TODO - use winBootstrapIP from the model
-	// winBootstrapIP is next to bootstrapIP
-	ip := net.ParseIP(cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP)
-	if ip == nil {
-		panic("Invalid IP format")
-	}
-	ip = ip.To4()
-	if ip == nil {
-		panic("Failed to convert to IPv4")
-	}
-	ip[3]++ // check for rollover
-	winBootstrapIP := ip.String()
-
 	config := string(bp)
 	config = strings.Replace(config, "MASTER_IP_LIST", strings.Join(masterIPList, "\n"), -1)
-	config = strings.Replace(config, "BOOTSTRAP_IP", winBootstrapIP, -1)
-	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.OAuthEnabled), -1)
+	config = strings.Replace(config, "BOOTSTRAP_IP", cs.Properties.OrchestratorProfile.WindowsBootstrapProfile.StaticIP, -1)
+	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.OAuthEnabled), -1)
 
 	return config
 }
@@ -727,7 +714,7 @@ func getDCOSAgentProvisionScript(profile *api.AgentPoolProfile, orchProfile *api
 	b.WriteString(provisionScript)
 	b.WriteString("\n")
 
-	if len(orchProfile.DcosConfig.Registry) == 0 {
+	if len(orchProfile.Registry) == 0 {
 		b.WriteString("rm /etc/docker.tar.gz\n")
 	}
 

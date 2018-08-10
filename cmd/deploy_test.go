@@ -15,7 +15,10 @@ import (
 const ExampleAPIModel = `{
   "apiVersion": "vlabs",
   "properties": {
-		"orchestratorProfile": { "orchestratorType": "DCOS", "dcosConfig" : { "dcosBootstrapURL": "%s" } },
+    "orchestratorProfile": {
+      "orchestratorType": "DCOS",
+	  "linuxBootstrapProfile" : { "bootstrapURL": "%s" }
+    },
     "masterProfile": { "count": 1, "dnsPrefix": "", "vmSize": "Standard_D2_v2" },
     "agentPoolProfiles": [ { "name": "linuxpool1", "count": 2, "vmSize": "Standard_D2_v2", "availabilityProfile": "AvailabilitySet" } ],
     "windowsProfile": { "adminUsername": "azureuser", "adminPassword": "replacepassword1234$" },
@@ -26,13 +29,16 @@ const ExampleAPIModel = `{
 `
 
 const ExampleAPIModelWithDNSPrefix = `{
-	"apiVersion": "vlabs",
-	"properties": {
-		  "orchestratorProfile": { "orchestratorType": "DCOS", "dcosConfig" : { "dcosBootstrapURL": "%s" } },
-	  "masterProfile": { "count": 1, "dnsPrefix": "mytestcluster", "vmSize": "Standard_D2_v2" },
-	  "agentPoolProfiles": [ { "name": "linuxpool1", "count": 2, "vmSize": "Standard_D2_v2", "availabilityProfile": "AvailabilitySet" } ],
-	  "windowsProfile": { "adminUsername": "azureuser", "adminPassword": "replacepassword1234$" },
-	  "linuxProfile": { "adminUsername": "azureuser", "ssh": { "publicKeys": [ { "keyData": "" } ] }
+  "apiVersion": "vlabs",
+  "properties": {
+    "orchestratorProfile": {
+		"orchestratorType": "DCOS",
+		"linuxBootstrapProfile" : { "bootstrapURL": "%s" }
+	  },
+    "masterProfile": { "count": 1, "dnsPrefix": "mytestcluster", "vmSize": "Standard_D2_v2" },
+    "agentPoolProfiles": [ { "name": "linuxpool1", "count": 2, "vmSize": "Standard_D2_v2", "availabilityProfile": "AvailabilitySet" } ],
+    "windowsProfile": { "adminUsername": "azureuser", "adminPassword": "replacepassword1234$" },
+    "linuxProfile": { "adminUsername": "azureuser", "ssh": { "publicKeys": [ { "keyData": "" } ] }
 	  }
 	}
   }

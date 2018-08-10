@@ -113,7 +113,7 @@
 {{if IsPublic .Ports}}
        ,"[concat('Microsoft.Network/loadBalancers/', variables('{{.Name}}LbName'))]"
 {{end}}
-{{if not IsHostedBootstrap}}
+{{if not IsHostedWindowsBootstrap}}
        ,"[concat('Microsoft.Compute/virtualMachines/', variables('bootstrapWinVMName'), '/extensions/winbootstrapready')]"
 {{end}}
       ],

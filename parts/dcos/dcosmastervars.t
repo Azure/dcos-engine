@@ -97,7 +97,7 @@
     ],
     "masterVMSize": "[parameters('masterVMSize')]",
     "nameSuffix": "[parameters('nameSuffix')]",
-    "oauthEnabled": "{{.MasterProfile.OAuthEnabled}}",
+    "oauthEnabled": "{{.OrchestratorProfile.OAuthEnabled}}",
     "orchestratorName": "dcos",
     "osImageOffer": "[parameters('osImageOffer')]",
     "osImagePublisher": "[parameters('osImagePublisher')]",

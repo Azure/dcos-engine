@@ -99,7 +99,7 @@
             }
           }
         ]
-{{if .MasterProfile.OAuthEnabled}}
+{{if .OrchestratorProfile.OAuthEnabled}}
         ,"loadBalancingRules": [
 	        {
             "name": "LBRule443",

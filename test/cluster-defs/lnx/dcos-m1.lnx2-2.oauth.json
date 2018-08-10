@@ -4,11 +4,7 @@
     "orchestratorProfile": {
       "orchestratorType": "DCOS",
       "orchestratorRelease": "",
-      "dcosConfig": {
-        "bootstrapProfile" : {
-          "oauthEnabled": true
-        }
-      }
+      "oauthEnabled": true
     },
     "masterProfile": {
       "count": 1,

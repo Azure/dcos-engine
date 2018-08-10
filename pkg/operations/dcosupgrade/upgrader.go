@@ -3,7 +3,6 @@ package dcosupgrade
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"strings"
 
 	"github.com/Azure/dcos-engine/pkg/acsengine"
@@ -70,9 +69,8 @@ bash ./dcos_node_upgrade.sh
 `
 
 func (uc *UpgradeCluster) runUpgrade() error {
-	if uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig == nil ||
-		uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile == nil {
-		return fmt.Errorf("BootstrapProfile is not set")
+	if uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.LinuxBootstrapProfile == nil {
+		return fmt.Errorf("LinuxBootstrapProfile is not set")
 	}
 	newVersion := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion
 	masterDNS := acsengine.FormatAzureProdFQDN(uc.ClusterTopology.DataModel.Properties.MasterProfile.DNSPrefix, uc.ClusterTopology.DataModel.Location)
@@ -98,23 +96,15 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	}
 
 	masterCount := uc.ClusterTopology.DataModel.Properties.MasterProfile.Count
-	bootstrapIP := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.BootstrapProfile.StaticIP
-	uc.Logger.Infof("masterDNS:%s masterCount:%d bootstrapIP:%s", masterDNS, masterCount, bootstrapIP)
-
+	bootstrapIP := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP
+	uc.Logger.Infof("masterDNS:%s masterCount:%d", masterDNS, masterCount)
+	uc.Logger.Infof("bootstrapIP:%s", bootstrapIP)
 	var winBootstrapIP string
 	if hasWindowsAgents {
-		//TODO - use winBootstrapIP from the model
-		// winBootstrapIP is next to bootstrapIP
-		ip := net.ParseIP(bootstrapIP)
-		if ip == nil {
-			return fmt.Errorf("Invalid IP format '%s'", bootstrapIP)
+		if uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.WindowsBootstrapProfile == nil {
+			return fmt.Errorf("WindowsBootstrapProfile is not set")
 		}
-		ip = ip.To4()
-		if ip == nil {
-			return fmt.Errorf("Failed to convert IP '%s' to IPv4", bootstrapIP)
-		}
-		ip[3]++ // check for rollover
-		winBootstrapIP = ip.String()
+		winBootstrapIP = uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.WindowsBootstrapProfile.StaticIP
 		uc.Logger.Infof("Windows bootstrapIP:%s", winBootstrapIP)
 	}
 
@@ -134,7 +124,7 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	// upgrade bootstrap node
 	bootstrapScript := strings.Replace(bootstrapUpgradeScript, "CURR_VERSION", uc.CurrentDcosVersion, -1)
 	bootstrapScript = strings.Replace(bootstrapScript, "NEW_VERSION", newVersion, -1)
-	bootstrapScript = strings.Replace(bootstrapScript, "BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.DcosBootstrapURL, -1)
+	bootstrapScript = strings.Replace(bootstrapScript, "BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.LinuxBootstrapProfile.BootstrapURL, -1)
 
 	upgradeScriptURL, err := uc.upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrapScript)
 	if err != nil {
@@ -146,7 +136,7 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	if hasWindowsAgents {
 		winBootstrapScript := strings.Replace(winBootstrapUpgradeScript, "CURR_VERSION", uc.CurrentDcosVersion, -1)
 		winBootstrapScript = strings.Replace(winBootstrapScript, "NEW_VERSION", newVersion, -1)
-		winBootstrapScript = strings.Replace(winBootstrapScript, "WIN_BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.DcosConfig.DcosWindowsBootstrapURL, -1)
+		winBootstrapScript = strings.Replace(winBootstrapScript, "WIN_BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.WindowsBootstrapProfile.BootstrapURL, -1)
 
 		winUpgradeScriptURL, err = uc.upgradeWindowsBootstrapNode(masterDNS, winBootstrapIP, winBootstrapScript)
 		if err != nil {

@@ -9,6 +9,8 @@ const (
 	DefaultDCOSFirstConsecutiveStaticIP = "192.168.255.5"
 	// DefaultDCOSBootstrapStaticIP specifies the static IP address on bootstrap for a DCOS cluster
 	DefaultDCOSBootstrapStaticIP = "192.168.255.240"
+	// DefaultDCOSWindowsBootstrapStaticIP specifies the static IP address on Windows bootstrap for a DCOS cluster
+	DefaultDCOSWindowsBootstrapStaticIP = "192.168.255.241"
 	// DefaultDockerBridgeSubnet specifies the default subnet for the docker bridge network for masters and agents.
 	DefaultDockerBridgeSubnet = "172.17.0.1/16"
 	// DefaultAgentSubnetTemplate specifies a default agent subnet

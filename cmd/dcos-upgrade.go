@@ -193,11 +193,8 @@ func (uc *dcosUpgradeCmd) loadCluster(cmd *cobra.Command) error {
 		return fmt.Errorf("upgrade to DCOS %s is not supported", uc.upgradeVersion)
 	}
 
-	if uc.containerService.Properties.OrchestratorProfile.DcosConfig == nil {
-		uc.containerService.Properties.OrchestratorProfile.DcosConfig = &api.DcosConfig{}
-	}
-	uc.containerService.Properties.OrchestratorProfile.DcosConfig.DcosBootstrapURL = uc.lnxBootstrapURL
-	uc.containerService.Properties.OrchestratorProfile.DcosConfig.DcosWindowsBootstrapURL = uc.winBootstrapURL
+	uc.containerService.Properties.OrchestratorProfile.LinuxBootstrapProfile.BootstrapURL = uc.lnxBootstrapURL
+	uc.containerService.Properties.OrchestratorProfile.WindowsBootstrapProfile.BootstrapURL = uc.winBootstrapURL
 
 	// Read name suffix to identify nodes in the resource group that belong
 	// to this cluster.

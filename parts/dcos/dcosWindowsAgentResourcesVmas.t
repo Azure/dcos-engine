@@ -210,7 +210,7 @@
 {{end}}
         "[concat('Microsoft.Network/networkInterfaces/', variables('{{.Name}}VMNamePrefix'), 'nic-', copyIndex(variables('{{.Name}}Offset')))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('{{.Name}}AvailabilitySet'))]"
-{{if not IsHostedBootstrap}}
+{{if not IsHostedWindowsBootstrap}}
        ,"[concat('Microsoft.Compute/virtualMachines/', variables('bootstrapWinVMName'), '/extensions/winbootstrapready')]"
 {{end}}
       ],

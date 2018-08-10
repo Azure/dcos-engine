@@ -4,10 +4,8 @@
     "orchestratorProfile": {
       "orchestratorType": "DCOS",
       "orchestratorRelease": "",
-      "dcosConfig": {
-        "bootstrapProfile": {
-          "staticIP": "10.100.0.240"
-        }
+      "linuxBootstrapProfile": {
+        "staticIP": "10.100.0.240"
       }
     },
     "masterProfile": {
