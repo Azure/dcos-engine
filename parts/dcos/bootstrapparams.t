@@ -1,22 +1,15 @@
 {{if IsHostedBootstrap}}
-    "bootstrapSubnet": {
-      "defaultValue": "{{.HostedBootstrapProfile.Subnet}}",
-      "metadata": {
-        "description": "Sets the subnet for the VMs in the cluster."
-      },
-      "type": "string"
-    },
     "bootstrapEndpoint": {
-      "defaultValue": "{{.HostedBootstrapProfile.FQDN}}",
+      "defaultValue": "{{.LinuxBootstrapProfile.BootstrapURL}}",
       "metadata": {
-        "description": "Sets the static IP of the first bootstrap"
+        "description": "Sets the FQDN of hosted Linux bootstrap node"
       },
       "type": "string"
-    },
+    }
 {{else}}
     "bootstrapStaticIP": {
       "metadata": {
-        "description": "Sets the static IP of the first bootstrap"
+        "description": "Sets the static IP of Linux bootstrap node"
       },
       "type": "string"
     },
@@ -27,4 +20,29 @@
       },
       "type": "string"
     }
+{{end}}
+{{if .HasWindows}}
+{{if IsHostedWindowsBootstrap}}
+    ,"windowsBootstrapEndpoint": {
+      "defaultValue": "{{.WindowsBootstrapProfile.BootstrapURL}}",
+      "metadata": {
+        "description": "Sets the FQDN of hosted Windows bootstrap node"
+      },
+      "type": "string"
+    }
+{{else}}
+    ,"windowsBootstrapStaticIP": {
+      "metadata": {
+        "description": "Sets the static IP of Windows bootstrap node"
+      },
+      "type": "string"
+    },
+    "windowsBootstrapVMSize": {
+      {{GetMasterAllowedSizes}}
+      "metadata": {
+        "description": "The size of the Virtual Machine."
+      },
+      "type": "string"
+    }
+{{end}}
 {{end}}

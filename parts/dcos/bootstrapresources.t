@@ -149,7 +149,7 @@
               "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('masterStorageAccountName')),variables('apiVersionStorage')).primaryEndpoints.blob,'vhds/',variables('bootstrapVMName'),'-osdisk.vhd')]"
             }
 {{end}}
-{{if ne .OrchestratorProfile.DcosConfig.BootstrapProfile.OSDiskSizeGB 0}}
+{{if ne .OrchestratorProfile.LinuxBootstrapProfile.OSDiskSizeGB 0}}
             ,"diskSizeGB": "60"
 {{end}}
           }

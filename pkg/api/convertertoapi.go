@@ -152,42 +152,35 @@ func convertVLabsOrchestratorProfile(vp *vlabs.Properties, api *OrchestratorProf
 	api.OrchestratorType = vlabscs.OrchestratorType
 	switch api.OrchestratorType {
 	case DCOS:
-		if vlabscs.DcosConfig != nil {
-			api.DcosConfig = &DcosConfig{}
-			convertVLabsDcosConfig(vlabscs.DcosConfig, api.DcosConfig)
-		}
 		api.OrchestratorVersion = common.RationalizeReleaseAndVersion(
 			vlabscs.OrchestratorType,
 			vlabscs.OrchestratorRelease,
 			vlabscs.OrchestratorVersion,
 			false)
-	}
-}
-
-func convertVLabsDcosConfig(vlabs *vlabs.DcosConfig, api *DcosConfig) {
-	api.DcosBootstrapURL = vlabs.DcosBootstrapURL
-	api.DcosWindowsBootstrapURL = vlabs.DcosWindowsBootstrapURL
-
-	if len(vlabs.Registry) > 0 {
-		api.Registry = vlabs.Registry
-	}
-
-	if len(vlabs.RegistryUser) > 0 {
-		api.RegistryUser = vlabs.RegistryUser
-	}
-
-	if len(vlabs.RegistryPass) > 0 {
-		api.RegistryPass = vlabs.RegistryPass
-	}
-
-	if vlabs.BootstrapProfile != nil {
-		api.BootstrapProfile = &BootstrapProfile{
-			VMSize:       vlabs.BootstrapProfile.VMSize,
-			OSDiskSizeGB: vlabs.BootstrapProfile.OSDiskSizeGB,
-			OAuthEnabled: vlabs.BootstrapProfile.OAuthEnabled,
-			StaticIP:     vlabs.BootstrapProfile.StaticIP,
-			Subnet:       vlabs.BootstrapProfile.Subnet,
+		api.OAuthEnabled = vlabscs.OAuthEnabled
+		if vlabscs.LinuxBootstrapProfile != nil {
+			api.LinuxBootstrapProfile = &BootstrapProfile{
+				BootstrapURL: vlabscs.LinuxBootstrapProfile.BootstrapURL,
+				Hosted:       vlabscs.LinuxBootstrapProfile.Hosted,
+				VMSize:       vlabscs.LinuxBootstrapProfile.VMSize,
+				OSDiskSizeGB: vlabscs.LinuxBootstrapProfile.OSDiskSizeGB,
+				StaticIP:     vlabscs.LinuxBootstrapProfile.StaticIP,
+				Subnet:       vlabscs.LinuxBootstrapProfile.Subnet,
+			}
 		}
+		if vlabscs.WindowsBootstrapProfile != nil {
+			api.WindowsBootstrapProfile = &BootstrapProfile{
+				BootstrapURL: vlabscs.WindowsBootstrapProfile.BootstrapURL,
+				Hosted:       vlabscs.WindowsBootstrapProfile.Hosted,
+				VMSize:       vlabscs.WindowsBootstrapProfile.VMSize,
+				OSDiskSizeGB: vlabscs.WindowsBootstrapProfile.OSDiskSizeGB,
+				StaticIP:     vlabscs.WindowsBootstrapProfile.StaticIP,
+				Subnet:       vlabscs.WindowsBootstrapProfile.Subnet,
+			}
+		}
+		api.Registry = vlabscs.Registry
+		api.RegistryUser = vlabscs.RegistryUser
+		api.RegistryPass = vlabscs.RegistryPass
 	}
 }
 
@@ -217,7 +210,6 @@ func convertVLabsMasterProfile(vlabs *vlabs.MasterProfile, api *MasterProfile) {
 	api.FQDN = vlabs.FQDN
 	api.StorageProfile = vlabs.StorageProfile
 	api.HTTPSourceAddressPrefix = vlabs.HTTPSourceAddressPrefix
-	api.OAuthEnabled = vlabs.OAuthEnabled
 	// by default vlabs will use managed disks as it has encryption at rest
 	if len(api.StorageProfile) == 0 {
 		api.StorageProfile = ManagedDisks

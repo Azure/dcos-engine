@@ -121,7 +121,7 @@
       "name": "[variables('bootstrapWinVMName')]",
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('bootstrapVMSize')]"
+          "vmSize": "[variables('bootstrapWinVMSize')]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -156,8 +156,8 @@
               "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('masterStorageAccountName')),variables('apiVersionStorage')).primaryEndpoints.blob,'vhds/',variables('bootstrapWinVMName'),'-osdisk.vhd')]"
             }
 {{end}}
-{{if ne .OrchestratorProfile.DcosConfig.BootstrapProfile.OSDiskSizeGB 0}}
-            ,"diskSizeGB": {{.OrchestratorProfile.DcosConfig.BootstrapProfile.OSDiskSizeGB}}
+{{if ne .OrchestratorProfile.WindowsBootstrapProfile.OSDiskSizeGB 0}}
+            ,"diskSizeGB": {{.OrchestratorProfile.WindowsBootstrapProfile.OSDiskSizeGB}}
 {{else}}
             ,"diskSizeGB": "120"
 {{end}}

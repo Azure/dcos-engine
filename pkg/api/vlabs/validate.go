@@ -77,12 +77,16 @@ func (a *Properties) validateOrchestratorProfile(isUpdate bool) error {
 			if version == "" {
 				return fmt.Errorf("the following OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of dcos-engine", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion)
 			}
-			if o.DcosConfig != nil && o.DcosConfig.BootstrapProfile != nil {
-				if len(o.DcosConfig.BootstrapProfile.StaticIP) > 0 {
-					if net.ParseIP(o.DcosConfig.BootstrapProfile.StaticIP) == nil {
-						return fmt.Errorf("DcosConfig.BootstrapProfile.StaticIP '%s' is an invalid IP address",
-							o.DcosConfig.BootstrapProfile.StaticIP)
-					}
+			if o.LinuxBootstrapProfile != nil && len(o.LinuxBootstrapProfile.StaticIP) > 0 {
+				if net.ParseIP(o.LinuxBootstrapProfile.StaticIP) == nil {
+					return fmt.Errorf("LinuxBootstrapProfile.StaticIP '%s' is an invalid IP address",
+						o.LinuxBootstrapProfile.StaticIP)
+				}
+			}
+			if o.WindowsBootstrapProfile != nil && len(o.WindowsBootstrapProfile.StaticIP) > 0 {
+				if net.ParseIP(o.WindowsBootstrapProfile.StaticIP) == nil {
+					return fmt.Errorf("WindowsBootstrapProfile.StaticIP '%s' is an invalid IP address",
+						o.WindowsBootstrapProfile.StaticIP)
 				}
 			}
 		default:
@@ -108,11 +112,6 @@ func (a *Properties) validateOrchestratorProfile(isUpdate bool) error {
 			}
 		}
 	}
-
-	if o.OrchestratorType != DCOS && o.DcosConfig != nil && (*o.DcosConfig != DcosConfig{}) {
-		return fmt.Errorf("DcosConfig can be specified only when OrchestratorType is DCOS")
-	}
-
 	return nil
 }
 

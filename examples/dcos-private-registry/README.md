@@ -1,17 +1,15 @@
 # Private Registry Support
 
-ACS can deploy credentials to private registries to agent nodes DC/OS clusters.
+dcos-engine can deploy credentials to private registries to agent nodes DC/OS clusters.
 
 The credentials are specified in the orchestrator profile in the apimodel:
 ```
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "DCOS",
-      "dcosConfig" : {
-        "Registry" : "",
-        "RegistryUser" : "",
-        "RegistryPassword" : ""
-      }
+      "registry" : "",
+      "registryUser" : "",
+      "registryPassword" : ""
     },
 ```
 
@@ -38,9 +36,9 @@ Let's provision a DC/OS cluster with credentials to an [Azure Container Registry
     },
 ```
 
-- Run acs-engine to create ARM templates
+- Run dcos-engine to create ARM templates
 ```
-./acs-engine generate examples/dcos-private-registry/dcos.json
+./dcos-engine generate examples/dcos-private-registry/dcos.json
 ```
 
 - Deploy the cluster
