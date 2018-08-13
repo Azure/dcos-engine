@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Upgrading the cluster"
+
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
@@ -23,8 +25,6 @@ fi
 
 [[ ! -z "${EXPECTED_ORCHESTRATOR_VERSION:-}" ]] || (echo "Must specify EXPECTED_ORCHESTRATOR_VERSION" && exit 1)
 
-OUTPUT="${DIR}/../../../_output/${INSTANCE_NAME}"
-
 CMD=""
 if [ ! -z "${LINUX_BOOTSTRAP_URL:-}" ]; then
   CMD=" $CMD --linux-bootstrap-url ${LINUX_BOOTSTRAP_URL}"
@@ -37,11 +37,15 @@ validate_node_count
 
 validate_node_health
 
-${DIR}/../../../bin/dcos-engine upgrade \
+${DCOS_ENGINE_EXE} upgrade $CMD \
   --subscription-id ${SUBSCRIPTION_ID} \
   --deployment-dir ${OUTPUT} \
   --location ${LOCATION} \
   --resource-group ${RESOURCE_GROUP} \
   --upgrade-version ${EXPECTED_ORCHESTRATOR_VERSION} \
   --ssh-private-key-path ${SSH_KEY} \
-  $CMD
+  --auth-method client_secret \
+  --client-id ${SERVICE_PRINCIPAL_CLIENT_ID} \
+  --client-secret ${SERVICE_PRINCIPAL_CLIENT_SECRET}
+
+echo "Successfully upgraded the cluster"
