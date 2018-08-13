@@ -353,7 +353,6 @@ function validate_agents {
 
 function validate_master_agent_authentication() {
 	echo $(date +%H:%M:%S) "Validating master-agent authentication"
-
 	[[ ! -z "${INSTANCE_NAME:-}" ]]         || exit_with_msg "Must specify INSTANCE_NAME"
 	[[ ! -z "${LOCATION:-}" ]]              || exit_with_msg "Must specify LOCATION"
 	[[ ! -z "${EXPECTED_MASTER_COUNT:-}" ]] || exit_with_msg "Must specify EXPECTED_MASTER_COUNT"
@@ -371,18 +370,14 @@ function validate_master_agent_authentication() {
 	echo $(date +%H:%M:%S) "All masters have the authenticate_agents flag enabled"
 }
 
-function validate() {
+function validate_node_count() {
+	echo $(date +%H:%M:%S) "Checking node count"
 	[[ ! -z "${INSTANCE_NAME:-}" ]]           || exit_with_msg "Must specify INSTANCE_NAME"
 	[[ ! -z "${LOCATION:-}" ]]                || exit_with_msg "Must specify LOCATION"
 	[[ ! -z "${SSH_KEY:-}" ]]                 || exit_with_msg "Must specify SSH_KEY"
 	[[ ! -z "${EXPECTED_NODE_COUNT:-}" ]]     || exit_with_msg "Must specify EXPECTED_NODE_COUNT"
-	[[ ! -z "${EXPECTED_LINUX_AGENTS:-}" ]]   || exit_with_msg "Must specify EXPECTED_LINUX_AGENTS"
-	[[ ! -z "${EXPECTED_WINDOWS_AGENTS:-}" ]] || exit_with_msg "Must specify EXPECTED_WINDOWS_AGENTS"
-	[[ ! -z "${OUTPUT:-}" ]]                  || exit_with_msg "Must specify OUTPUT"
 
 	local remote_exec="ssh -i "${SSH_KEY}" -o ConnectTimeout=30 -o StrictHostKeyChecking=no azureuser@${INSTANCE_NAME}.${LOCATION}.cloudapp.azure.com -p2200"
-
-	echo $(date +%H:%M:%S) "Checking node count"
 	count=20
 	while (( $count > 0 )); do
 		echo $(date +%H:%M:%S) "  ... counting down $count"
@@ -397,8 +392,15 @@ function validate() {
 		echo ${node_list}
 		exit 1
 	fi
+}
 
+function validate_node_health() {
 	echo $(date +%H:%M:%S) "Checking node health"
+	[[ ! -z "${INSTANCE_NAME:-}" ]]           || exit_with_msg "Must specify INSTANCE_NAME"
+	[[ ! -z "${LOCATION:-}" ]]                || exit_with_msg "Must specify LOCATION"
+	[[ ! -z "${SSH_KEY:-}" ]]                 || exit_with_msg "Must specify SSH_KEY"
+
+	local remote_exec="ssh -i "${SSH_KEY}" -o ConnectTimeout=30 -o StrictHostKeyChecking=no azureuser@${INSTANCE_NAME}.${LOCATION}.cloudapp.azure.com -p2200"
 	count=20
 	while (( $count > 0 )); do
 		echo $(date +%H:%M:%S) "  ... counting down $count"
@@ -407,6 +409,21 @@ function validate() {
 		sleep 30; count=$((count-1))
 	done
 	[[ -z "$unhealthy_nodes" ]] || exit_with_msg "Error: unhealthy nodes: $unhealthy_nodes"
+}
+
+function validate() {
+	echo $(date +%H:%M:%S) "Validating deployment"
+	[[ ! -z "${INSTANCE_NAME:-}" ]]           || exit_with_msg "Must specify INSTANCE_NAME"
+	[[ ! -z "${LOCATION:-}" ]]                || exit_with_msg "Must specify LOCATION"
+	[[ ! -z "${SSH_KEY:-}" ]]                 || exit_with_msg "Must specify SSH_KEY"
+	[[ ! -z "${EXPECTED_LINUX_AGENTS:-}" ]]   || exit_with_msg "Must specify EXPECTED_LINUX_AGENTS"
+	[[ ! -z "${EXPECTED_WINDOWS_AGENTS:-}" ]] || exit_with_msg "Must specify EXPECTED_WINDOWS_AGENTS"
+
+	local remote_exec="ssh -i "${SSH_KEY}" -o ConnectTimeout=30 -o StrictHostKeyChecking=no azureuser@${INSTANCE_NAME}.${LOCATION}.cloudapp.azure.com -p2200"
+
+	validate_node_count
+
+	validate_node_health
 
 	if [[ "${MASTER_AGENT_AUTHENTICATION:-}" == "true" ]]; then
 		validate_master_agent_authentication
