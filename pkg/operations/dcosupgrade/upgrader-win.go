@@ -112,51 +112,51 @@ exit 0
 func (uc *UpgradeCluster) upgradeWindowsBootstrapNode(masterDNS, winBootstrapIP, winBootstrapScript string) (string, error) {
 	// copy bootstrap script to master
 	uc.Logger.Infof("Copy Windows bootstrap script to master")
-	out, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > winBootstrapUpgrade.ps1\n%s\nEND\n", winBootstrapScript))
+	strOut, strErr, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > winBootstrapUpgrade.ps1\n%s\nEND\n", winBootstrapScript))
 	if err != nil {
-		uc.Logger.Errorf(out)
+		uc.Logger.Errorf(strErr)
 		return "", err
 	}
 	// copy bootstrap config to master
 	configFilename := fmt.Sprintf("config-win.%s.yaml", uc.DataModel.Properties.OrchestratorProfile.OrchestratorVersion)
 	uc.Logger.Infof("Copy Windows bootstrap config to master")
-	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > %s\n%s\nEND\n",
+	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > %s\n%s\nEND\n",
 		configFilename, acsengine.GetDCOSWindowsBootstrapConfig(uc.DataModel)))
 	if err != nil {
-		uc.Logger.Errorf(out)
+		uc.Logger.Errorf(strErr)
 		return "", err
 	}
 	// copy bootstrap script to bootstrap node
 	uc.Logger.Infof("Copy Windows bootstrap script to Windows bootstrap node")
 	cmd := fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no winBootstrapUpgrade.ps1 %s:C:\\\\AzureData\\\\winBootstrapUpgrade.ps1",
 		winBootstrapIP)
-	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 	if err != nil {
-		uc.Logger.Errorf(out)
+		uc.Logger.Errorf(strErr)
 		return "", err
 	}
 	// copy bootstrap config to bootstrap node
 	uc.Logger.Infof("Copy Windows bootstrap config to Windows bootstrap node")
 	cmd = fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s %s:C:\\\\AzureData\\\\%s",
 		configFilename, winBootstrapIP, configFilename)
-	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 	if err != nil {
-		uc.Logger.Errorf(out)
+		uc.Logger.Errorf(strErr)
 		return "", err
 	}
 	// run bootstrap script
 	uc.Logger.Infof("Run Windows bootstrap upgrade script")
 	cmd = fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s powershell.exe -ExecutionPolicy Unrestricted -command \"C:\\\\AzureData\\\\winBootstrapUpgrade.ps1\"",
 		winBootstrapIP)
-	out, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 	if err != nil {
-		uc.Logger.Errorf(out)
+		uc.Logger.Errorf(strErr)
 		return "", err
 	}
-	uc.Logger.Info(out)
+	uc.Logger.Info(strOut)
 	// retrieve upgrade script URL
 	var url string
-	arr := strings.Split(out, "\n")
+	arr := strings.Split(strOut, "\n")
 	prefix := "Setting up bootstrap node completed. Node upgrade script URL"
 	for _, str := range arr {
 		if strings.HasPrefix(str, prefix) {
