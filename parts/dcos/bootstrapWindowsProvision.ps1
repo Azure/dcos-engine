@@ -93,6 +93,14 @@ function InstallOpehSSH()
     $acl | Set-Acl -Path $path
 
     Restart-Service sshd
+
+    $sshStartCmd = "C:\AzureData\OpenSSHStart.ps1"
+    Set-Content -Path $sshStartCmd -Value "Start-Service sshd"
+
+    & schtasks.exe /CREATE /F /SC ONSTART /RU SYSTEM /RL HIGHEST /TN "SSH start" /TR "powershell.exe -ExecutionPolicy Bypass -File $sshStartCmd"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to add scheduled task $sshStartCmd"
+    }
 }
 
 try {
