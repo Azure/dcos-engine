@@ -40,6 +40,30 @@ function CreateIpDetect($fileName)
     Set-Content -Path $fileName -Value $content
 }
 
+function CreateDockerStart($fileName, $log)
+{
+    $content = "Start-Transcript -path $log -append"
+    Set-Content -Path $fileName -Value $content
+    $content = '
+Write-Output ("{0} {1}" -f (Get-Date -Format o), "Starting docker container")
+& docker.exe run --rm -d --network customnat -p 8086:80 -v C:/temp/genconf/serve/:c:/nginx/html:ro nginx:1803
+if ($LASTEXITCODE -ne 0) {
+    Write-Output ("{0} {1}" -f (Get-Date -Format o), "Failed to run docker image")
+    Stop-Transcript
+    Exit 1
+}
+Write-Output ("{0} {1}" -f (Get-Date -Format o), "Successfully started docker container")
+Stop-Transcript
+Exit 0
+'
+    Add-Content -Path $fileName -Value $content
+
+    & schtasks.exe /CREATE /F /SC ONSTART /RU ADMIN_USER /RP ADMIN_PASSWORD /TN "Docker start" /RL HIGHEST /TR "Powershell.exe -ExecutionPolicy Bypass -File $filename"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to add scheduled task $fileName"
+    }
+}
+
 function InstallOpehSSH()
 {
     Write-Log "Installing OpehSSH"
@@ -137,6 +161,8 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to run docker image"
     }
+
+    CreateDockerStart "c:\docker\StartDocker.ps1" "c:\docker\StartDocker.log"
 } catch {
     Write-Log "Failed to provision Windows bootstrap node: $_"
     exit 1
