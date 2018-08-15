@@ -17,6 +17,27 @@ function Write-Log(\$message)
     Write-Output \$msg
 }
 
+function CreateDockerStart(\$fileName, \$log, \$volume)
+{
+    \$content = "Start-Transcript -path \$log -append"
+    Set-Content -Path \$fileName -Value \$content
+	\$content = 'Write-Output ("[{0}] {1}" -f (Get-Date -Format o), "Starting docker container")'
+	Add-Content -Path \$fileName -Value \$content
+	\$content = "& docker.exe run --rm -d --network customnat -p 8086:80 -v \$volume nginx:1803"
+	Add-Content -Path \$fileName -Value \$content
+	\$content = '
+if (\$LASTEXITCODE -ne 0) {
+    Write-Output ("[{0}] {1}" -f (Get-Date -Format o), "Failed to run docker image")
+    Stop-Transcript
+    Exit 1
+}
+Write-Output ("[{0}] {1}" -f (Get-Date -Format o), "Successfully started docker container")
+Stop-Transcript
+Exit 0
+'
+    Add-Content -Path \$fileName -Value \$content
+}
+
 try {
 	Write-Log "Starting upgrade configuration"
 	\$BootstrapURL = "WIN_BOOTSTRAP_URL"
@@ -92,6 +113,8 @@ try {
 			throw "Failed to run docker image"
 		}
 
+		CreateDockerStart "c:\docker\StartDocker.ps1" "c:\docker\StartDocker.log" \$volume
+
 		Set-Content -Path \$upgradeUrlPath -Value \$url -Encoding Ascii
 	}
 	\$url = Get-Content -Path \$upgradeUrlPath -Encoding Ascii
@@ -99,13 +122,14 @@ try {
 		Remove-Item $upgradeUrlPath -Force
 		throw "Failed to set up bootstrap node. Please try again"
 	} else {
+		# keep Write-Output - used in parsing
 		Write-Output "Setting up bootstrap node completed. Node upgrade script URL \$url"
 	}
 } catch {
     Write-Log "Failed to upgrade Windows bootstrap node: \$_"
     exit 1
 }
-Write-Output "Setting up bootstrap node completed"
+Write-Log "Setting up bootstrap node completed"
 exit 0
 `
 
