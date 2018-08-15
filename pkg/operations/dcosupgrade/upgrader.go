@@ -96,7 +96,8 @@ func (uc *UpgradeCluster) runUpgrade() error {
 
 	masterCount := uc.ClusterTopology.DataModel.Properties.MasterProfile.Count
 	bootstrapIP := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP
-	uc.Logger.Infof("masterDNS:%s masterCount:%d bootstrapIP:%s", masterDNS, masterCount, bootstrapIP)
+	uc.Logger.Infof("masterDNS:%s masterCount:%d", masterDNS, masterCount)
+	uc.Logger.Infof("bootstrapIP:%s", bootstrapIP)
 
 	if hasWindowsAgents {
 		uc.Logger.Warnf("DC/OS upgrade for Windows agents is currently unsupported")
