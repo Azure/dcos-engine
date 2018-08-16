@@ -133,7 +133,69 @@ Write-Log "Setting up bootstrap node completed"
 exit 0
 `
 
-func (uc *UpgradeCluster) upgradeWindowsBootstrapNode(masterDNS, winBootstrapIP, winBootstrapScript string) (string, error) {
+var winNodeUpgradeScript = `
+filter Timestamp {"[\$(Get-Date -Format o)] \$_"}
+
+function Write-Log(\$message)
+{
+    \$msg = \$message | Timestamp
+    Write-Output \$msg
+}
+\$upgradeScriptURL = "WIN_UPGRADE_SCRIPT_URL"
+\$upgradeDir = "C:\AzureData\upgrade\NEW_VERSION"
+\$log = "C:\AzureData\upgrade_NEW_VERSION.log"
+\$adminUser = "ADMIN_USER"
+\$password = "ADMIN_PASSWORD"
+try {
+	Start-Transcript -Path \$log -append
+	Write-Log "Starting node upgrade to DCOS NEW_VERSION"
+	Remove-Item -Recurse -Force -ErrorAction SilentlyContinue \$upgradeDir
+	New-Item -ItemType Directory -Force -Path \$upgradeDir
+	cd \$upgradeDir
+
+	[Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_USERNAME", "\$env:computername\\\$adminUser", "Machine")
+	[Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_PASSWORD", \$password, "Machine")
+
+	[Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_USERNAME", "\$env:computername\\\$adminUser", "Process")
+	[Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_PASSWORD", \$password, "Process")
+
+	& curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o dcos_node_upgrade.ps1 \$upgradeScriptURL
+	if (\$LASTEXITCODE -ne 0) {
+		throw "Failed to download \$upgradeScriptURL"
+	}
+	.\dcos_node_upgrade.ps1
+}catch {
+	Write-Log "Failed to upgrade Windows agent node: \$_"
+	Stop-Transcript
+    exit 1
+}
+Write-Log "Successfully upgraded Windows agent node"
+Stop-Transcript
+exit 0
+`
+
+func (uc *UpgradeCluster) createWindowsAgentScript(masterDNS, winUpgradeScriptURL, newVersion string) error {
+	winNodeScript := strings.Replace(winNodeUpgradeScript, "NEW_VERSION", newVersion, -1)
+	winNodeScript = strings.Replace(winNodeScript, "WIN_UPGRADE_SCRIPT_URL", winUpgradeScriptURL, -1)
+	winNodeScript = strings.Replace(winNodeScript, "ADMIN_USER", uc.ClusterTopology.DataModel.Properties.WindowsProfile.AdminUsername, -1)
+	winNodeScript = strings.Replace(winNodeScript, "ADMIN_PASSWORD", uc.ClusterTopology.DataModel.Properties.WindowsProfile.AdminPassword, -1)
+	winNodeScriptName := fmt.Sprintf("node_upgrade.%s.ps1", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion)
+	// copy script to master
+	uc.Logger.Infof("Copy Windows agent script to master")
+	_, strErr, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > %s\n%s\nEND\n",
+		winNodeScriptName, winNodeScript))
+	if err != nil {
+		uc.Logger.Errorf(strErr)
+		return err
+	}
+	return nil
+}
+
+func (uc *UpgradeCluster) upgradeWindowsBootstrapNode(masterDNS, winBootstrapIP, newVersion string) (string, error) {
+	winBootstrapScript := strings.Replace(winBootstrapUpgradeScript, "CURR_VERSION", uc.CurrentDcosVersion, -1)
+	winBootstrapScript = strings.Replace(winBootstrapScript, "NEW_VERSION", newVersion, -1)
+	winBootstrapScript = strings.Replace(winBootstrapScript, "WIN_BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.WindowsBootstrapProfile.BootstrapURL, -1)
+
 	// copy bootstrap script to master
 	uc.Logger.Infof("Copy Windows bootstrap script to master")
 	strOut, strErr, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > winBootstrapUpgrade.ps1\n%s\nEND\n", winBootstrapScript))
@@ -195,6 +257,48 @@ func (uc *UpgradeCluster) upgradeWindowsBootstrapNode(masterDNS, winBootstrapIP,
 }
 
 func (uc *UpgradeCluster) upgradeWindowsAgent(masterDNS string, agent *agentInfo) error {
-	uc.Logger.Infof("Skipping upgrade of Windows agent %s", agent.Hostname)
+	uc.Logger.Infof("Upgrading Windows agent %s", agent.Hostname)
+	cmdCheckVersion := fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s type C:\\\\opt\\\\mesosphere\\\\etc\\\\dcos-version.json", agent.Hostname)
+	strOut, strErr, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmdCheckVersion)
+	if err != nil {
+		uc.Logger.Errorf(strErr)
+		return err
+	}
+	uc.Logger.Infof("Current DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
+	dcosVer, err := getDCOSVersion(strOut)
+	if err != nil {
+		uc.Logger.Errorf("failed to parse dcos-version.json")
+		return err
+	}
+	if dcosVer.Version == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
+		uc.Logger.Infof("Agent node %s is up-to-date. Skipping upgrade", agent.Hostname)
+		return nil
+	}
+	// copy script to the node
+	uc.Logger.Infof("Copy script to agent %s", agent.Hostname)
+	winNodeScriptName := fmt.Sprintf("node_upgrade.%s.ps1", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion)
+	cmd := fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s %s:C:\\\\AzureData\\\\%s",
+		winNodeScriptName, agent.Hostname, winNodeScriptName)
+	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	if err != nil {
+		uc.Logger.Errorf(strErr)
+		return err
+	}
+	// run the script
+	uc.Logger.Infof("Run script on agent %s", agent.Hostname)
+	cmd = fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s powershell.exe -ExecutionPolicy Unrestricted -Command \"C:\\\\AzureData\\\\%s\"",
+		agent.Hostname, winNodeScriptName)
+	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	if err != nil {
+		uc.Logger.Errorf(strErr)
+		return err
+	}
+	// check new version
+	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmdCheckVersion)
+	if err != nil {
+		uc.Logger.Errorf(strErr)
+		return err
+	}
+	uc.Logger.Infof("New DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
 	return nil
 }
