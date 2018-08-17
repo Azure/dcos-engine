@@ -332,7 +332,7 @@ func getDCOSAgentCustomNodeLabels(profile *api.AgentPoolProfile) string {
 	}
 
 	if len(profile.Ports) > 0 {
-		attrstring += ";public_ip:yes"
+		attrstring += ";public_ip:true"
 	}
 
 	buf.WriteString(attrstring)
@@ -352,10 +352,10 @@ func getDCOSWindowsAgentCustomAttributes(profile *api.AgentPoolProfile) string {
 	if len(profile.OSType) > 0 {
 		attrstring = fmt.Sprintf("os:%s", profile.OSType)
 	} else {
-		attrstring = fmt.Sprintf("os:windows")
+		attrstring = fmt.Sprintf("os:%s", api.Windows)
 	}
 	if len(profile.Ports) > 0 {
-		attrstring += ";public_ip:yes"
+		attrstring += ";public_ip:true"
 	}
 	buf.WriteString(attrstring)
 	if len(profile.CustomNodeLabels) > 0 {

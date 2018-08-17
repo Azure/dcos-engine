@@ -46,77 +46,76 @@ try {
 	\$logPath = Join-Path \$upgradeDir "dcos_generate_config.log"
 	\$upgradeUrlPath = Join-Path \$upgradeDir "upgrade_url"
 
-	if ( -Not (Test-Path \$upgradeUrlPath)) {
-		Write-Log "Setting up Windows bootstrap node for upgrade"
-		Remove-Item -Recurse -Force -ErrorAction SilentlyContinue \$upgradeDir
-		New-Item -ItemType Directory -Force -Path \$genconfDir
-		\$path = Join-Path \$genconfDir "config.yaml"
-		cp "C:\AzureData\config-win.NEW_VERSION.yaml" \$path
-		cp "c:\temp\genconf\ip-detect.ps1" \$genconfDir
-		cd \$upgradeDir
+	Write-Log "Setting up Windows bootstrap node for upgrade"
+	Remove-Item -Recurse -Force -ErrorAction SilentlyContinue \$upgradeDir
+	New-Item -ItemType Directory -Force -Path \$genconfDir
+	\$path = Join-Path \$genconfDir "config.yaml"
+	cp "C:\AzureData\config-win.NEW_VERSION.yaml" \$path
+	cp "c:\temp\genconf\ip-detect.ps1" \$genconfDir
+	cd \$upgradeDir
 
-		\$path = Join-Path \$upgradeDir "dcos_generate_config.windows.tar.xz"
-		& curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o \$path \$BootstrapURL
-		if (\$LASTEXITCODE -ne 0) {
-			throw "Failed to download \$BootstrapURL"
-		}
-
-		& tar -xvf .\dcos_generate_config.windows.tar.xz
-		if (\$LASTEXITCODE -ne 0) {
-			throw "Failed to untar dcos_generate_config.windows.tar.xz"
-		}
-
-		& .\dcos_generate_config.ps1 --generate-node-upgrade-script CURR_VERSION > \$logPath
-		if (\$LASTEXITCODE -ne 0) {
-			throw "Failed to run dcos_generate_config.ps1"
-		}
-
-		# Fetch upgrade script URL
-		\$match = Select-String -Path \$logPath -Pattern "Node upgrade script URL:" -CaseSensitive
-		if (-Not \$match) {
-			throw "Missing Node upgrade script URL in \$logPath"
-		}
-		\$url = (\$match.Line -replace 'Node upgrade script URL:','').Trim()
-		if (-Not \$url) {
-			throw "Bad Node upgrade script URL in \$logPath"
-		}
-
-		# Stop docker container
-		\$process = docker ps -q
-		if (\$process) {
-			Write-Log "Stopping nginx service \$process"
-			& docker.exe kill \$process
-		}
-		Write-Log "Starting nginx service"
-
-		# Run docker container with nginx
-		cd c:\docker
-
-		# only create customnat if it does not exist
-		\$a = docker network ls | select-string -pattern "customnat"
-		if (\$a.count -eq 0)
-		{
-			& docker.exe network create --driver="nat" --opt "com.docker.network.windowsshim.disable_gatewaydns=true" "customnat"
-			if (\$LASTEXITCODE -ne 0) {
-				throw "Failed to create customnat docker network"
-			}
-		}
-
-		& docker.exe build --network customnat -t nginx:1803 c:\docker
-		if (\$LASTEXITCODE -ne 0) {
-			throw "Failed to build docker image"
-		}
-
-		\$volume = (\$genconfDir+"/serve/:c:/nginx/html:ro")
-		& docker.exe run --rm -d --network customnat -p 8086:80 -v \$volume nginx:1803
-		if (\$LASTEXITCODE -ne 0) {
-			throw "Failed to run docker image"
-		}
-
-		CreateDockerStart "c:\docker\StartDocker.ps1" "c:\docker\StartDocker.log" \$volume
-
-		Set-Content -Path \$upgradeUrlPath -Value \$url -Encoding Ascii
+	\$path = Join-Path \$upgradeDir "dcos_generate_config.windows.tar.xz"
+	& curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o \$path \$BootstrapURL
+	if (\$LASTEXITCODE -ne 0) {
+		throw "Failed to download \$BootstrapURL"
 	}
+
+	& tar -xvf .\dcos_generate_config.windows.tar.xz
+	if (\$LASTEXITCODE -ne 0) {
+		throw "Failed to untar dcos_generate_config.windows.tar.xz"
+	}
+
+	& .\dcos_generate_config.ps1 --generate-node-upgrade-script CURR_VERSION > \$logPath
+	if (\$LASTEXITCODE -ne 0) {
+		throw "Failed to run dcos_generate_config.ps1"
+	}
+
+	# Fetch upgrade script URL
+	\$match = Select-String -Path \$logPath -Pattern "Node upgrade script URL:" -CaseSensitive
+	if (-Not \$match) {
+		throw "Missing Node upgrade script URL in \$logPath"
+	}
+	\$url = (\$match.Line -replace 'Node upgrade script URL:','').Trim()
+	if (-Not \$url) {
+		throw "Bad Node upgrade script URL in \$logPath"
+	}
+
+	# Stop docker container
+	\$process = docker ps -q
+	if (\$process) {
+		Write-Log "Stopping nginx service \$process"
+		& docker.exe kill \$process
+	}
+	Write-Log "Starting nginx service"
+
+	# Run docker container with nginx
+	cd c:\docker
+
+	# only create customnat if it does not exist
+	\$a = docker network ls | select-string -pattern "customnat"
+	if (\$a.count -eq 0)
+	{
+		& docker.exe network create --driver="nat" --opt "com.docker.network.windowsshim.disable_gatewaydns=true" "customnat"
+		if (\$LASTEXITCODE -ne 0) {
+			throw "Failed to create customnat docker network"
+		}
+	}
+
+	& docker.exe build --network customnat -t nginx:1803 c:\docker
+	if (\$LASTEXITCODE -ne 0) {
+		throw "Failed to build docker image"
+	}
+
+	\$volume = (\$genconfDir+"/serve/:c:/nginx/html:ro")
+	& docker.exe run --rm -d --network customnat -p 8086:80 -v \$volume nginx:1803
+	if (\$LASTEXITCODE -ne 0) {
+		throw "Failed to run docker image"
+	}
+
+	CreateDockerStart "c:\docker\StartDocker.ps1" "c:\docker\StartDocker.log" \$volume
+
+	Set-Content -Path \$upgradeUrlPath -Value \$url -Encoding Ascii
+
 	\$url = Get-Content -Path \$upgradeUrlPath -Encoding Ascii
 	if (-Not \$url) {
 		Remove-Item $upgradeUrlPath -Force
@@ -265,15 +264,6 @@ func (uc *UpgradeCluster) upgradeWindowsAgent(masterDNS string, agent *agentInfo
 		return err
 	}
 	uc.Logger.Infof("Current DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
-	dcosVer, err := getDCOSVersion(strOut)
-	if err != nil {
-		uc.Logger.Errorf("failed to parse dcos-version.json")
-		return err
-	}
-	if dcosVer.Version == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
-		uc.Logger.Infof("Agent node %s is up-to-date. Skipping upgrade", agent.Hostname)
-		return nil
-	}
 	// copy script to the node
 	uc.Logger.Infof("Copy script to agent %s", agent.Hostname)
 	winNodeScriptName := fmt.Sprintf("node_upgrade.%s.ps1", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion)
