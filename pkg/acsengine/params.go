@@ -68,15 +68,12 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 
 	if strings.HasPrefix(properties.OrchestratorProfile.OrchestratorType, api.DCOS) {
 		dcosBootstrapURL := GetDCOSDefaultBootstrapInstallerURL(properties.OrchestratorProfile.OrchestratorVersion)
-		dcosWindowsBootstrapURL := getDCOSDefaultWindowsBootstrapInstallerURL(properties.OrchestratorProfile)
+		dcosWindowsBootstrapURL := GetDCOSDefaultWindowsBootstrapInstallerURL(properties.OrchestratorProfile.OrchestratorVersion)
 
 		if len(properties.OrchestratorProfile.Registry) > 0 {
 			addValue(parametersMap, "registry", properties.OrchestratorProfile.Registry)
 			addValue(parametersMap, "registryKey", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", properties.OrchestratorProfile.RegistryUser, properties.OrchestratorProfile.RegistryPass))))
 		}
-
-		addValue(parametersMap, "dcosBootstrapURL", dcosBootstrapURL)
-		addValue(parametersMap, "dcosWindowsBootstrapURL", dcosWindowsBootstrapURL)
 
 		if properties.OrchestratorProfile.LinuxBootstrapProfile != nil {
 			if len(properties.OrchestratorProfile.LinuxBootstrapProfile.BootstrapURL) > 0 {
@@ -90,6 +87,8 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 				dcosWindowsBootstrapURL = properties.OrchestratorProfile.WindowsBootstrapProfile.BootstrapURL
 			}
 		}
+		addValue(parametersMap, "dcosBootstrapURL", dcosBootstrapURL)
+		addValue(parametersMap, "dcosWindowsBootstrapURL", dcosWindowsBootstrapURL)
 	}
 
 	// Agent parameters

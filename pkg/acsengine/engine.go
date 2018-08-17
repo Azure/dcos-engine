@@ -270,20 +270,21 @@ func GetDCOSDefaultBootstrapInstallerURL(orchestratorVersion string) string {
 		return "https://dcos-mirror.azureedge.net/dcos/1-11-2/dcos_generate_config.sh"
 	case common.DCOSVersion1Dot11Dot0:
 		return "https://dcos-mirror.azureedge.net/dcos/1-11-0/dcos_generate_config.sh"
+	default:
+		return ""
 	}
-	return ""
 }
 
-func getDCOSDefaultWindowsBootstrapInstallerURL(profile *api.OrchestratorProfile) string {
-	if profile.OrchestratorType == api.DCOS {
-		switch profile.OrchestratorVersion {
-		case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
-			return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-2"
-		case common.DCOSVersion1Dot11Dot0:
-			return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-0"
-		}
+// GetDCOSDefaultWindowsBootstrapInstallerURL returns default DCOS Windows Bootstrap installer URL
+func GetDCOSDefaultWindowsBootstrapInstallerURL(orchestratorVersion string) string {
+	switch orchestratorVersion {
+	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
+		return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-2"
+	case common.DCOSVersion1Dot11Dot0:
+		return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-0"
+	default:
+		return ""
 	}
-	return ""
 }
 
 func isCustomVNET(a []*api.AgentPoolProfile) bool {
