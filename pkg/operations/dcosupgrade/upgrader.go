@@ -24,6 +24,13 @@ type agentList struct {
 	Agents []*agentInfo `json:"slaves"`
 }
 
+type dcosVersion struct {
+	Version         string `json:"version,omitempty"`
+	DcosImageCommit string `json:"dcos-image-commit,omitempty"`
+	BootstrapID     string `json:"bootstrap-id,omitempty"`
+	DcosVariant     string `json:"dcos-variant,omitempty"`
+}
+
 var bootstrapUpgradeScript = `#!/bin/bash
 
 echo "Starting upgrade configuration"
@@ -109,13 +116,13 @@ func (uc *UpgradeCluster) runUpgrade() error {
 
 	// copy SSH key to master
 	uc.Logger.Infof("Copy SSH key to master")
-	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > .ssh/id_rsa_cluster\n%s\nEND\n", string(uc.SSHKey)))
+	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > .ssh/id_rsa_cluster\n%s\nEND\n", string(uc.SSHKey)))
 	if err != nil {
 		uc.Logger.Errorf(strErr)
 		return err
 	}
 	// set SSH key permissions
-	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, "chmod 600 .ssh/id_rsa_cluster")
+	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, "chmod 600 .ssh/id_rsa_cluster")
 	if err != nil {
 		uc.Logger.Errorf(strErr)
 		return err
@@ -130,19 +137,17 @@ func (uc *UpgradeCluster) runUpgrade() error {
 		return err
 	}
 	uc.Logger.Infof("upgradeScriptURL %s", upgradeScriptURL)
-	// upgrade Windows bootstrap node
-	var winUpgradeScriptURL string
-	if hasWindowsAgents {
-		winBootstrapScript := strings.Replace(winBootstrapUpgradeScript, "CURR_VERSION", uc.CurrentDcosVersion, -1)
-		winBootstrapScript = strings.Replace(winBootstrapScript, "NEW_VERSION", newVersion, -1)
-		winBootstrapScript = strings.Replace(winBootstrapScript, "WIN_BOOTSTRAP_URL", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.WindowsBootstrapProfile.BootstrapURL, -1)
 
-		winUpgradeScriptURL, err = uc.upgradeWindowsBootstrapNode(masterDNS, winBootstrapIP, winBootstrapScript)
+	if hasWindowsAgents {
+		winUpgradeScriptURL, err := uc.upgradeWindowsBootstrapNode(masterDNS, winBootstrapIP, newVersion)
 		if err != nil {
 			return err
 		}
+		uc.Logger.Infof("winUpgradeScriptURL %s", winUpgradeScriptURL)
+		if err = uc.createWindowsAgentScript(masterDNS, winUpgradeScriptURL, newVersion); err != nil {
+			return err
+		}
 	}
-	uc.Logger.Infof("winUpgradeScriptURL %s", winUpgradeScriptURL)
 
 	nodeScript := strings.Replace(nodeUpgradeScript, "NEW_VERSION", newVersion, -1)
 	nodeScript = strings.Replace(nodeScript, "UPGRADE_SCRIPT_URL", upgradeScriptURL, -1)
@@ -176,7 +181,7 @@ func (uc *UpgradeCluster) upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrap
 		return "", err
 	}
 	// set script permissions
-	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, "chmod 755 ./bootstrap_upgrade.sh")
+	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, "chmod 755 ./bootstrap_upgrade.sh")
 	if err != nil {
 		uc.Logger.Errorf(strErr)
 		return "", err
@@ -184,7 +189,7 @@ func (uc *UpgradeCluster) upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrap
 	// copy bootstrap config to master
 	configFilename := fmt.Sprintf("config.%s.yaml", uc.DataModel.Properties.OrchestratorProfile.OrchestratorVersion)
 	uc.Logger.Infof("Copy bootstrap config to master")
-	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > %s\n%s\nEND\n",
+	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > %s\n%s\nEND\n",
 		configFilename, acsengine.GetDCOSBootstrapConfig(uc.DataModel)))
 	if err != nil {
 		uc.Logger.Errorf(strErr)
@@ -193,7 +198,7 @@ func (uc *UpgradeCluster) upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrap
 	// copy bootstrap script to the bootstrap node
 	uc.Logger.Infof("Copy bootstrap script to the bootstrap node")
 	cmd := fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no bootstrap_upgrade.sh %s:", bootstrapIP)
-	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 	if err != nil {
 		uc.Logger.Errorf(strErr)
 		return "", err
@@ -201,7 +206,7 @@ func (uc *UpgradeCluster) upgradeBootstrapNode(masterDNS, bootstrapIP, bootstrap
 	// copy bootstrap config to the bootstrap node
 	uc.Logger.Infof("Copy bootstrap config to the bootstrap node")
 	cmd = fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s %s:", configFilename, bootstrapIP)
-	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 	if err != nil {
 		uc.Logger.Errorf(strErr)
 		return "", err
@@ -236,67 +241,103 @@ func (uc *UpgradeCluster) upgradeMasterNodes(masterDNS string, masterCount int, 
 	catCmd := fmt.Sprintf("cat << END > node_upgrade.sh\n%s\nEND\n", nodeScript)
 	for i := 0; i < masterCount; i++ {
 		uc.Logger.Infof("Upgrading master node #%d", i+1)
+		port := 2200 + i
 		// check current version
-		strOut, strErr, err := operations.RemoteRun("azureuser", masterDNS, 2200+i, uc.SSHKey, "grep version /opt/mesosphere/etc/dcos-version.json | cut -d '\"' -f 4")
+		strOut, strErr, err := operations.RemoteRun("azureuser", masterDNS, port, uc.SSHKey, "cat /opt/mesosphere/etc/dcos-version.json")
 		if err != nil {
 			uc.Logger.Errorf(strErr)
 			return err
 		}
-		if strings.TrimSpace(strOut) == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
+		uc.Logger.Infof("Current DCOS Version for %s:%d\n%s", masterDNS, port, strings.TrimSpace(strOut))
+		dcosVer, err := getDCOSVersion(strOut)
+		if err != nil {
+			uc.Logger.Errorf("failed to parse dcos-version.json")
+			return err
+		}
+		if dcosVer.Version == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
 			uc.Logger.Infof("Master node is up-to-date. Skipping upgrade")
 			continue
 		}
 		// copy script to the node
-		strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200+i, uc.SSHKey, catCmd)
+		uc.Logger.Infof("Copy script to master node")
+		_, strErr, err = operations.RemoteRun("azureuser", masterDNS, port, uc.SSHKey, catCmd)
 		if err != nil {
 			uc.Logger.Errorf(strErr)
 			return err
 		}
 		// set script permissions
-		strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200+i, uc.SSHKey, "chmod 755 ./node_upgrade.sh")
+		_, strErr, err = operations.RemoteRun("azureuser", masterDNS, port, uc.SSHKey, "chmod 755 ./node_upgrade.sh")
 		if err != nil {
 			uc.Logger.Errorf(strErr)
 			return err
 		}
 		// run the script
-		strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200+i, uc.SSHKey, "sudo ./node_upgrade.sh")
+		uc.Logger.Infof("Run script on master node")
+		_, strErr, err = operations.RemoteRun("azureuser", masterDNS, port, uc.SSHKey, "sudo ./node_upgrade.sh")
 		if err != nil {
 			uc.Logger.Errorf(strErr)
 			return err
 		}
-		uc.Logger.Info(strOut)
+		// check new version
+		strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, port, uc.SSHKey, "cat /opt/mesosphere/etc/dcos-version.json")
+		if err != nil {
+			uc.Logger.Errorf(strErr)
+			return err
+		}
+		uc.Logger.Infof("New DCOS Version for %s:%d\n%s", masterDNS, port, strings.TrimSpace(strOut))
 	}
 	return nil
 }
 
 func (uc *UpgradeCluster) upgradeLinuxAgent(masterDNS string, agent *agentInfo) error {
 	uc.Logger.Infof("Upgrading Linux agent %s", agent.Hostname)
-
 	// check current version
-	cmd := fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s grep version /opt/mesosphere/etc/dcos-version.json | cut -d '\"' -f 4", agent.Hostname)
-	strOut, strErr, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	cmdCheckVersion := fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s cat /opt/mesosphere/etc/dcos-version.json", agent.Hostname)
+	strOut, strErr, err := operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmdCheckVersion)
 	if err != nil {
 		uc.Logger.Errorf(strErr)
 		return err
 	}
-	if strings.TrimSpace(strOut) == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
+	uc.Logger.Infof("Current DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
+	dcosVer, err := getDCOSVersion(strOut)
+	if err != nil {
+		uc.Logger.Errorf("failed to parse dcos-version.json")
+		return err
+	}
+	if dcosVer.Version == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
 		uc.Logger.Infof("Agent node %s is up-to-date. Skipping upgrade", agent.Hostname)
 		return nil
 	}
 	// copy script to the node
-	cmd = fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no node_upgrade.sh %s:", agent.Hostname)
-	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	uc.Logger.Infof("Copy script to agent %s", agent.Hostname)
+	cmd := fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no node_upgrade.sh %s:", agent.Hostname)
+	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 	if err != nil {
 		uc.Logger.Errorf(strErr)
 		return err
 	}
 	// run the script
+	uc.Logger.Infof("Run script on agent %s", agent.Hostname)
 	cmd = fmt.Sprintf("ssh -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no %s sudo ./node_upgrade.sh", agent.Hostname)
-	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
+	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmd)
 	if err != nil {
 		uc.Logger.Errorf(strErr)
 		return err
 	}
-	uc.Logger.Info(strOut)
+	// check new version
+	strOut, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, cmdCheckVersion)
+	if err != nil {
+		uc.Logger.Errorf(strErr)
+		return err
+	}
+	uc.Logger.Infof("Current DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
 	return nil
+}
+
+func getDCOSVersion(data string) (*dcosVersion, error) {
+	dcosVer := &dcosVersion{}
+	if err := json.Unmarshal([]byte(data), dcosVer); err != nil {
+		return nil, err
+	}
+	return dcosVer, nil
 }
