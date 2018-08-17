@@ -24,37 +24,28 @@ type agentList struct {
 	Agents []*agentInfo `json:"slaves"`
 }
 
-type dcosVersion struct {
-	Version         string `json:"version,omitempty"`
-	DcosImageCommit string `json:"dcos-image-commit,omitempty"`
-	BootstrapID     string `json:"bootstrap-id,omitempty"`
-	DcosVariant     string `json:"dcos-variant,omitempty"`
-}
-
 var bootstrapUpgradeScript = `#!/bin/bash
 
-echo "Starting upgrade configuration"
-if [ ! -e /opt/azure/dcos/upgrade/NEW_VERSION/upgrade_url ]; then
-  echo "Setting up bootstrap node"
-  rm -rf /opt/azure/dcos/upgrade/NEW_VERSION
-  mkdir -p /opt/azure/dcos/upgrade/NEW_VERSION/genconf
-  cp /opt/azure/dcos/genconf/ip-detect /opt/azure/dcos/upgrade/NEW_VERSION/genconf/ip-detect
-  cp config.NEW_VERSION.yaml /opt/azure/dcos/upgrade/NEW_VERSION/genconf/config.yaml
-  dns=\$(grep search /etc/resolv.conf | cut -d " " -f 2)
-  sed -i "/dns_search:/c dns_search: \$dns" /opt/azure/dcos/upgrade/NEW_VERSION/genconf/config.yaml
-  cd /opt/azure/dcos/upgrade/NEW_VERSION/
-  curl -fsSL -O BOOTSTRAP_URL
-  bash dcos_generate_config.sh --generate-node-upgrade-script CURR_VERSION | tee /opt/azure/dcos/upgrade/NEW_VERSION/log
-  process=\$(docker ps -f ancestor=nginx -q)
-  if [ ! -z "\$process" ]; then
-    echo "Stopping nginx service \$process"
-    docker kill \$process
-  fi
-  echo "Starting nginx service"
-  docker run -d -p 8086:80 -v \$PWD/genconf/serve:/usr/share/nginx/html:ro nginx
-  docker ps
-  grep 'Node upgrade script URL' /opt/azure/dcos/upgrade/NEW_VERSION/log | awk -F ': ' '{print \$2}' | cat > /opt/azure/dcos/upgrade/NEW_VERSION/upgrade_url
+echo "Setting up bootstrap node"
+rm -rf /opt/azure/dcos/upgrade/NEW_VERSION
+mkdir -p /opt/azure/dcos/upgrade/NEW_VERSION/genconf
+cp /opt/azure/dcos/genconf/ip-detect /opt/azure/dcos/upgrade/NEW_VERSION/genconf/ip-detect
+cp config.NEW_VERSION.yaml /opt/azure/dcos/upgrade/NEW_VERSION/genconf/config.yaml
+dns=\$(grep search /etc/resolv.conf | cut -d " " -f 2)
+sed -i "/dns_search:/c dns_search: \$dns" /opt/azure/dcos/upgrade/NEW_VERSION/genconf/config.yaml
+cd /opt/azure/dcos/upgrade/NEW_VERSION/
+curl -fsSL -O BOOTSTRAP_URL
+bash dcos_generate_config.sh --generate-node-upgrade-script CURR_VERSION | tee /opt/azure/dcos/upgrade/NEW_VERSION/log
+process=\$(docker ps -f ancestor=nginx -q)
+if [ ! -z "\$process" ]; then
+  echo "Stopping nginx service \$process"
+  docker kill \$process
 fi
+echo "Starting nginx service"
+docker run -d -p 8086:80 -v \$PWD/genconf/serve:/usr/share/nginx/html:ro nginx
+docker ps
+grep 'Node upgrade script URL' /opt/azure/dcos/upgrade/NEW_VERSION/log | awk -F ': ' '{print \$2}' | cat > /opt/azure/dcos/upgrade/NEW_VERSION/upgrade_url
+
 upgrade_url=\$(cat /opt/azure/dcos/upgrade/NEW_VERSION/upgrade_url)
 if [ -z \${upgrade_url} ]; then
   rm -f /opt/azure/dcos/upgrade/NEW_VERSION/upgrade_url
@@ -249,15 +240,6 @@ func (uc *UpgradeCluster) upgradeMasterNodes(masterDNS string, masterCount int, 
 			return err
 		}
 		uc.Logger.Infof("Current DCOS Version for %s:%d\n%s", masterDNS, port, strings.TrimSpace(strOut))
-		dcosVer, err := getDCOSVersion(strOut)
-		if err != nil {
-			uc.Logger.Errorf("failed to parse dcos-version.json")
-			return err
-		}
-		if dcosVer.Version == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
-			uc.Logger.Infof("Master node is up-to-date. Skipping upgrade")
-			continue
-		}
 		// copy script to the node
 		uc.Logger.Infof("Copy script to master node")
 		_, strErr, err = operations.RemoteRun("azureuser", masterDNS, port, uc.SSHKey, catCmd)
@@ -299,15 +281,6 @@ func (uc *UpgradeCluster) upgradeLinuxAgent(masterDNS string, agent *agentInfo) 
 		return err
 	}
 	uc.Logger.Infof("Current DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
-	dcosVer, err := getDCOSVersion(strOut)
-	if err != nil {
-		uc.Logger.Errorf("failed to parse dcos-version.json")
-		return err
-	}
-	if dcosVer.Version == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
-		uc.Logger.Infof("Agent node %s is up-to-date. Skipping upgrade", agent.Hostname)
-		return nil
-	}
 	// copy script to the node
 	uc.Logger.Infof("Copy script to agent %s", agent.Hostname)
 	cmd := fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no node_upgrade.sh %s:", agent.Hostname)
@@ -332,12 +305,4 @@ func (uc *UpgradeCluster) upgradeLinuxAgent(masterDNS string, agent *agentInfo) 
 	}
 	uc.Logger.Infof("Current DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
 	return nil
-}
-
-func getDCOSVersion(data string) (*dcosVersion, error) {
-	dcosVer := &dcosVersion{}
-	if err := json.Unmarshal([]byte(data), dcosVer); err != nil {
-		return nil, err
-	}
-	return dcosVer, nil
 }
