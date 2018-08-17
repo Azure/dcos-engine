@@ -14,6 +14,7 @@ import (
 	"github.com/Azure/dcos-engine/pkg/helpers"
 	"github.com/Azure/dcos-engine/pkg/i18n"
 	"github.com/Azure/dcos-engine/pkg/operations/dcosupgrade"
+	"github.com/blang/semver"
 	"github.com/leonelquinteros/gotext"
 
 	log "github.com/sirupsen/logrus"
@@ -153,8 +154,16 @@ func (uc *dcosUpgradeCmd) loadCluster(cmd *cobra.Command) error {
 	}
 	uc.currentDcosVersion = uc.containerService.Properties.OrchestratorProfile.OrchestratorVersion
 
-	if uc.currentDcosVersion == uc.upgradeVersion {
-		return fmt.Errorf("already running DCOS %s", uc.upgradeVersion)
+	cv, err := semver.Make(uc.currentDcosVersion)
+	if err != nil {
+		return fmt.Errorf("invalid format of current version %s", uc.currentDcosVersion)
+	}
+	uv, err := semver.Make(uc.upgradeVersion)
+	if err != nil {
+		return fmt.Errorf("invalid format of desired version %s", uc.upgradeVersion)
+	}
+	if uv.LT(cv) {
+		return fmt.Errorf("cannot downgrade DC/OS from %s to %s", uc.currentDcosVersion, uc.upgradeVersion)
 	}
 
 	if len(uc.containerService.Location) == 0 {

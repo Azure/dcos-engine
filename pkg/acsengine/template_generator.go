@@ -180,7 +180,7 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			return false
 		},
 		"IsHostedBootstrap": func() bool {
-			return false
+			return cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.Hosted
 		},
 		"GetDCOSBootstrapCustomData": func() string {
 			bootstrapConfig := getDCOSBootstrapConfig(cs)
