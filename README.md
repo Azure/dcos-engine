@@ -2,7 +2,7 @@
 
 ## Overview
 
-The DC/OS Engine (`dcos-engine`) generates ARM (Azure Resource Manager) templates for Docker enabled clusters on Microsoft Azure with DC/OS orchestrator. The input to the tool is a cluster definition. The cluster definition (or apimodel) is very similar to (in many cases the same as) the ARM template syntax used to deploy a Microsoft Azure Container Service cluster.
+The DC/OS Engine (`dcos-engine`) generates ARM (Azure Resource Manager) templates for Docker enabled clusters on Microsoft Azure with DC/OS orchestrator. The input to the tool is a cluster definition. The cluster definition (or apimodel) is very similar to (in many cases the same as) the ARM template syntax.
 
 The cluster definition file enables you to customize your Docker enabled cluster in many ways including:
 * multiple agent pools where each agent pool can specify:

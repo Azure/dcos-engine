@@ -33,6 +33,3 @@ Should only be ran on a single master after the waitforall extension has succeed
     ]
     
 ```
-
-# Supported Orchestrators
-DCOS

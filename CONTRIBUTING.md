@@ -18,8 +18,7 @@ signed the CLA can be accepted into the repository.
 This is an open source project and as such no formal support is available. However, like all good open source projects we do offer "best effort" support through github issues.
 
 GitHub issues:
-- ACS-Engine: https://github.com/Azure/dcos-engine/issues - file issues and PRs related to ACS-Engine
-- ACS: https://github.com/Azure/acs/issues - file issues and PRs related to Azure Container Service
+- DCOS-Engine: https://github.com/Azure/dcos-engine/issues - file issues and PRs related to DCOS-Engine
 
 Before opening a new issue or submitting a new pull request, it's helpful to search the project - it's likely that another user has already reported the issue you're facing, or it's a known issue that we're already aware of.
 
