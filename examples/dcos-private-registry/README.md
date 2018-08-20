@@ -61,5 +61,4 @@ az group deployment create -g cluster-rg --template-file _output/dcoscluster/azu
 
 ## Limitations
 - The API model currenlty only supports credentials to a single registry.
-- Not tested with Kubernetes clusters
 - Credentials have to be updated on each node

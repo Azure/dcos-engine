@@ -44,4 +44,4 @@ ls -l /var/log
 ```
 
 # Supported Orchestrators
-All
+"DCOS"

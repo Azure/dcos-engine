@@ -43,4 +43,4 @@ dcos task log hello-marathon
 ```
 
 # Supported Orchestrators
-"DCOS", "DCOS173", "DCOS184", "DCOS188"
+"DCOS"

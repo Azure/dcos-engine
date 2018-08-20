@@ -22,14 +22,12 @@ const (
 )
 
 type generateCmd struct {
-	apimodelPath      string
-	outputDirectory   string // can be auto-determined from clusterDefinition
-	caCertificatePath string
-	caPrivateKeyPath  string
-	classicMode       bool
-	noPrettyPrint     bool
-	parametersOnly    bool
-	set               []string
+	apimodelPath    string
+	outputDirectory string // can be auto-determined from clusterDefinition
+	classicMode     bool
+	noPrettyPrint   bool
+	parametersOnly  bool
+	set             []string
 
 	// derived
 	containerService *api.ContainerService
@@ -64,8 +62,6 @@ func newGenerateCmd() *cobra.Command {
 	f := generateCmd.Flags()
 	f.StringVar(&gc.apimodelPath, "api-model", "", "")
 	f.StringVar(&gc.outputDirectory, "output-directory", "", "output directory (derived from FQDN if absent)")
-	f.StringVar(&gc.caCertificatePath, "ca-certificate-path", "", "path to the CA certificate to use for Kubernetes PKI assets")
-	f.StringVar(&gc.caPrivateKeyPath, "ca-private-key-path", "", "path to the CA private key to use for Kubernetes PKI assets")
 	f.StringArrayVar(&gc.set, "set", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 	f.BoolVar(&gc.classicMode, "classic-mode", false, "enable classic parameters and outputs")
 	f.BoolVar(&gc.noPrettyPrint, "no-pretty-print", false, "skip pretty printing the output")
