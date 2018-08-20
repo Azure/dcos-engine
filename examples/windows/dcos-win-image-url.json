@@ -33,7 +33,8 @@
     ],
     "windowsProfile": {
       "adminUsername": "azureuser",
-      "adminPassword": "password"
+      "adminPassword": "password",
+      "WindowsImageSourceUrl": "https://mystorage.blob.core.windows.net/winimage/AzureWindowsServer.vhd"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",

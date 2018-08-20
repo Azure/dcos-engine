@@ -2,7 +2,7 @@
 
 GO_SOURCE="pkg/acsengine/*.go pkg/acsengine/transform/*.go pkg/api/*.go pkg/operations/*.go"
 LANGUAGE="en_US"
-DOMAIN="acsengine"
+DOMAIN="dcosengine"
 generate_po="false"
 generate_mo="false"
 
