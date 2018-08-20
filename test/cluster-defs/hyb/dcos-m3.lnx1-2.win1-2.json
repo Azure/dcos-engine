@@ -30,13 +30,13 @@
       {
         "name": "winpri",
         "count": 1,
-        "vmSize": "Standard_D2s_v3",
+        "vmSize": "Standard_D8s_v3",
         "osType": "Windows"
       },
       {
         "name": "winpub",
         "count": 2,
-        "vmSize": "Standard_D2s_v3",
+        "vmSize": "Standard_D8s_v3",
         "osType": "Windows",
         "dnsPrefix": "",
         "ports": [

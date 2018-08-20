@@ -1,0 +1,81 @@
+# Portuguese translations for  package.
+# Copyright (C) 2018 THE 'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the  package.
+# dima <dcos-engine@github.com>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-08-20 12:47-0700\n"
+"PO-Revision-Date: 2018-08-20 12:47-0700\n"
+"Last-Translator: dima <dcos-engine@github.com>\n"
+"Language-Team: Brazilian Portuguese\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: pkg/acsengine/template_generator.go:65
+#, c-format
+msgid "Error reading file %s, Error: %s"
+msgstr ""
+
+#: pkg/acsengine/transform/transform.go:175
+#: pkg/acsengine/transform/transform.go:183
+#: pkg/acsengine/transform/transform.go:191
+#, c-format
+msgid "Found 2 resources with type %s in the template. There should only be 1"
+msgstr ""
+
+#: pkg/acsengine/transform/transform.go:221
+#, c-format
+msgid ""
+"Found no resources with type %s in the template. There should have been 1"
+msgstr ""
+
+#: pkg/acsengine/filesaver.go:26
+#, c-format
+msgid "error creating directory '%s': %s"
+msgstr ""
+
+#: pkg/acsengine/engine.go:566
+#, c-format
+msgid "error executing template for file %s: %v"
+msgstr ""
+
+#: pkg/acsengine/engine.go:561
+#, c-format
+msgid "error parsing file %s: %v"
+msgstr ""
+
+#: pkg/api/apiloader.go:23
+#, c-format
+msgid "error reading file %s: %s"
+msgstr ""
+
+#: pkg/api/apiloader.go:102
+#, c-format
+msgid "invalid version %s for conversion back from unversioned object"
+msgstr ""
+
+#: pkg/acsengine/template_generator.go:128
+#, c-format
+msgid "orchestrator '%s' is unsupported"
+msgstr ""
+
+#: pkg/acsengine/template_generator.go:114
+#, c-format
+msgid "template file %s does not exist"
+msgstr ""
+
+#: pkg/api/apiloader.go:83
+#, c-format
+msgid "unrecognized APIVersion '%s'"
+msgstr ""
+
+#: pkg/acsengine/engine.go:555
+#, c-format
+msgid "yaml file %s does not exist"
+msgstr ""

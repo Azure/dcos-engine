@@ -5,36 +5,42 @@
       "orchestratorType": "DCOS"
     },
     "masterProfile": {
-      "count": 1,
-      "dnsPrefix": "dcos-mstr",
-      "vmSize": "Standard_D2_v2"
+      "count": 3,
+      "dnsPrefix": "mstr",
+      "vmSize": "Standard_D2s_v3"
     },
     "agentPoolProfiles": [
       {
-        "name": "win2",
+        "name": "winpri",
         "count": 2,
-        "vmSize": "Standard_D2_v2",
-        "availabilityProfile": "AvailabilitySet",
+        "vmSize": "Standard_D8s_v3",
+        "osType": "Windows"
+      },
+      {
+        "name": "winpub",
+        "count": 2,
+        "vmSize": "Standard_D8s_v3",
         "osType": "Windows",
         "dnsPrefix": "agnt",
         "ports": [
-             80,
-             443,
-             8080,
-             3389
+              80,
+              443,
+              8080,
+              3389,
+              5986
           ]
       }
     ],
     "windowsProfile": {
       "adminUsername": "azureuser",
-      "adminPassword": "replacepassword1234$"
+      "adminPassword": "password"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
       "ssh": {
         "publicKeys": [
           {
-            "keyData": ""
+            "keyData": "ssh-rsa ..."
           }
         ]
       }

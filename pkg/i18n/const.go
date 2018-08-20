@@ -2,7 +2,7 @@ package i18n
 
 const (
 	defaultLanguage   = "en_US"
-	defaultDomain     = "acsengine"
+	defaultDomain     = "dcosengine"
 	defaultLocalDir   = "translations"
 	defaultMessageDir = "LC_MESSAGES"
 )

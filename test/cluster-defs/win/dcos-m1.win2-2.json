@@ -14,16 +14,14 @@
       {
         "name": "winpri",
         "count": 2,
-        "vmSize": "Standard_D2s_v3",
-        "osType": "Windows",
-        "storageProfile": "ManagedDisks"
+        "vmSize": "Standard_D8s_v3",
+        "osType": "Windows"
       },
       {
         "name": "winpub",
         "count": 2,
-        "vmSize": "Standard_D2s_v3",
+        "vmSize": "Standard_D8s_v3",
         "osType": "Windows",
-        "storageProfile": "StorageAccount",
         "dnsPrefix": "",
         "ports": [
           80,
