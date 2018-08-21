@@ -60,7 +60,7 @@ try {
 		throw "Failed to download \$BootstrapURL"
 	}
 
-	& tar -xvf .\dcos_generate_config.windows.tar.xz
+	& cmd /c "c:\AzureData\7z\7z.exe e .\dcos_generate_config.windows.tar.xz -so | c:\AzureData\7z\7z.exe x -si -ttar"
 	if (\$LASTEXITCODE -ne 0) {
 		throw "Failed to untar dcos_generate_config.windows.tar.xz"
 	}
