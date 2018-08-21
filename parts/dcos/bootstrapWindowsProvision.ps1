@@ -64,6 +64,23 @@ Exit 0
     }
 }
 
+function Install7zip
+{
+    # install 7zip in order to unpack the bootstrap node
+    Write-Log "Installing 7zip"
+    New-Item -itemtype directory -erroraction silentlycontinue "C:\AzureData\7z"
+
+    & curl.exe -fLsS --retry 20 -o C:\AzureData\7z\7z1801-x64.msi https://dcos-mirror.azureedge.net/winbootstrap/7z1801-x64.msi
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to download 7zip"
+    }
+    & cmd.exe /c start /wait msiexec /i C:\AzureData\7z\7z1801-x64.msi INSTALLDIR="C:\AzureData\7z" /qn
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to install 7zip"
+    }
+    Remove-Item C:\AzureData\7z\7z1801-x64.msi
+}
+
 function InstallOpehSSH()
 {
     Write-Log "Installing OpehSSH"
@@ -113,9 +130,11 @@ try {
 
     InstallOpehSSH
 
-    New-item -itemtype directory -erroraction silentlycontinue c:\temp
+    Install7zip
+
+    New-Item -itemtype directory -erroraction silentlycontinue c:\temp
     cd c:\temp
-    New-item -itemtype directory -erroraction silentlycontinue c:\temp\genconf
+    New-Item -itemtype directory -erroraction silentlycontinue c:\temp\genconf
 
     CreateDcosConfig "c:\temp\genconf\config.yaml"
 
@@ -126,7 +145,7 @@ try {
         throw "Failed to download $BootstrapURL"
     }
 
-    & tar -xvf .\dcos_generate_config.windows.tar.xz
+    & cmd /c "c:\AzureData\7z\7z.exe e .\dcos_generate_config.windows.tar.xz -so | c:\AzureData\7z\7z.exe x -si -ttar"
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to untar dcos_generate_config.windows.tar.xz"
     }
@@ -137,7 +156,7 @@ try {
     }
 
     # Run docker container with nginx
-    New-item -itemtype directory -erroraction silentlycontinue c:\docker
+    New-Item -itemtype directory -erroraction silentlycontinue c:\docker
     cd c:\docker
 
     & curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o c:\docker\dockerfile https://dcos-mirror.azureedge.net/winbootstrap/dockerfile
