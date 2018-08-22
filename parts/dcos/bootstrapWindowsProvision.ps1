@@ -64,16 +64,30 @@ Exit 0
     }
 }
 
+function RetryCurl($url, $path)
+{
+    for($i = 1; $i -le 10; $i++) {
+        try {
+            & curl.exe --keepalive-time 2 -fLsS --retry 20 -o $path $url
+            if ($LASTEXITCODE -eq 0) {
+                Write-Log "Downloaded $url in $i attempts"
+                return
+            }
+        } catch {
+        }
+        Sleep(2)
+    }
+    throw "Failed to download $url"
+}
+
 function Install7zip
 {
     # install 7zip in order to unpack the bootstrap node
     Write-Log "Installing 7zip"
     New-Item -itemtype directory -erroraction silentlycontinue "C:\AzureData\7z"
 
-    & curl.exe -fLsS --retry 20 -o C:\AzureData\7z\7z1801-x64.msi https://dcos-mirror.azureedge.net/winbootstrap/7z1801-x64.msi
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to download 7zip"
-    }
+    RetryCurl "https://dcos-mirror.azureedge.net/winbootstrap/7z1801-x64.msi" "C:\AzureData\7z\7z1801-x64.msi"
+
     & cmd.exe /c start /wait msiexec /i C:\AzureData\7z\7z1801-x64.msi INSTALLDIR="C:\AzureData\7z" /qn
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to install 7zip"
@@ -140,10 +154,7 @@ try {
 
     CreateIpDetect "c:\temp\genconf\ip-detect.ps1"
 
-    & curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o c:\temp\dcos_generate_config.windows.tar.xz $BootstrapURL
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to download $BootstrapURL"
-    }
+    RetryCurl $BootstrapURL "c:\temp\dcos_generate_config.windows.tar.xz"
 
     & cmd /c "c:\AzureData\7z\7z.exe e .\dcos_generate_config.windows.tar.xz -so | c:\AzureData\7z\7z.exe x -si -ttar"
     if ($LASTEXITCODE -ne 0) {
@@ -158,16 +169,8 @@ try {
     # Run docker container with nginx
     New-Item -itemtype directory -erroraction silentlycontinue c:\docker
     cd c:\docker
-
-    & curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o c:\docker\dockerfile https://dcos-mirror.azureedge.net/winbootstrap/dockerfile
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to download dockerfile"
-    }
-
-    & curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o c:\docker\nginx.conf https://dcos-mirror.azureedge.net/winbootstrap/nginx.conf
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to download nginx.conf"
-    }
+    RetryCurl "https://dcos-mirror.azureedge.net/winbootstrap/dockerfile" "c:\docker\dockerfile"
+    RetryCurl "https://dcos-mirror.azureedge.net/winbootstrap/nginx.conf" "c:\docker\nginx.conf"
 
     # only create customnat if it does not exist
     $a = docker network ls | select-string -pattern "customnat"
