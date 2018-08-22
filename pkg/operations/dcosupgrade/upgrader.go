@@ -24,7 +24,16 @@ type agentList struct {
 	Agents []*agentInfo `json:"slaves"`
 }
 
+type dcosVersion struct {
+	Version         string `json:"version,omitempty"`
+	DcosImageCommit string `json:"dcos-image-commit,omitempty"`
+	BootstrapID     string `json:"bootstrap-id,omitempty"`
+	DcosVariant     string `json:"dcos-variant,omitempty"`
+}
+
 var bootstrapUpgradeScript = `#!/bin/bash
+
+source /opt/azure/containers/provision_source.sh
 
 echo "Setting up bootstrap node"
 rm -rf /opt/azure/dcos/upgrade/NEW_VERSION
@@ -34,8 +43,8 @@ cp config.NEW_VERSION.yaml /opt/azure/dcos/upgrade/NEW_VERSION/genconf/config.ya
 dns=\$(grep search /etc/resolv.conf | cut -d " " -f 2)
 sed -i "/dns_search:/c dns_search: \$dns" /opt/azure/dcos/upgrade/NEW_VERSION/genconf/config.yaml
 cd /opt/azure/dcos/upgrade/NEW_VERSION/
-curl -fsSL -O BOOTSTRAP_URL
-bash dcos_generate_config.sh --generate-node-upgrade-script CURR_VERSION | tee /opt/azure/dcos/upgrade/NEW_VERSION/log
+retrycmd_if_failure 10 10 120 curl -fsSL -o ./dcos_generate_config.sh BOOTSTRAP_URL
+bash ./dcos_generate_config.sh --generate-node-upgrade-script CURR_VERSION | tee /opt/azure/dcos/upgrade/NEW_VERSION/log
 process=\$(docker ps -f ancestor=nginx -q)
 if [ ! -z "\$process" ]; then
   echo "Stopping nginx service \$process"
@@ -58,10 +67,12 @@ fi
 
 var nodeUpgradeScript = `#!/bin/bash
 
+source /opt/azure/containers/provision_source.sh
+
 echo "Starting node upgrade"
 mkdir -p /opt/azure/dcos/upgrade/NEW_VERSION
 cd /opt/azure/dcos/upgrade/NEW_VERSION
-curl -O UPGRADE_SCRIPT_URL
+retrycmd_if_failure 10 10 120 curl -fsSL -o ./dcos_node_upgrade.sh UPGRADE_SCRIPT_URL
 bash ./dcos_node_upgrade.sh
 
 `
@@ -100,6 +111,7 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	if hasWindowsAgents {
 		uc.Logger.Warnf("DC/OS upgrade for Windows agents is currently unsupported")
 	}
+
 	// copy SSH key to master
 	uc.Logger.Infof("Copy SSH key to master")
 	_, strErr, err = operations.RemoteRun("azureuser", masterDNS, 2200, uc.SSHKey, fmt.Sprintf("cat << END > .ssh/id_rsa_cluster\n%s\nEND\n", string(uc.SSHKey)))
@@ -224,6 +236,17 @@ func (uc *UpgradeCluster) upgradeMasterNodes(masterDNS string, masterCount int, 
 			return err
 		}
 		uc.Logger.Infof("Current DCOS Version for %s:%d\n%s", masterDNS, port, strings.TrimSpace(strOut))
+		dcosVer, err := getDCOSVersion(strOut)
+		if err != nil {
+			uc.Logger.Errorf("failed to parse dcos-version.json")
+			return err
+		}
+		// partial upgrade case
+		if uc.CurrentDcosVersion != uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion &&
+			dcosVer.Version == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
+			uc.Logger.Infof("Master node is up-to-date. Skipping upgrade")
+			continue
+		}
 		// copy script to the node
 		uc.Logger.Infof("Copy script to master node")
 		_, strErr, err = operations.RemoteRun("azureuser", masterDNS, port, uc.SSHKey, catCmd)
@@ -265,6 +288,17 @@ func (uc *UpgradeCluster) upgradeLinuxAgent(masterDNS string, agent *agentInfo) 
 		return err
 	}
 	uc.Logger.Infof("Current DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
+	dcosVer, err := getDCOSVersion(strOut)
+	if err != nil {
+		uc.Logger.Errorf("failed to parse dcos-version.json")
+		return err
+	}
+	// partial upgrade case
+	if uc.CurrentDcosVersion != uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion &&
+		dcosVer.Version == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
+		uc.Logger.Infof("Agent node is up-to-date. Skipping upgrade")
+		return nil
+	}
 	// copy script to the node
 	uc.Logger.Infof("Copy script to agent %s", agent.Hostname)
 	cmd := fmt.Sprintf("scp -i .ssh/id_rsa_cluster -o ConnectTimeout=30 -o StrictHostKeyChecking=no node_upgrade.sh %s:", agent.Hostname)
@@ -287,8 +321,16 @@ func (uc *UpgradeCluster) upgradeLinuxAgent(masterDNS string, agent *agentInfo) 
 		uc.Logger.Errorf(strErr)
 		return err
 	}
-	uc.Logger.Infof("Current DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
+	uc.Logger.Infof("New DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
 	return nil
+}
+
+func getDCOSVersion(data string) (*dcosVersion, error) {
+	dcosVer := &dcosVersion{}
+	if err := json.Unmarshal([]byte(data), dcosVer); err != nil {
+		return nil, err
+	}
+	return dcosVer, nil
 }
 
 func (uc *UpgradeCluster) upgradeWindowsAgent(masterDNS string, agent *agentInfo) error {
