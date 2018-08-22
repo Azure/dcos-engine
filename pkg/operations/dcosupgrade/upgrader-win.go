@@ -292,6 +292,17 @@ func (uc *UpgradeCluster) upgradeWindowsAgent(masterDNS string, agent *agentInfo
 		return err
 	}
 	uc.Logger.Infof("Current DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
+	dcosVer, err := getDCOSVersion(strOut)
+	if err != nil {
+		uc.Logger.Errorf("failed to parse dcos-version.json")
+		return err
+	}
+	// partial upgrade case
+	if uc.CurrentDcosVersion != uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion &&
+		dcosVer.Version == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
+		uc.Logger.Infof("Agent node is up-to-date. Skipping upgrade")
+		return nil
+	}
 	// copy script to the node
 	uc.Logger.Infof("Copy script to agent %s", agent.Hostname)
 	winNodeScriptName := fmt.Sprintf("node_upgrade.%s.ps1", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion)
