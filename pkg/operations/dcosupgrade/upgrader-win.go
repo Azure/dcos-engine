@@ -17,6 +17,22 @@ function Write-Log(\$message)
     Write-Output \$msg
 }
 
+function RetryCurl(\$url, \$path)
+{
+    for(\$i = 1; \$i -le 10; \$i++) {
+        try {
+            & curl.exe --keepalive-time 2 -fLsS --retry 20 -o \$path \$url
+            if (\$LASTEXITCODE -eq 0) {
+                Write-Log "Downloaded \$url in \$i attempts"
+                return
+            }
+        } catch {
+        }
+        Sleep(2)
+    }
+    throw "Failed to download \$url"
+}
+
 function CreateDockerStart(\$fileName, \$log, \$volume)
 {
     \$content = "Start-Transcript -path \$log -append"
@@ -55,10 +71,7 @@ try {
 	cd \$upgradeDir
 
 	\$path = Join-Path \$upgradeDir "dcos_generate_config.windows.tar.xz"
-	& curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o \$path \$BootstrapURL
-	if (\$LASTEXITCODE -ne 0) {
-		throw "Failed to download \$BootstrapURL"
-	}
+	RetryCurl \$BootstrapURL \$path
 
 	& cmd /c "c:\AzureData\7z\7z.exe e .\dcos_generate_config.windows.tar.xz -so | c:\AzureData\7z\7z.exe x -si -ttar"
 	if (\$LASTEXITCODE -ne 0) {
@@ -140,6 +153,23 @@ function Write-Log(\$message)
     \$msg = \$message | Timestamp
     Write-Output \$msg
 }
+
+function RetryCurl(\$url, \$path)
+{
+    for(\$i = 1; \$i -le 10; \$i++) {
+        try {
+            & curl.exe --keepalive-time 2 -fLsS --retry 20 -o \$path \$url
+            if (\$LASTEXITCODE -eq 0) {
+                Write-Log "Downloaded \$url in \$i attempts"
+                return
+            }
+        } catch {
+        }
+        Sleep(2)
+    }
+    throw "Failed to download \$url"
+}
+
 \$upgradeScriptURL = "WIN_UPGRADE_SCRIPT_URL"
 \$upgradeDir = "C:\AzureData\upgrade\NEW_VERSION"
 \$log = "C:\AzureData\upgrade_NEW_VERSION.log"
@@ -158,10 +188,8 @@ try {
 	[Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_USERNAME", "\$env:computername\\\$adminUser", "Process")
 	[Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_PASSWORD", \$password, "Process")
 
-	& curl.exe --keepalive-time 2 -fLsS --retry 20 -Y 100000 -y 60 -o dcos_node_upgrade.ps1 \$upgradeScriptURL
-	if (\$LASTEXITCODE -ne 0) {
-		throw "Failed to download \$upgradeScriptURL"
-	}
+	RetryCurl \$upgradeScriptURL "dcos_node_upgrade.ps1"
+
 	.\dcos_node_upgrade.ps1
 }catch {
 	Write-Log "Failed to upgrade Windows agent node: \$_"
@@ -264,6 +292,17 @@ func (uc *UpgradeCluster) upgradeWindowsAgent(masterDNS string, agent *agentInfo
 		return err
 	}
 	uc.Logger.Infof("Current DCOS Version for %s\n%s", agent.Hostname, strings.TrimSpace(strOut))
+	dcosVer, err := getDCOSVersion(strOut)
+	if err != nil {
+		uc.Logger.Errorf("failed to parse dcos-version.json")
+		return err
+	}
+	// partial upgrade case
+	if uc.CurrentDcosVersion != uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion &&
+		dcosVer.Version == uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion {
+		uc.Logger.Infof("Agent node is up-to-date. Skipping upgrade")
+		return nil
+	}
 	// copy script to the node
 	uc.Logger.Infof("Copy script to agent %s", agent.Hostname)
 	winNodeScriptName := fmt.Sprintf("node_upgrade.%s.ps1", uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.OrchestratorVersion)

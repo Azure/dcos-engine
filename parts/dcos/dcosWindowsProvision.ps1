@@ -30,6 +30,22 @@ function Write-Log($message)
     Write-Output $msg
 }
 
+function RetryCurl($url, $path)
+{
+    for($i = 1; $i -le 10; $i++) {
+        try {
+            & curl.exe --keepalive-time 2 -fLsS --retry 20 -o $path $url
+            if ($LASTEXITCODE -eq 0) {
+                Write-Log "Downloaded $url in $i attempts"
+                return
+            }
+        } catch {
+        }
+        Sleep(2)
+    }
+    throw "Failed to download $url"
+}
+
 function InstallOpehSSH()
 {
     Write-Log "Installing OpehSSH"
@@ -81,10 +97,7 @@ try {
     InstallOpehSSH
 
     # First up, download the runasxbox util
-    curl.exe -fLsS -o c:\AzureData\runasxbox.exe https://dcosdevstorage.blob.core.windows.net/tmp/RunAsXbox.exe
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to download windows runasxbox.exe"
-    }
+    RetryCurl "https://dcos-mirror.azureedge.net/winbootstrap/RunAsXbox.exe" "c:\AzureData\runasxbox.exe"
 
     # Create the setcreds script
     $setcred_content = @'
@@ -126,10 +139,7 @@ try {
     c:\AzureData\setcreds.ps1 -User $adminUser -Password $password -Domain $env:computername
 
     $dcosInstallUrl = "http://${BootstrapIP}:8086/dcos_install.ps1"
-    & curl.exe $dcosInstallUrl -o $global:BootstrapInstallDir\dcos_install.ps1
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to download $dcosInstallUrl"
-    }
+    RetryCurl $dcosInstallUrl "$global:BootstrapInstallDir\dcos_install.ps1"
 
     $cmd = @'
 powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
