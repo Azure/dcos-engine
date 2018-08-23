@@ -58,7 +58,7 @@ function UpdateDocker()
     Set-Content -Path "$dockerData\config\daemon.json" -Value '{ "bridge" : "none" }' -Encoding Ascii
 
     # Upgrade and restart Docker
-    if ("WINDOWS_DOCKER_VERSION" -ne "default") {
+    if ("WINDOWS_DOCKER_VERSION" -ne "current") {
         Write-Log "Updating Docker to WINDOWS_DOCKER_VERSION"
         Install-Module DockerMsftProvider -Force
         Install-Package -Name docker -ProviderName DockerMsftProvider -Force -RequiredVersion WINDOWS_DOCKER_VERSION
