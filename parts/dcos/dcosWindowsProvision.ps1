@@ -46,6 +46,27 @@ function RetryCurl($url, $path)
     throw "Failed to download $url"
 }
 
+function UpdateDocker()
+{
+    # Stop Docker service, disable Docker Host Networking Service
+    Write-Log "Stopping Docker"
+    Stop-Service Docker
+
+    Write-Log "Disabling Docker Host Networking Service"
+    Get-HNSNetwork | Remove-HNSNetwork
+    $dockerData = Join-Path $env:ProgramData "Docker"
+    Set-Content -Path "$dockerData\config\daemon.json" -Value '{ "bridge" : "none" }' -Encoding Ascii
+
+    # Upgrade and restart Docker
+    if ("WINDOWS_DOCKER_VERSION" -ne "default") {
+        Write-Log "Updating Docker to WINDOWS_DOCKER_VERSION"
+        Install-Module DockerMsftProvider -Force
+        Install-Package -Name docker -ProviderName DockerMsftProvider -Force -RequiredVersion WINDOWS_DOCKER_VERSION
+    }
+    Write-Log "Starting Docker"
+    Start-Service Docker
+}
+
 function InstallOpehSSH()
 {
     Write-Log "Installing OpehSSH"
@@ -94,17 +115,7 @@ try {
 
     PREPROVISION_EXTENSION
 
-    # Stop Docker service, disable Docker Host Networking Service
-    Stop-Service Docker
-
-    Get-HNSNetwork | Remove-HNSNetwork
-    $dockerData = Join-Path $env:ProgramData "Docker"
-    Set-Content -Path "$dockerData\config\daemon.json" -Value '{ "bridge" : "none" }' -Encoding Ascii
-
-    # Upgrade and restart Docker
-    Install-Module DockerMsftProvider -Force
-    Install-Package -Name docker -ProviderName DockerMsftProvider -Force WINDOWS_DOCKER_VERSION
-    Start-Service Docker 
+    UpdateDocker
 
     InstallOpehSSH
 
