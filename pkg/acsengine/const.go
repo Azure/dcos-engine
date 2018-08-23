@@ -21,6 +21,8 @@ const (
 	DefaultGeneratorCode = "dcos-engine"
 	// DefaultOrchestratorName specifies the 3 character orchestrator code of the cluster template and affects resource naming.
 	DefaultOrchestratorName = "dcos"
+	// DefaultWindowsDockerVersion specifies default docker version installed on Windows nodes
+	DefaultWindowsDockerVersion = "18.03.1-ee-1"
 )
 
 const (

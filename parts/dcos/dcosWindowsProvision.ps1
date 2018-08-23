@@ -46,6 +46,27 @@ function RetryCurl($url, $path)
     throw "Failed to download $url"
 }
 
+function UpdateDocker()
+{
+    # Stop Docker service, disable Docker Host Networking Service
+    Write-Log "Stopping Docker"
+    Stop-Service Docker
+
+    Write-Log "Disabling Docker Host Networking Service"
+    Get-HNSNetwork | Remove-HNSNetwork
+    $dockerData = Join-Path $env:ProgramData "Docker"
+    Set-Content -Path "$dockerData\config\daemon.json" -Value '{ "bridge" : "none" }' -Encoding Ascii
+
+    # Upgrade and restart Docker
+    if ("WINDOWS_DOCKER_VERSION" -ne "current") {
+        Write-Log "Updating Docker to WINDOWS_DOCKER_VERSION"
+        Install-Module DockerMsftProvider -Force
+        Install-Package -Name docker -ProviderName DockerMsftProvider -Force -RequiredVersion WINDOWS_DOCKER_VERSION
+    }
+    Write-Log "Starting Docker"
+    Start-Service Docker
+}
+
 function InstallOpehSSH()
 {
     Write-Log "Installing OpehSSH"
@@ -94,6 +115,8 @@ try {
 
     PREPROVISION_EXTENSION
 
+    UpdateDocker
+
     InstallOpehSSH
 
     # First up, download the runasxbox util
@@ -133,7 +156,6 @@ try {
 
     $password = "ADMIN_PASSWORD"
 
-  #  $adminUser = "dcos-service"   # Overwriting the arg
     & net user $adminUser $password /add /yes
     & net localgroup administrators $adminUser /add
     c:\AzureData\setcreds.ps1 -User $adminUser -Password $password -Domain $env:computername
