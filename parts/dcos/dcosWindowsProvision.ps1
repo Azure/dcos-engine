@@ -94,6 +94,18 @@ try {
 
     PREPROVISION_EXTENSION
 
+    # Stop Docker service, disable Docker Host Networking Service
+    Stop-Service Docker
+
+    Get-HNSNetwork | Remove-HNSNetwork
+    $dockerData = Join-Path $env:ProgramData "Docker"
+    Set-Content -Path "$dockerData\config\daemon.json" -Value '{ "bridge" : "none" }' -Encoding Ascii
+
+    # Upgrade and restart Docker
+    Install-Module DockerMsftProvider -Force
+    Install-Package -Name docker -ProviderName DockerMsftProvider -Force WINDOWS_DOCKER_VERSION
+    Start-Service Docker 
+
     InstallOpehSSH
 
     # First up, download the runasxbox util
@@ -133,7 +145,6 @@ try {
 
     $password = "ADMIN_PASSWORD"
 
-  #  $adminUser = "dcos-service"   # Overwriting the arg
     & net user $adminUser $password /add /yes
     & net localgroup administrators $adminUser /add
     c:\AzureData\setcreds.ps1 -User $adminUser -Password $password -Domain $env:computername

@@ -291,6 +291,7 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			csStr = strings.Replace(csStr, "ROLENAME", agentRoleName, -1)
 			csStr = strings.Replace(csStr, "SSH_PUB_KEY", cs.Properties.LinuxProfile.SSH.PublicKeys[0].KeyData, -1)
 			csStr = strings.Replace(csStr, "ADMIN_PASSWORD", cs.Properties.WindowsProfile.AdminPassword, -1)
+			csStr = strings.Replace(csStr, "WINDOWS_DOCKER_VERSION", getWindowsDockerVersion(cs.Properties.OrchestratorProfile), -1)
 			csStr = strings.Replace(csStr, "\r\n", "\n", -1)
 			str := getBase64CustomScriptFromStr(csStr)
 			return fmt.Sprintf("\"customData\": \"%s\"", str)

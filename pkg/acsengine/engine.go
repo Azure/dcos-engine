@@ -287,6 +287,20 @@ func GetDCOSDefaultWindowsBootstrapInstallerURL(orchestratorVersion string) stri
 	}
 }
 
+func getWindowsDockerVersion(o *api.OrchestratorProfile) string {
+	if o.WindowsBootstrapProfile != nil {
+		switch {
+		case len(o.WindowsBootstrapProfile.DockerVersion) == 0:
+			fallthrough
+		case strings.EqualFold(o.WindowsBootstrapProfile.DockerVersion, "latest"):
+			return ""
+		default:
+			return fmt.Sprintf("-RequiredVersion %s", o.WindowsBootstrapProfile.DockerVersion)
+		}
+	}
+	return ""
+}
+
 func isCustomVNET(a []*api.AgentPoolProfile) bool {
 	if a != nil {
 		for _, agentPoolProfile := range a {

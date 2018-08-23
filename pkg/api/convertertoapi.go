@@ -160,22 +160,24 @@ func convertVLabsOrchestratorProfile(vp *vlabs.Properties, api *OrchestratorProf
 		api.OAuthEnabled = vlabscs.OAuthEnabled
 		if vlabscs.LinuxBootstrapProfile != nil {
 			api.LinuxBootstrapProfile = &BootstrapProfile{
-				BootstrapURL: vlabscs.LinuxBootstrapProfile.BootstrapURL,
-				Hosted:       vlabscs.LinuxBootstrapProfile.Hosted,
-				VMSize:       vlabscs.LinuxBootstrapProfile.VMSize,
-				OSDiskSizeGB: vlabscs.LinuxBootstrapProfile.OSDiskSizeGB,
-				StaticIP:     vlabscs.LinuxBootstrapProfile.StaticIP,
-				Subnet:       vlabscs.LinuxBootstrapProfile.Subnet,
+				BootstrapURL:  vlabscs.LinuxBootstrapProfile.BootstrapURL,
+				DockerVersion: vlabscs.LinuxBootstrapProfile.DockerVersion,
+				Hosted:        vlabscs.LinuxBootstrapProfile.Hosted,
+				VMSize:        vlabscs.LinuxBootstrapProfile.VMSize,
+				OSDiskSizeGB:  vlabscs.LinuxBootstrapProfile.OSDiskSizeGB,
+				StaticIP:      vlabscs.LinuxBootstrapProfile.StaticIP,
+				Subnet:        vlabscs.LinuxBootstrapProfile.Subnet,
 			}
 		}
 		if vlabscs.WindowsBootstrapProfile != nil {
 			api.WindowsBootstrapProfile = &BootstrapProfile{
-				BootstrapURL: vlabscs.WindowsBootstrapProfile.BootstrapURL,
-				Hosted:       vlabscs.WindowsBootstrapProfile.Hosted,
-				VMSize:       vlabscs.WindowsBootstrapProfile.VMSize,
-				OSDiskSizeGB: vlabscs.WindowsBootstrapProfile.OSDiskSizeGB,
-				StaticIP:     vlabscs.WindowsBootstrapProfile.StaticIP,
-				Subnet:       vlabscs.WindowsBootstrapProfile.Subnet,
+				BootstrapURL:  vlabscs.WindowsBootstrapProfile.BootstrapURL,
+				DockerVersion: vlabscs.WindowsBootstrapProfile.DockerVersion,
+				Hosted:        vlabscs.WindowsBootstrapProfile.Hosted,
+				VMSize:        vlabscs.WindowsBootstrapProfile.VMSize,
+				OSDiskSizeGB:  vlabscs.WindowsBootstrapProfile.OSDiskSizeGB,
+				StaticIP:      vlabscs.WindowsBootstrapProfile.StaticIP,
+				Subnet:        vlabscs.WindowsBootstrapProfile.Subnet,
 			}
 		}
 		api.Registry = vlabscs.Registry

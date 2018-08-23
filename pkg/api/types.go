@@ -164,12 +164,13 @@ type CustomFile struct {
 
 // BootstrapProfile represents the definition of the DCOS bootstrap node used to deploy the cluster
 type BootstrapProfile struct {
-	BootstrapURL string `json:"bootstrapURL,omitempty"`
-	Hosted       bool   `json:"hosted,omitempty"`
-	VMSize       string `json:"vmSize,omitempty"`
-	OSDiskSizeGB int    `json:"osDiskSizeGB,omitempty"`
-	StaticIP     string `json:"staticIP,omitempty"`
-	Subnet       string `json:"subnet,omitempty"`
+	BootstrapURL  string `json:"bootstrapURL,omitempty"`
+	DockerVersion string `json:"dockerVersion,omitempty"`
+	Hosted        bool   `json:"hosted,omitempty"`
+	VMSize        string `json:"vmSize,omitempty"`
+	OSDiskSizeGB  int    `json:"osDiskSizeGB,omitempty"`
+	StaticIP      string `json:"staticIP,omitempty"`
+	Subnet        string `json:"subnet,omitempty"`
 }
 
 // MasterProfile represents the definition of the master cluster

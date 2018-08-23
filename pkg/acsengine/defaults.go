@@ -171,6 +171,9 @@ func setOrchestratorDefaults(cs *api.ContainerService) {
 			if len(o.WindowsBootstrapProfile.VMSize) == 0 {
 				o.WindowsBootstrapProfile.VMSize = "Standard_D2s_v3"
 			}
+			if len(o.WindowsBootstrapProfile.DockerVersion) == 0 {
+				o.WindowsBootstrapProfile.DockerVersion = DefaultWindowsDockerVersion
+			}
 		}
 	}
 }
