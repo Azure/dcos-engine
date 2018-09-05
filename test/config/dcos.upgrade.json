@@ -5,7 +5,7 @@
       "location": "westus2"
     },
     {
-      "cluster_definition": "upgrade/dcos1.11.4-m3.lnx1-2.win1-2.json",
+      "cluster_definition": "upgrade/dcos1.11.4-m1.lnx1-2.win1-2.json",
       "location": "westus2"
     }
   ]
