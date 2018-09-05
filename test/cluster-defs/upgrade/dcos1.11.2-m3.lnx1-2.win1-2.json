@@ -5,6 +5,7 @@
       "orchestratorType": "DCOS",
       "orchestratorVersion": "1.11.2",
       "windowsBootstrapProfile": {
+        "bootstrapURL": "https://dcosci.blob.core.windows.net/dcos/testing/master/dcos_generate_config.sh",
         "vmSize": "Standard_D8s_v3"
       }
     },
