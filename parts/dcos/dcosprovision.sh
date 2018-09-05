@@ -42,13 +42,13 @@ esac
 
 len=$((${#packages[@]}-1))
 for i in $(seq 0 $len); do
-  retry_get_install_deb 10 10 120 ${packages[$i]} ${sha1sums[$i]}
+  retry_get_install_deb 30 10 120 ${packages[$i]} ${sha1sums[$i]}
     if [ $? -ne 0  ]; then
     exit 1
   fi
 done
 
-retrycmd_if_failure 10 10 120 curl -fsSL -o $TMPDIR/dcos_install.sh http://BOOTSTRAP_IP:8086/dcos_install.sh
+retrycmd_if_failure 30 10 120 curl -fsSL -o $TMPDIR/dcos_install.sh http://BOOTSTRAP_IP:8086/dcos_install.sh
 if [ $? -ne 0  ]; then
   exit 1
 fi
