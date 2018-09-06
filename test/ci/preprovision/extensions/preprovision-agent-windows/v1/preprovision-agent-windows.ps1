@@ -78,7 +78,7 @@ function Start-CIAgentSetup {
     # We're using the updated service wrapper for this.
     $serviceName = "Docker"
     $dockerHome = Join-Path $env:ProgramFiles "Docker"
-    $wrapperUrl = "http://dcos-win.westus.cloudapp.azure.com/downloads/service-wrapper.exe"
+    $wrapperUrl = "http://dcos-win.westus2.cloudapp.azure.com/downloads/service-wrapper.exe"
     Stop-Service $serviceName
     sc.exe delete $serviceName
     if($LASTEXITCODE) {
@@ -145,5 +145,5 @@ try {
     Write-Log "The pre-provision setup for the DC/OS Windows node failed"
     Write-Log "preprovision-agent-windows-setup.ps1 exception: $_.ToString()"
     Write-Log $_.ScriptStackTrace
-    Throw $_
+    exit 1
 }
