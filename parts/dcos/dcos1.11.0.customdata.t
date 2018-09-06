@@ -29,6 +29,8 @@ runcmd: PREPROVISION_EXTENSION
 - ln -s /bin/systemctl /usr/bin/systemctl
 - ln -s /bin/mount /usr/bin/mount
 - ln -s /bin/bash /usr/bin/bash
+- ln -s /bin/chmod /usr/bin/chmod
+- ln -s /bin/chown /usr/bin/chown
 - ln -s /usr/sbin/useradd /usr/bin/useradd
 - systemctl disable --now resolvconf.service
 - systemctl mask --now lxc-net.service
