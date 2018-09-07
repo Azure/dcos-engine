@@ -51,8 +51,6 @@ const (
 	DCOSVersion1Dot11Dot3 string = "1.11.3"
 	// DCOSVersion1Dot11Dot2 is the major.minor.patch string for 1.11.2 versions of DCOS
 	DCOSVersion1Dot11Dot2 string = "1.11.2"
-	// DCOSVersion1Dot11Dot0 is the major.minor.patch string for 1.11.0 versions of DCOS
-	DCOSVersion1Dot11Dot0 string = "1.11.0"
 	// DCOSDefaultVersion is a default DCOS version
 	DCOSDefaultVersion string = DCOSVersion1Dot11Dot4
 )
@@ -62,7 +60,6 @@ var AllDCOSSupportedVersions = []string{
 	DCOSVersion1Dot11Dot4,
 	DCOSVersion1Dot11Dot3,
 	DCOSVersion1Dot11Dot2,
-	DCOSVersion1Dot11Dot0,
 }
 
 // GetAllSupportedDCOSVersions returns a slice of all supported DCOS versions.
