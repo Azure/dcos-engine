@@ -34,7 +34,7 @@ var _ = Describe("The orchestrators command", func() {
 
 	It("should succeed", func() {
 		command := &orchestratorsCmd{
-			version: "1.11.0",
+			version: "1.11.2",
 		}
 
 		err := command.run(nil, nil)

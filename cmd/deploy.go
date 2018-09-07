@@ -76,10 +76,10 @@ func newDeployCmd() *cobra.Command {
 				log.Fatalf(fmt.Sprintf("error merging API model in deployCmd: %s", err.Error()))
 			}
 			if err := dc.loadAPIModel(cmd, args); err != nil {
-				log.Fatalln("failed to load apimodel: %s", err.Error())
+				log.Fatalf("failed to load apimodel: %s", err.Error())
 			}
 			if _, _, err := dc.validateApimodel(); err != nil {
-				log.Fatalln("Failed to validate the apimodel after populating values: %s", err.Error())
+				log.Fatalf("Failed to validate the apimodel after populating values: %s", err.Error())
 			}
 			return dc.run()
 		},
@@ -322,7 +322,7 @@ func (dc *deployCmd) run() error {
 
 	templateGenerator, err := acsengine.InitializeTemplateGenerator(ctx, dc.classicMode)
 	if err != nil {
-		log.Fatalln("failed to initialize template generator: %s", err.Error())
+		log.Fatalf("failed to initialize template generator: %s", err.Error())
 	}
 
 	template, parameters, certsgenerated, err := templateGenerator.GenerateTemplate(dc.containerService, acsengine.DefaultGeneratorCode, false)
