@@ -268,8 +268,6 @@ func GetDCOSDefaultBootstrapInstallerURL(orchestratorVersion string) string {
 		return "https://dcos-mirror.azureedge.net/dcos/1-11-3/dcos_generate_config.sh"
 	case common.DCOSVersion1Dot11Dot2:
 		return "https://dcos-mirror.azureedge.net/dcos/1-11-2/dcos_generate_config.sh"
-	case common.DCOSVersion1Dot11Dot0:
-		return "https://dcos-mirror.azureedge.net/dcos/1-11-0/dcos_generate_config.sh"
 	default:
 		return ""
 	}
@@ -279,9 +277,7 @@ func GetDCOSDefaultBootstrapInstallerURL(orchestratorVersion string) string {
 func GetDCOSDefaultWindowsBootstrapInstallerURL(orchestratorVersion string) string {
 	switch orchestratorVersion {
 	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
-		return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-2/dcos_generate_config.windows.tar.xz"
-	case common.DCOSVersion1Dot11Dot0:
-		return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-0/dcos_generate_config.windows.tar.xz"
+		return "https://dcos-mirror.azureedge.net/dcos/1-11-4/dcos_generate_config.windows.tar.xz"
 	default:
 		return ""
 	}
@@ -610,7 +606,7 @@ func GetDCOSBootstrapConfig(cs *api.ContainerService) string {
 	}
 	var configFName string
 	switch cs.Properties.OrchestratorProfile.OrchestratorVersion {
-	case common.DCOSVersion1Dot11Dot0, common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
+	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
 		configFName = dcosBootstrapConfig111
 	default:
 		panic(fmt.Sprintf("BUG: invalid orchestrator version %s", cs.Properties.OrchestratorProfile.OrchestratorVersion))
@@ -641,7 +637,7 @@ func GetDCOSWindowsBootstrapConfig(cs *api.ContainerService) string {
 	}
 	var configFName string
 	switch cs.Properties.OrchestratorProfile.OrchestratorVersion {
-	case common.DCOSVersion1Dot11Dot0, common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
+	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
 		configFName = dcosBootstrapWindowsConfig111
 	default:
 		panic(fmt.Sprintf("BUG: invalid orchestrator version %s", cs.Properties.OrchestratorProfile.OrchestratorVersion))
@@ -752,10 +748,8 @@ func getDCOSCustomDataTemplate(orchestratorType, orchestratorVersion string) str
 	switch orchestratorType {
 	case api.DCOS:
 		switch orchestratorVersion {
-		case common.DCOSVersion1Dot11Dot0:
-			return dcosCustomData1110
 		case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
-			return dcosCustomData1112
+			return dcosCustomData111
 		}
 	default:
 		// it is a bug to get here

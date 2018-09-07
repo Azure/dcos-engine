@@ -8,7 +8,6 @@ import (
 
 	"github.com/Azure/dcos-engine/pkg/api"
 	"github.com/Azure/dcos-engine/pkg/api/common"
-	"github.com/blang/semver"
 )
 
 const (
@@ -156,24 +155,20 @@ func setOrchestratorDefaults(cs *api.ContainerService) {
 
 	switch o.OrchestratorType {
 	case api.DCOS:
-		dcosSemVer, _ := semver.Make(o.OrchestratorVersion)
-		dcosBootstrapSemVer, _ := semver.Make(common.DCOSVersion1Dot11Dot0)
-		if !dcosSemVer.LT(dcosBootstrapSemVer) {
-			if o.LinuxBootstrapProfile == nil {
-				o.LinuxBootstrapProfile = &api.BootstrapProfile{}
-			}
-			if len(o.LinuxBootstrapProfile.VMSize) == 0 {
-				o.LinuxBootstrapProfile.VMSize = "Standard_D2s_v3"
-			}
-			if o.WindowsBootstrapProfile == nil {
-				o.WindowsBootstrapProfile = &api.BootstrapProfile{}
-			}
-			if len(o.WindowsBootstrapProfile.VMSize) == 0 {
-				o.WindowsBootstrapProfile.VMSize = "Standard_D2s_v3"
-			}
-			if len(o.WindowsBootstrapProfile.DockerVersion) == 0 {
-				o.WindowsBootstrapProfile.DockerVersion = DefaultWindowsDockerVersion
-			}
+		if o.LinuxBootstrapProfile == nil {
+			o.LinuxBootstrapProfile = &api.BootstrapProfile{}
+		}
+		if len(o.LinuxBootstrapProfile.VMSize) == 0 {
+			o.LinuxBootstrapProfile.VMSize = "Standard_D2s_v3"
+		}
+		if o.WindowsBootstrapProfile == nil {
+			o.WindowsBootstrapProfile = &api.BootstrapProfile{}
+		}
+		if len(o.WindowsBootstrapProfile.VMSize) == 0 {
+			o.WindowsBootstrapProfile.VMSize = "Standard_D2s_v3"
+		}
+		if len(o.WindowsBootstrapProfile.DockerVersion) == 0 {
+			o.WindowsBootstrapProfile.DockerVersion = DefaultWindowsDockerVersion
 		}
 	}
 }
