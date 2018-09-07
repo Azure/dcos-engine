@@ -67,7 +67,7 @@ if [ ! -z "$LINUX_BSTRAP_PATH" ]; then
 fi
 
 if [ ! -z "$WINDOWS_BSTRAP_PATH" ]; then
-  container="dcos-windows"
+  container="dcos"
   name="${dashedVersion}/dcos_generate_config.windows.tar.xz"
   UploadFile $WINDOWS_BSTRAP_PATH $storage_account $key $container $name
 
