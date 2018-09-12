@@ -164,6 +164,12 @@ func setOrchestratorDefaults(cs *api.ContainerService) {
 		if o.WindowsBootstrapProfile == nil {
 			o.WindowsBootstrapProfile = &api.BootstrapProfile{}
 		}
+		if len(o.WindowsBootstrapProfile.VMSize) == 0 {
+			o.WindowsBootstrapProfile.VMSize = "Standard_D2s_v3"
+		}
+		if len(o.WindowsBootstrapProfile.DockerVersion) == 0 {
+			o.WindowsBootstrapProfile.DockerVersion = DefaultWindowsDockerVersion
+		}
 	}
 }
 
@@ -199,6 +205,11 @@ func setMasterNetworkDefaults(a *api.Properties, isUpgrade bool) {
 			if a.OrchestratorProfile.LinuxBootstrapProfile != nil {
 				if !isUpgrade || len(a.OrchestratorProfile.LinuxBootstrapProfile.StaticIP) == 0 {
 					a.OrchestratorProfile.LinuxBootstrapProfile.StaticIP = DefaultDCOSBootstrapStaticIP
+				}
+			}
+			if a.OrchestratorProfile.WindowsBootstrapProfile != nil {
+				if !isUpgrade || len(a.OrchestratorProfile.WindowsBootstrapProfile.StaticIP) == 0 {
+					a.OrchestratorProfile.WindowsBootstrapProfile.StaticIP = DefaultDCOSWindowsBootstrapStaticIP
 				}
 			}
 		}

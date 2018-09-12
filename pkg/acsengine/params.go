@@ -82,13 +82,15 @@ func getParameters(cs *api.ContainerService, isClassicMode bool, generatorCode s
 			addValue(parametersMap, "bootstrapStaticIP", properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP)
 			addValue(parametersMap, "bootstrapVMSize", properties.OrchestratorProfile.LinuxBootstrapProfile.VMSize)
 		}
-		if properties.OrchestratorProfile.WindowsBootstrapProfile != nil {
+		if properties.HasWindows() {
 			if len(properties.OrchestratorProfile.WindowsBootstrapProfile.BootstrapURL) > 0 {
 				dcosWindowsBootstrapURL = properties.OrchestratorProfile.WindowsBootstrapProfile.BootstrapURL
 			}
+			addValue(parametersMap, "dcosWindowsBootstrapURL", dcosWindowsBootstrapURL)
+			addValue(parametersMap, "windowsBootstrapStaticIP", properties.OrchestratorProfile.WindowsBootstrapProfile.StaticIP)
+			addValue(parametersMap, "windowsBootstrapVMSize", properties.OrchestratorProfile.WindowsBootstrapProfile.VMSize)
 		}
 		addValue(parametersMap, "dcosBootstrapURL", dcosBootstrapURL)
-		addValue(parametersMap, "dcosWindowsBootstrapURL", dcosWindowsBootstrapURL)
 	}
 
 	// Agent parameters

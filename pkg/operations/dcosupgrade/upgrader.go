@@ -107,9 +107,13 @@ func (uc *UpgradeCluster) runUpgrade() error {
 	bootstrapIP := uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP
 	uc.Logger.Infof("masterDNS:%s masterCount:%d", masterDNS, masterCount)
 	uc.Logger.Infof("bootstrapIP:%s", bootstrapIP)
-
+	var winBootstrapIP string
 	if hasWindowsAgents {
-		uc.Logger.Warnf("DC/OS upgrade for Windows agents is currently unsupported")
+		if uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.WindowsBootstrapProfile == nil {
+			return fmt.Errorf("WindowsBootstrapProfile is not set")
+		}
+		winBootstrapIP = uc.ClusterTopology.DataModel.Properties.OrchestratorProfile.WindowsBootstrapProfile.StaticIP
+		uc.Logger.Infof("Windows bootstrapIP:%s", winBootstrapIP)
 	}
 
 	// copy SSH key to master
@@ -135,6 +139,17 @@ func (uc *UpgradeCluster) runUpgrade() error {
 		return err
 	}
 	uc.Logger.Infof("upgradeScriptURL %s", upgradeScriptURL)
+
+	if hasWindowsAgents {
+		winUpgradeScriptURL, err := uc.upgradeWindowsBootstrapNode(masterDNS, winBootstrapIP, newVersion)
+		if err != nil {
+			return err
+		}
+		uc.Logger.Infof("winUpgradeScriptURL %s", winUpgradeScriptURL)
+		if err = uc.createWindowsAgentScript(masterDNS, winUpgradeScriptURL, newVersion); err != nil {
+			return err
+		}
+	}
 
 	nodeScript := strings.Replace(nodeUpgradeScript, "NEW_VERSION", newVersion, -1)
 	nodeScript = strings.Replace(nodeScript, "UPGRADE_SCRIPT_URL", upgradeScriptURL, -1)
@@ -331,9 +346,4 @@ func getDCOSVersion(data string) (*dcosVersion, error) {
 		return nil, err
 	}
 	return dcosVer, nil
-}
-
-func (uc *UpgradeCluster) upgradeWindowsAgent(masterDNS string, agent *agentInfo) error {
-	uc.Logger.Infof("Skipping upgrade of Windows agent %s", agent.Hostname)
-	return nil
 }

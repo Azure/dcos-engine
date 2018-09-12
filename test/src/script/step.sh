@@ -82,6 +82,18 @@ validate)
   validate
 ;;
 
+validate_node_count)
+  export OUTPUT=${OUTPUT:-"${ROOT}/_output/${INSTANCE_NAME}"}
+  set +e
+  validate_node_count
+;;
+
+validate_node_health)
+  export OUTPUT=${OUTPUT:-"${ROOT}/_output/${INSTANCE_NAME}"}
+  set +e
+  validate_node_health
+;;
+
 cleanup)
   export CLEANUP="${CLEANUP:-true}"
   cleanup

@@ -164,12 +164,13 @@ type CustomFile struct {
 
 // BootstrapProfile represents the definition of the DCOS bootstrap node used to deploy the cluster
 type BootstrapProfile struct {
-	BootstrapURL string `json:"bootstrapURL,omitempty"`
-	Hosted       bool   `json:"hosted,omitempty"`
-	VMSize       string `json:"vmSize,omitempty"`
-	OSDiskSizeGB int    `json:"osDiskSizeGB,omitempty"`
-	StaticIP     string `json:"staticIP,omitempty"`
-	Subnet       string `json:"subnet,omitempty"`
+	BootstrapURL  string `json:"bootstrapURL,omitempty"`
+	DockerVersion string `json:"dockerVersion,omitempty"`
+	Hosted        bool   `json:"hosted,omitempty"`
+	VMSize        string `json:"vmSize,omitempty"`
+	OSDiskSizeGB  int    `json:"osDiskSizeGB,omitempty"`
+	StaticIP      string `json:"staticIP,omitempty"`
+	Subnet        string `json:"subnet,omitempty"`
 }
 
 // MasterProfile represents the definition of the master cluster
@@ -187,6 +188,7 @@ type MasterProfile struct {
 	StorageProfile           string          `json:"storageProfile,omitempty"`
 	HTTPSourceAddressPrefix  string          `json:"HTTPSourceAddressPrefix,omitempty"`
 	PreprovisionExtension    *Extension      `json:"preProvisionExtension"`
+	PostprovisionExtension   *Extension      `json:"postProvisionExtension"`
 	Extensions               []Extension     `json:"extensions"`
 	Distro                   Distro          `json:"distro,omitempty"`
 	ImageRef                 *ImageReference `json:"imageReference,omitempty"`
@@ -244,11 +246,12 @@ type AgentPoolProfile struct {
 	Role                         AgentPoolProfileRole `json:"role,omitempty"`
 	AcceleratedNetworkingEnabled bool                 `json:"acceleratedNetworkingEnabled,omitempty"`
 
-	FQDN                  string            `json:"fqdn,omitempty"`
-	CustomNodeLabels      map[string]string `json:"customNodeLabels,omitempty"`
-	PreprovisionExtension *Extension        `json:"preProvisionExtension"`
-	Extensions            []Extension       `json:"extensions"`
-	ImageRef              *ImageReference   `json:"imageReference,omitempty"`
+	FQDN                   string            `json:"fqdn,omitempty"`
+	CustomNodeLabels       map[string]string `json:"customNodeLabels,omitempty"`
+	PreprovisionExtension  *Extension        `json:"preProvisionExtension"`
+	PostprovisionExtension *Extension        `json:"postProvisionExtension"`
+	Extensions             []Extension       `json:"extensions"`
+	ImageRef               *ImageReference   `json:"imageReference,omitempty"`
 }
 
 // AgentPoolProfileRole represents an agent role

@@ -24,7 +24,7 @@ import (
 )
 
 var commonTemplateFiles = []string{agentOutputs, agentParams, classicParams, masterOutputs, iaasOutputs, masterParams, windowsParams}
-var dcosTemplateFiles = []string{dcosBaseFile, dcosAgentResourcesVMAS, dcosAgentResourcesVMSS, dcosAgentVars, dcosMasterResources, dcosBootstrapResources, dcosMasterVars, dcosParams, dcosWindowsAgentResourcesVMAS, dcosWindowsAgentResourcesVMSS, dcosBootstrapVars, dcosBootstrapParams}
+var dcosTemplateFiles = []string{dcosBaseFile, dcosAgentResourcesVMAS, dcosAgentResourcesVMSS, dcosAgentVars, dcosMasterResources, dcosBootstrapResources, dcosBootstrapWinResources, dcosMasterVars, dcosParams, dcosWindowsAgentResourcesVMAS, dcosWindowsAgentResourcesVMSS, dcosBootstrapVars, dcosBootstrapParams}
 
 var keyvaultSecretPathRe *regexp.Regexp
 
@@ -183,26 +183,18 @@ func getStorageAccountType(sizeName string) (string, error) {
 	return "Standard_LRS", nil
 }
 
-func makeMasterExtensionScriptCommands(cs *api.ContainerService) string {
-	copyIndex := "',copyIndex(),'"
-	return makeExtensionScriptCommands(cs.Properties.MasterProfile.PreprovisionExtension,
-		cs.Properties.ExtensionProfiles, copyIndex)
+func makeMasterExtensionScriptCommands(cs *api.ContainerService, ext *api.Extension) string {
+	return makeExtensionScriptCommands(ext, cs.Properties.ExtensionProfiles)
 }
 
-func makeAgentExtensionScriptCommands(cs *api.ContainerService, profile *api.AgentPoolProfile) string {
-	copyIndex := "',copyIndex(),'"
-	if profile.IsAvailabilitySets() {
-		copyIndex = fmt.Sprintf("',copyIndex(variables('%sOffset')),'", profile.Name)
-	}
+func makeAgentExtensionScriptCommands(cs *api.ContainerService, profile *api.AgentPoolProfile, ext *api.Extension) string {
 	if profile.OSType == api.Windows {
-		return makeWindowsExtensionScriptCommands(profile.PreprovisionExtension,
-			cs.Properties.ExtensionProfiles, copyIndex)
+		return makeWindowsExtensionScriptCommands(ext, cs.Properties.ExtensionProfiles)
 	}
-	return makeExtensionScriptCommands(profile.PreprovisionExtension,
-		cs.Properties.ExtensionProfiles, copyIndex)
+	return makeExtensionScriptCommands(ext, cs.Properties.ExtensionProfiles)
 }
 
-func makeExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile, copyIndex string) string {
+func makeExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile) string {
 	var extensionProfile *api.ExtensionProfile
 	for _, eP := range extensionProfiles {
 		if strings.EqualFold(eP.Name, extension.Name) {
@@ -222,7 +214,7 @@ func makeExtensionScriptCommands(extension *api.Extension, extensionProfiles []*
 		scriptFilePath, scriptURL, scriptFilePath, scriptFilePath, extensionsParameterReference, extensionProfile.Name)
 }
 
-func makeWindowsExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile, copyIndex string) string {
+func makeWindowsExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile) string {
 	var extensionProfile *api.ExtensionProfile
 	for _, eP := range extensionProfiles {
 		if strings.EqualFold(eP.Name, extension.Name) {
@@ -276,8 +268,12 @@ func GetDCOSDefaultBootstrapInstallerURL(orchestratorVersion string) string {
 // GetDCOSDefaultWindowsBootstrapInstallerURL returns default DCOS Windows Bootstrap installer URL
 func GetDCOSDefaultWindowsBootstrapInstallerURL(orchestratorVersion string) string {
 	switch orchestratorVersion {
-	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
-		return "https://dcos-mirror.azureedge.net/dcos-windows/1-11-2"
+	case common.DCOSVersion1Dot11Dot2:
+		return "https://dcos-mirror.azureedge.net/dcos/1-11-2/dcos_generate_config.windows.tar.xz"
+	case common.DCOSVersion1Dot11Dot3:
+		return "https://dcos-mirror.azureedge.net/dcos/1-11-3/dcos_generate_config.windows.tar.xz"
+	case common.DCOSVersion1Dot11Dot4:
+		return "https://dcos-mirror.azureedge.net/dcos/1-11-4/dcos_generate_config.windows.tar.xz"
 	default:
 		return ""
 	}
@@ -348,7 +344,7 @@ func getDCOSWindowsAgentCustomAttributes(profile *api.AgentPoolProfile) string {
 	if len(profile.OSType) > 0 {
 		attrstring = fmt.Sprintf("os:%s", profile.OSType)
 	} else {
-		attrstring = fmt.Sprintf("os:windows")
+		attrstring = fmt.Sprintf("os:%s", api.Windows)
 	}
 	if len(profile.Ports) > 0 {
 		attrstring += ";public_ip:true"
@@ -630,6 +626,37 @@ func GetDCOSBootstrapConfig(cs *api.ContainerService) string {
 	return config
 }
 
+// GetDCOSWindowsBootstrapConfig returns DCOS Windows bootstrap config
+func GetDCOSWindowsBootstrapConfig(cs *api.ContainerService) string {
+	if cs.Properties.OrchestratorProfile.OrchestratorType != api.DCOS {
+		panic(fmt.Sprintf("BUG: invalid orchestrator %s", cs.Properties.OrchestratorProfile.OrchestratorType))
+	}
+	var configFName string
+	switch cs.Properties.OrchestratorProfile.OrchestratorVersion {
+	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
+		configFName = dcosBootstrapWindowsConfig111
+	default:
+		panic(fmt.Sprintf("BUG: invalid orchestrator version %s", cs.Properties.OrchestratorProfile.OrchestratorVersion))
+	}
+
+	bp, err := Asset(configFName)
+	if err != nil {
+		panic(fmt.Sprintf("BUG: %s", err.Error()))
+	}
+
+	masterIPList := generateIPList(cs.Properties.MasterProfile.Count, cs.Properties.MasterProfile.FirstConsecutiveStaticIP)
+	for i, v := range masterIPList {
+		masterIPList[i] = "- " + v
+	}
+
+	config := string(bp)
+	config = strings.Replace(config, "MASTER_IP_LIST", strings.Join(masterIPList, "\n"), -1)
+	config = strings.Replace(config, "BOOTSTRAP_IP", cs.Properties.OrchestratorProfile.WindowsBootstrapProfile.StaticIP, -1)
+	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.OAuthEnabled), -1)
+
+	return config
+}
+
 func getDCOSBootstrapConfig(cs *api.ContainerService) string {
 	config := GetDCOSBootstrapConfig(cs)
 	return strings.Replace(strings.Replace(config, "\r\n", "\n", -1), "\n", "\n\n    ", -1)
@@ -653,9 +680,6 @@ func getDCOSProvisionScript(script string) string {
 func getDCOSAgentProvisionScript(profile *api.AgentPoolProfile, orchProfile *api.OrchestratorProfile, bootstrapIP string) string {
 	// add the provision script
 	scriptname := dcosProvision
-	if profile.OSType == api.Windows {
-		scriptname = dcosWindowsProvision
-	}
 
 	bp, err := Asset(scriptname)
 	if err != nil {

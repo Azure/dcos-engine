@@ -1,220 +1,190 @@
-<#
+﻿<#
     .SYNOPSIS
-        Provisions VM as a DCOS agent.
+        Provisions VM as a Windows bootstrap node.
 
     .DESCRIPTION
-        Provisions VM as a DCOS agent.
+        Provisions VM as a Windows bootstrap node.
 
      Invoke by:
-       
+
 #>
 
 [CmdletBinding(DefaultParameterSetName="Standard")]
 param(
     [string]
     [ValidateNotNullOrEmpty()]
-    $dcosVersion,
+    $BootstrapIP,
 
     [string]
     [ValidateNotNullOrEmpty()]
-    $masterCount,
-
-    [string]
-    [ValidateNotNullOrEmpty()]
-    $firstMasterIP,
-    
-    [string]
-    [ValidateNotNullOrEmpty()]
-    $bootstrapUri,
-
-    [parameter()]
-    [ValidateNotNullOrEmpty()]
-    $isAgent,
-
-    [parameter()]
-    [ValidateNotNullOrEmpty()]
-    $subnet,
-
-    [parameter()]
-    [AllowNull()]
-    $isPublic = $false,
-
-    [string]
-    [AllowNull()]
-    $customAttrs = "",
-
-    [string]
-    [AllowNull()]
-    $preprovisionExtensionParams = ""
+    $adminUser
 )
-
-
-
 
 $global:BootstrapInstallDir = "C:\AzureData"
 
-filter Timestamp {"$(Get-Date -Format o): $_"}
+filter Timestamp {"[$(Get-Date -Format o)] $_"}
 
-
-function
-Write-Log($message)
+function Write-Log($message)
 {
     $msg = $message | Timestamp
     Write-Output $msg
 }
 
-
-function
-Expand-ZIPFile($file, $destination)
+function RetryCurl($url, $path)
 {
-    $shell = new-object -com shell.application
-    $zip = $shell.NameSpace($file)
-    foreach($item in $zip.items())
-    {
-        $shell.Namespace($destination).copyhere($item, 0x14)
-    }
-}
-
-
-function 
-Remove-Directory($dirname)
-{
-
-    try {
-        #Get-ChildItem $dirname -Recurse | Remove-Item  -force -confirm:$false
-        # This doesn't work because of long file names
-        # But this does:
-        Invoke-Expression ("cmd /C rmdir /s /q "+$dirname)
-    }
-    catch {
-        # If this fails we don't want it to stop
-
-    }
-}
-
-
-function 
-Check-Subnet ([string]$cidr, [string]$ip)
-{
-    try {
-
-        $network, [int]$subnetlen = $cidr.Split('/')
-    
-        if ($subnetlen -eq 0)
-        {
-            $subnetlen = 8 # Default in case we get an IP addr, not CIDR
+    for($i = 1; $i -le 10; $i++) {
+        try {
+            & curl.exe --keepalive-time 2 -fLsS --retry 20 -o $path $url
+            if ($LASTEXITCODE -eq 0) {
+                Write-Log "Downloaded $url in $i attempts"
+                return
+            }
+        } catch {
         }
-        $a = ([IPAddress] $network)
-        [uint32] $unetwork = [uint32]$a.Address
-    
-        $mask = -bnot ((-bnot [uint32]0) -shl (32 - $subnetlen))
-    
-        $a = [IPAddress]$ip
-        [uint32] $uip = [uint32]$a.Address
-    
-        return ($unetwork -eq ($mask -band $uip))
+        Sleep(2)
     }
-    catch {
-        return $false
+    throw "Failed to download $url"
+}
+
+function UpdateDocker()
+{
+    # Stop Docker service, disable Docker Host Networking Service
+    Write-Log "Stopping Docker"
+    Stop-Service Docker
+
+    Write-Log "Disabling Docker Host Networking Service"
+    Get-HNSNetwork | Remove-HNSNetwork
+    $dockerData = Join-Path $env:ProgramData "Docker"
+    Set-Content -Path "$dockerData\config\daemon.json" -Value '{ "bridge" : "none" }' -Encoding Ascii
+
+    # Upgrade and restart Docker
+    if ("WINDOWS_DOCKER_VERSION" -ne "current") {
+        Write-Log "Updating Docker to WINDOWS_DOCKER_VERSION"
+        Install-Module DockerMsftProvider -Force
+        Install-Package -Name docker -ProviderName DockerMsftProvider -Force -RequiredVersion WINDOWS_DOCKER_VERSION
+    }
+    Write-Log "Starting Docker"
+    Start-Service Docker
+}
+
+function InstallOpehSSH()
+{
+    Write-Log "Installing OpehSSH"
+    $list = (Get-WindowsCapability -Online | ? Name -like 'OpenSSH.Server*')
+    Add-WindowsCapability -Online -Name $list.Name
+    Install-Module -Force OpenSSHUtils
+    Start-Service sshd
+
+    Write-Log "Creating authorized key"
+    $path = "C:\AzureData\authorized_keys"
+    Set-Content -Path $path -Value "SSH_PUB_KEY" -Encoding Ascii
+
+    (Get-Content C:\ProgramData\ssh\sshd_config) -replace "AuthorizedKeysFile(\s+).ssh/authorized_keys", "AuthorizedKeysFile $path" | Set-Content C:\ProgramData\ssh\sshd_config
+    $acl = Get-Acl -Path $path
+    $acl.SetAccessRuleProtection($True, $True)
+    $acl | Set-Acl -Path $path
+
+    $acl = Get-Acl -Path $path
+    $rules = $acl.Access
+    $usersToRemove = @("Everyone","BUILTIN\Users","NT AUTHORITY\Authenticated Users")
+    foreach ($u in $usersToRemove) {
+        $targetrule = $rules | where IdentityReference -eq $u
+        if ($targetrule) {
+            $acl.RemoveAccessRule($targetrule)
+        }
+    }
+    $acl | Set-Acl -Path $path
+
+    Restart-Service sshd
+
+    $sshStartCmd = "C:\AzureData\OpenSSHStart.ps1"
+    Set-Content -Path $sshStartCmd -Value "Start-Service sshd"
+
+    & schtasks.exe /CREATE /F /SC ONSTART /RU SYSTEM /RL HIGHEST /TN "SSH start" /TR "powershell.exe -ExecutionPolicy Bypass -File $sshStartCmd"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to add scheduled task $sshStartCmd"
     }
 }
 
-#
-# Gets the bootstrap script from the blob store and places it in c:\AzureData
+try {
+    Write-Log "Setting up Windows Agent node. BootstrapIP:$BootstrapIP"
+    Write-Log "Admin user is $adminUser"
+    Write-Log "User Domain is $env:computername"
 
-function
-Get-BootstrapScript($download_uri, $download_dir)
-{
-    # Get Mesos Binaries
-    $scriptfile = "DCOSWindowsAgentSetup.ps1"
-
-    Write-Log "get script $download_uri/$scriptfile and put it $download_dir\$scriptfile"
-
-    Invoke-WebRequest -Uri ($download_uri+"/"+$scriptfile) -OutFile ($download_dir+"\"+$scriptfile)
-}
-
-
-try
-{
-    # Set to false for debugging.  This will output the start script to
-    # c:\AzureData\dcosProvisionScript.log, and then you can RDP 
-    # to the windows machine, and run the script manually to watch
-    # the output.
     Write-Log "Run preprovision extension (if present)"
 
     PREPROVISION_EXTENSION
 
-    Write-Log "Get the install script"
+    UpdateDocker
 
-    Write-Log ("Parameters: -dcosVersion "+$dcosVersion+" -isAgent "+$isAgent+" -mastercount "+$masterCount+" -firstMasterIP "+$firstMasterIP+" -bootstrapURI "+$bootstrapUri+" -subnet "+$subnet+" -customAttrs "+$customAttrs+" -preprovisionExtensionParms "+$preprovisionExtensionParams)
+    InstallOpehSSH
 
-    # Get the boostrap script
+    # First up, download the runasxbox util
+    RetryCurl "https://dcos-mirror.azureedge.net/winbootstrap/RunAsXbox.exe" "c:\AzureData\runasxbox.exe"
 
-    Get-BootstrapScript $bootstrapUri $global:BootstrapInstallDir
+    # Create the setcreds script
+    $setcred_content = @'
+     # usage: setcreds.ps1 -adminUser domain\user -password password
+    [CmdletBinding(DefaultParameterSetName="Standard")]
+       param(
+            [string]
+            [ValidateNotNullOrEmpty()]
+            $user,
+            [string]
+            [ValidateNotNullOrEmpty()]
+            $password,
+            [string]
+            [ValidateNotNullOrEmpty()]
+            $domain
+       )
 
-    # Convert Master count and first IP to a JSON array of IPAddresses
-    $ip = ([IPAddress]$firstMasterIp).getAddressBytes()
-    [Array]::Reverse($ip)
-    $ip = ([IPAddress]($ip -join '.')).Address
+    Install-Module CredentialManager -force
 
-    $MasterIP = @([IPAddress]$null)
-    
-    for ($i = 0; $i -lt $MasterCount; $i++ ) 
-    {
-       $new_ip = ([IPAddress]$ip).getAddressBytes()
-       [Array]::Reverse($new_ip)
-       $new_ip = [IPAddress]($new_ip -join '.')
-       $MasterIP += $new_ip
-      
-       $ip++
-     
+    & net user $user $password /add /yes
+    & net localgroup administrators $user /add
+    # & cmdkey /generic:dcos/app /user:$domain\$user /pass:$password
+
+    New-StoredCredential -Target dcos/app -Username "$domain\$user" -Password $password -Type GENERIC -Persist LocalMachine
+
+'@
+    $setcred_content | out-file -encoding ascii c:\AzureData\setcreds.ps1
+    # prime the credential cache
+    Set-PSDebug -trace 1
+    get-wmiobject -class Win32_UserAccount
+
+    # Add all the known dcos users (2do)
+
+    $password = "ADMIN_PASSWORD"
+
+    & net user $adminUser $password /add /yes
+    & net localgroup administrators $adminUser /add
+    c:\AzureData\setcreds.ps1 -User $adminUser -Password $password -Domain $env:computername
+
+    $dcosInstallUrl = "http://${BootstrapIP}:8086/dcos_install.ps1"
+    RetryCurl $dcosInstallUrl "$global:BootstrapInstallDir\dcos_install.ps1"
+
+    $cmd = @'
+powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
+'@
+
+    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_USERNAME", "$env:computername\$adminUser", "Machine")
+    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_PASSWORD", $password, "Machine")
+
+    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_USERNAME", "$env:computername\$adminUser", "Process")
+    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_PASSWORD", $password, "Process")
+
+    $runasargs = "/fix /type:4 /user:$env:computername\$adminUser /password:$password /command:'$cmd'"
+    Invoke-Expression -command ("c:\AzureData\runasxbox.exe "+$runasargs)
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed run DC/OS install script"
     }
-    $master_str  = $MasterIP.IPAddressToString
-
-    # Add the port numbers
-    if ($master_str.count -eq 1) {
-        $master_str += ":2181"
-    }
-    else {
-        for ($i = 0; $i -lt $master_str.count; $i++) 
-        {
-            $master_str[$i] += ":2181"
-        }
-    }
-    $master_json = ConvertTo-Json $master_str
-    $master_json = $master_json -replace [Environment]::NewLine,""
-
-    $private_ip = ( Get-NetIPAddress | where { $_.AddressFamily -eq "IPv4" } | where { Check-Subnet $subnet $_.IPAddress } )  # We know the subnet we are on. Makes it easier and more robust
-    [Environment]::SetEnvironmentVariable("DCOS_AGENT_IP", $private_ip.IPAddress, "Machine")
-
-    if ($isAgent)
-    {
-        $run_cmd = $global:BootstrapInstallDir+"\DCOSWindowsAgentSetup.ps1 -DcosVersion '$dcosVersion' -MasterIP '$master_json' -AgentPrivateIP "+($private_ip.IPAddress) +" -BootstrapUrl '$bootstrapUri' " 
-        if ($isPublic) 
-        {
-            $run_cmd += " -isPublic:`$true "
-        }
-        if ($customAttrs) 
-        {
-            $run_cmd += " -customAttrs '$customAttrs'"
-        }
-        $run_cmd += ">"+$global:BootstrapInstallDir+"\DCOSWindowsAgentSetup.log 2>&1"
-        Write-Log "run setup script $run_cmd"
-        Invoke-Expression $run_cmd
-        Write-Log "setup script completed"
-    }
-    else # We must be deploying a master
-    {
-        $run_cmd = $global:BootstrapInstallDir+"\DCOSWindowsMasterSetup.ps1 -MasterIP '$master_json' -MasterPrivateIP $privateIP.IPAddress -BootstrapUrl '$bootstrapUri'"
-        Write-Log "run setup script $run_cmd"
-        Invoke-Expression $run_cmd
-    }
-
-    Write-Log "Provisioning script succeeded"
-}
-catch
-{
-    Write-Log "Provisioning script failed"
-    Write-Error $_
+} catch {
+    Write-Log "Failed to provision Windows agent node: $_"
+    Set-PSDebug -Off
     exit 1
 }
+
+Set-PSDebug -Off
+Write-Log "Successfully provisioned Windows agent node"
+exit 0

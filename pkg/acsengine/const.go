@@ -9,6 +9,8 @@ const (
 	DefaultDCOSFirstConsecutiveStaticIP = "192.168.255.5"
 	// DefaultDCOSBootstrapStaticIP specifies the static IP address on bootstrap for a DCOS cluster
 	DefaultDCOSBootstrapStaticIP = "192.168.255.240"
+	// DefaultDCOSWindowsBootstrapStaticIP specifies the static IP address on Windows bootstrap for a DCOS cluster
+	DefaultDCOSWindowsBootstrapStaticIP = "192.168.255.241"
 	// DefaultDockerBridgeSubnet specifies the default subnet for the docker bridge network for masters and agents.
 	DefaultDockerBridgeSubnet = "172.17.0.1/16"
 	// DefaultAgentSubnetTemplate specifies a default agent subnet
@@ -19,6 +21,8 @@ const (
 	DefaultGeneratorCode = "dcos-engine"
 	// DefaultOrchestratorName specifies the 3 character orchestrator code of the cluster template and affects resource naming.
 	DefaultOrchestratorName = "dcos"
+	// DefaultWindowsDockerVersion specifies default docker version installed on Windows nodes
+	DefaultWindowsDockerVersion = "18.03.1-ee-1"
 )
 
 const (
@@ -46,12 +50,15 @@ const (
 )
 
 const (
-	dcosWindowsProvision   = "dcos/dcosWindowsProvision.ps1"
 	dcosProvisionSource    = "dcos/dcosprovisionsource.sh"
 	dcosProvision          = "dcos/dcosprovision.sh"
 	dcosBootstrapProvision = "dcos/bootstrapprovision.sh"
 	dcosBootstrapConfig111 = "dcos/dcos1.11.bootstrap-config.yaml"
 	dcosCustomData111      = "dcos/dcos1.11.customdata.t"
+
+	dcosBootstrapWindowsProvision = "dcos/bootstrapWindowsProvision.ps1"
+	dcosBootstrapWindowsConfig111 = "dcos/dcos1.11.bootstrapwin-config.yaml"
+	dcosWindowsProvision          = "dcos/dcosWindowsProvision.ps1"
 )
 
 const (
@@ -68,6 +75,7 @@ const (
 	dcosBootstrapVars             = "dcos/bootstrapvars.t"
 	dcosBootstrapParams           = "dcos/bootstrapparams.t"
 	dcosBootstrapResources        = "dcos/bootstrapresources.t"
+	dcosBootstrapWinResources     = "dcos/bootstrapwinresources.t"
 	dcosBootstrapCustomdata       = "dcos/bootstrapcustomdata.yml"
 	dcosMasterVars                = "dcos/dcosmastervars.t"
 	dcosMasterResources           = "dcos/dcosmasterresources.t"

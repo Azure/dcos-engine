@@ -3,7 +3,10 @@
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "DCOS",
-      "orchestratorVersion": "1.11.2"
+      "orchestratorVersion": "1.11.2",
+      "windowsBootstrapProfile": {
+        "vmSize": "Standard_D8s_v3"
+      }
     },
     "masterProfile": {
       "count": 3,

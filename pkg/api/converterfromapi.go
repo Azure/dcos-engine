@@ -172,22 +172,24 @@ func convertOrchestratorProfileToVLabs(api *OrchestratorProfile, o *vlabs.Orches
 	o.OAuthEnabled = api.OAuthEnabled
 	if api.LinuxBootstrapProfile != nil {
 		o.LinuxBootstrapProfile = &vlabs.BootstrapProfile{
-			BootstrapURL: api.LinuxBootstrapProfile.BootstrapURL,
-			Hosted:       api.LinuxBootstrapProfile.Hosted,
-			VMSize:       api.LinuxBootstrapProfile.VMSize,
-			OSDiskSizeGB: api.LinuxBootstrapProfile.OSDiskSizeGB,
-			StaticIP:     api.LinuxBootstrapProfile.StaticIP,
-			Subnet:       api.LinuxBootstrapProfile.Subnet,
+			BootstrapURL:  api.LinuxBootstrapProfile.BootstrapURL,
+			DockerVersion: api.LinuxBootstrapProfile.DockerVersion,
+			Hosted:        api.LinuxBootstrapProfile.Hosted,
+			VMSize:        api.LinuxBootstrapProfile.VMSize,
+			OSDiskSizeGB:  api.LinuxBootstrapProfile.OSDiskSizeGB,
+			StaticIP:      api.LinuxBootstrapProfile.StaticIP,
+			Subnet:        api.LinuxBootstrapProfile.Subnet,
 		}
 	}
 	if api.WindowsBootstrapProfile != nil {
 		o.WindowsBootstrapProfile = &vlabs.BootstrapProfile{
-			BootstrapURL: api.WindowsBootstrapProfile.BootstrapURL,
-			Hosted:       api.WindowsBootstrapProfile.Hosted,
-			VMSize:       api.WindowsBootstrapProfile.VMSize,
-			OSDiskSizeGB: api.WindowsBootstrapProfile.OSDiskSizeGB,
-			StaticIP:     api.WindowsBootstrapProfile.StaticIP,
-			Subnet:       api.WindowsBootstrapProfile.Subnet,
+			BootstrapURL:  api.WindowsBootstrapProfile.BootstrapURL,
+			DockerVersion: api.WindowsBootstrapProfile.DockerVersion,
+			Hosted:        api.WindowsBootstrapProfile.Hosted,
+			VMSize:        api.WindowsBootstrapProfile.VMSize,
+			OSDiskSizeGB:  api.WindowsBootstrapProfile.OSDiskSizeGB,
+			StaticIP:      api.WindowsBootstrapProfile.StaticIP,
+			Subnet:        api.WindowsBootstrapProfile.Subnet,
 		}
 	}
 	o.Registry = api.Registry
@@ -223,6 +225,11 @@ func convertMasterProfileToVLabs(api *MasterProfile, vlabsProfile *vlabs.MasterP
 		vlabsExtension := &vlabs.Extension{}
 		convertExtensionToVLabs(api.PreprovisionExtension, vlabsExtension)
 		vlabsProfile.PreProvisionExtension = vlabsExtension
+	}
+	if api.PostprovisionExtension != nil {
+		vlabsExtension := &vlabs.Extension{}
+		convertExtensionToVLabs(api.PostprovisionExtension, vlabsExtension)
+		vlabsProfile.PostProvisionExtension = vlabsExtension
 	}
 	vlabsProfile.Extensions = []vlabs.Extension{}
 	for _, extension := range api.Extensions {
@@ -281,7 +288,11 @@ func convertAgentPoolProfileToVLabs(api *AgentPoolProfile, p *vlabs.AgentPoolPro
 		convertExtensionToVLabs(api.PreprovisionExtension, vlabsExtension)
 		p.PreProvisionExtension = vlabsExtension
 	}
-
+	if api.PostprovisionExtension != nil {
+		vlabsExtension := &vlabs.Extension{}
+		convertExtensionToVLabs(api.PostprovisionExtension, vlabsExtension)
+		p.PostProvisionExtension = vlabsExtension
+	}
 	p.Extensions = []vlabs.Extension{}
 	for _, extension := range api.Extensions {
 		vlabsExtension := &vlabs.Extension{}

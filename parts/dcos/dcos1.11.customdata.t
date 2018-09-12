@@ -20,7 +20,8 @@ mounts:
   - /var/lib/mesos
 - - ephemeral0.2
   - /var/lib/docker
-runcmd: PREPROVISION_EXTENSION
+runcmd:
+PREPROVISION_EXTENSION
 - ln -s /bin/rm /usr/bin/rm
 - ln -s /bin/mkdir /usr/bin/mkdir
 - ln -s /bin/tar /usr/bin/tar
@@ -39,6 +40,7 @@ runcmd: PREPROVISION_EXTENSION
 - /opt/azure/containers/provision.sh
 - bash /tmp/dcos/dcos_install.sh ROLENAME
 - /opt/azure/dcos/postinstall-cond.sh
+POSTPROVISION_EXTENSION
 write_files:
 - content: |
     [Service]
