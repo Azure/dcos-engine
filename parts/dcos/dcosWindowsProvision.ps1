@@ -106,6 +106,25 @@ function InstallOpehSSH()
     }
 }
 
+function ConfirmService($serviceName) {
+  $timeout = New-TimeSpan -Minutes 15
+  $sw = [diagnostics.stopwatch]::StartNew()
+  while ($sw.elapsed -lt $timeout) {
+    if (Get-Service $serviceName -ErrorAction SilentlyContinue) {
+      $status = (Get-Service $serviceName).Status
+      if ($status -eq 'Running') {
+        Write-Log "Service $serviceName is Running"
+        return
+      }
+      Write-Log "Service $serviceName is $status. Waiting ..."
+    } else {
+        Write-Log "Service $serviceName is not listed. Waiting ..."
+    }
+    Start-Sleep -Seconds 15
+  }
+  Throw "Service $serviceName is not available or in the final state"
+}
+
 try {
     Write-Log "Setting up Windows Agent node. BootstrapIP:$BootstrapIP"
     Write-Log "Admin user is $adminUser"
@@ -179,6 +198,10 @@ powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
     if ($LASTEXITCODE -ne 0) {
         throw "Failed run DC/OS install script"
     }
+
+    # Confirm Services
+    ConfirmService "dcos-net.service"
+    ConfirmService "dcos-metrics-agent.service"
 
     POSTPROVISION_EXTENSION
 

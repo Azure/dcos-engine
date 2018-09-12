@@ -66,6 +66,10 @@
             "name": "preprovision-agent-windows",
             "singleOrAll": "All"
         },
+        "postProvisionExtension": {
+          "name": "postinstall-agent-windows",
+          "singleOrAll": "All"
+        },
         "customNodeLabels": {
           "infrastructure": "ci"
         }
@@ -78,6 +82,10 @@
         "dnsPrefix": "",
         "preProvisionExtension": {
           "name": "preprovision-agent-windows",
+          "singleOrAll": "All"
+        },
+        "postProvisionExtension": {
+          "name": "postinstall-agent-windows",
           "singleOrAll": "All"
         },
         "customNodeLabels": {
@@ -140,6 +148,13 @@
         "extensionParameters": "parameters",
         "rootURL": "https://dcosenginetest.blob.core.windows.net/preprovision",
         "script": "preprovision-agent-windows.ps1"
+      },
+      {
+        "name": "postinstall-agent-windows",
+        "version": "v1",
+        "extensionParameters": "parameters",
+        "rootURL": "https://dcosenginetest.blob.core.windows.net/preprovision",
+        "script": "postinstall-agent-windows.ps1"
       }
     ]
   }
