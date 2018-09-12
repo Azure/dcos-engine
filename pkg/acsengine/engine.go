@@ -183,18 +183,10 @@ func getStorageAccountType(sizeName string) (string, error) {
 	return "Standard_LRS", nil
 }
 
-func makeMasterExtensionScriptCommands(cs *api.ContainerService, ext *api.Extension) string {
-	return makeExtensionScriptCommands(ext, cs.Properties.ExtensionProfiles)
-}
-
-func makeAgentExtensionScriptCommands(cs *api.ContainerService, profile *api.AgentPoolProfile, ext *api.Extension) string {
-	if profile.OSType == api.Windows {
-		return makeWindowsExtensionScriptCommands(ext, cs.Properties.ExtensionProfiles)
-	}
-	return makeExtensionScriptCommands(ext, cs.Properties.ExtensionProfiles)
-}
-
 func makeExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile) string {
+	if extension == nil {
+		return ""
+	}
 	var extensionProfile *api.ExtensionProfile
 	for _, eP := range extensionProfiles {
 		if strings.EqualFold(eP.Name, extension.Name) {
@@ -210,11 +202,14 @@ func makeExtensionScriptCommands(extension *api.Extension, extensionProfiles []*
 	extensionsParameterReference := fmt.Sprintf("parameters('%sParameters')", extensionProfile.Name)
 	scriptURL := getExtensionURL(extensionProfile.RootURL, extensionProfile.Name, extensionProfile.Version, extensionProfile.Script, extensionProfile.URLQuery)
 	scriptFilePath := fmt.Sprintf("/opt/azure/containers/extensions/%s/%s", extensionProfile.Name, extensionProfile.Script)
-	return fmt.Sprintf("- sudo /usr/bin/curl --retry 5 --retry-delay 10 --retry-max-time 30 -o %s --create-dirs \"%s\" \n- sudo /bin/chmod 744 %s \n- sudo %s ',%s,' > /var/log/%s-output.log",
+	return fmt.Sprintf("- /usr/bin/curl --retry 5 --retry-delay 10 --retry-max-time 30 -o %s --create-dirs \"%s\" \n- /bin/chmod 744 %s \n- %s ',%s,' > /var/log/%s-output.log",
 		scriptFilePath, scriptURL, scriptFilePath, scriptFilePath, extensionsParameterReference, extensionProfile.Name)
 }
 
 func makeWindowsExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile) string {
+	if extension == nil {
+		return ""
+	}
 	var extensionProfile *api.ExtensionProfile
 	for _, eP := range extensionProfiles {
 		if strings.EqualFold(eP.Name, extension.Name) {

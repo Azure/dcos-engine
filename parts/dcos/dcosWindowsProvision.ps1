@@ -179,6 +179,9 @@ powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
     if ($LASTEXITCODE -ne 0) {
         throw "Failed run DC/OS install script"
     }
+
+    POSTPROVISION_EXTENSION
+
 } catch {
     Write-Log "Failed to provision Windows agent node: $_"
     Set-PSDebug -Off
