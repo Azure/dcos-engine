@@ -3,7 +3,10 @@
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "DCOS",
-      "orchestratorRelease": ""
+      "orchestratorRelease": "",
+      "linuxBootstrapProfile": {
+        "staticIP": "10.100.0.240"
+      }
     },
     "masterProfile": {
       "count": 3,
