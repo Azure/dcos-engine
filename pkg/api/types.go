@@ -188,6 +188,7 @@ type MasterProfile struct {
 	StorageProfile           string          `json:"storageProfile,omitempty"`
 	HTTPSourceAddressPrefix  string          `json:"HTTPSourceAddressPrefix,omitempty"`
 	PreprovisionExtension    *Extension      `json:"preProvisionExtension"`
+	PostprovisionExtension   *Extension      `json:"postProvisionExtension"`
 	Extensions               []Extension     `json:"extensions"`
 	Distro                   Distro          `json:"distro,omitempty"`
 	ImageRef                 *ImageReference `json:"imageReference,omitempty"`
@@ -245,11 +246,12 @@ type AgentPoolProfile struct {
 	Role                         AgentPoolProfileRole `json:"role,omitempty"`
 	AcceleratedNetworkingEnabled bool                 `json:"acceleratedNetworkingEnabled,omitempty"`
 
-	FQDN                  string            `json:"fqdn,omitempty"`
-	CustomNodeLabels      map[string]string `json:"customNodeLabels,omitempty"`
-	PreprovisionExtension *Extension        `json:"preProvisionExtension"`
-	Extensions            []Extension       `json:"extensions"`
-	ImageRef              *ImageReference   `json:"imageReference,omitempty"`
+	FQDN                   string            `json:"fqdn,omitempty"`
+	CustomNodeLabels       map[string]string `json:"customNodeLabels,omitempty"`
+	PreprovisionExtension  *Extension        `json:"preProvisionExtension"`
+	PostprovisionExtension *Extension        `json:"postProvisionExtension"`
+	Extensions             []Extension       `json:"extensions"`
+	ImageRef               *ImageReference   `json:"imageReference,omitempty"`
 }
 
 // AgentPoolProfileRole represents an agent role

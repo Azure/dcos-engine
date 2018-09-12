@@ -222,7 +222,11 @@ func convertVLabsMasterProfile(vlabs *vlabs.MasterProfile, api *MasterProfile) {
 		convertVLabsExtension(vlabs.PreProvisionExtension, apiExtension)
 		api.PreprovisionExtension = apiExtension
 	}
-
+	if vlabs.PostProvisionExtension != nil {
+		apiExtension := &Extension{}
+		convertVLabsExtension(vlabs.PostProvisionExtension, apiExtension)
+		api.PostprovisionExtension = apiExtension
+	}
 	api.Extensions = []Extension{}
 	for _, extension := range vlabs.Extensions {
 		apiExtension := &Extension{}
@@ -272,7 +276,11 @@ func convertVLabsAgentPoolProfile(vlabs *vlabs.AgentPoolProfile, api *AgentPoolP
 		convertVLabsExtension(vlabs.PreProvisionExtension, apiExtension)
 		api.PreprovisionExtension = apiExtension
 	}
-
+	if vlabs.PostProvisionExtension != nil {
+		apiExtension := &Extension{}
+		convertVLabsExtension(vlabs.PostProvisionExtension, apiExtension)
+		api.PostprovisionExtension = apiExtension
+	}
 	api.Extensions = []Extension{}
 	for _, extension := range vlabs.Extensions {
 		apiExtension := &Extension{}

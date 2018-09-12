@@ -197,6 +197,7 @@ type MasterProfile struct {
 	StorageProfile           string          `json:"storageProfile,omitempty" validate:"eq=StorageAccount|eq=ManagedDisks|len=0"`
 	HTTPSourceAddressPrefix  string          `json:"HTTPSourceAddressPrefix,omitempty"`
 	PreProvisionExtension    *Extension      `json:"preProvisionExtension"`
+	PostProvisionExtension   *Extension      `json:"postProvisionExtension"`
 	Extensions               []Extension     `json:"extensions"`
 	Distro                   Distro          `json:"distro,omitempty"`
 	ImageRef                 *ImageReference `json:"imageReference,omitempty"`
@@ -263,10 +264,11 @@ type AgentPoolProfile struct {
 	// subnet is internal
 	subnet string
 
-	FQDN                  string            `json:"fqdn"`
-	CustomNodeLabels      map[string]string `json:"customNodeLabels,omitempty"`
-	PreProvisionExtension *Extension        `json:"preProvisionExtension"`
-	Extensions            []Extension       `json:"extensions"`
+	FQDN                   string            `json:"fqdn"`
+	CustomNodeLabels       map[string]string `json:"customNodeLabels,omitempty"`
+	PreProvisionExtension  *Extension        `json:"preProvisionExtension"`
+	PostProvisionExtension *Extension        `json:"postProvisionExtension"`
+	Extensions             []Extension       `json:"extensions"`
 }
 
 // AgentPoolProfileRole represents an agent role

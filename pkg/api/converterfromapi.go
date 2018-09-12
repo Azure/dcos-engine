@@ -226,6 +226,11 @@ func convertMasterProfileToVLabs(api *MasterProfile, vlabsProfile *vlabs.MasterP
 		convertExtensionToVLabs(api.PreprovisionExtension, vlabsExtension)
 		vlabsProfile.PreProvisionExtension = vlabsExtension
 	}
+	if api.PostprovisionExtension != nil {
+		vlabsExtension := &vlabs.Extension{}
+		convertExtensionToVLabs(api.PostprovisionExtension, vlabsExtension)
+		vlabsProfile.PostProvisionExtension = vlabsExtension
+	}
 	vlabsProfile.Extensions = []vlabs.Extension{}
 	for _, extension := range api.Extensions {
 		vlabsExtension := &vlabs.Extension{}
@@ -283,7 +288,11 @@ func convertAgentPoolProfileToVLabs(api *AgentPoolProfile, p *vlabs.AgentPoolPro
 		convertExtensionToVLabs(api.PreprovisionExtension, vlabsExtension)
 		p.PreProvisionExtension = vlabsExtension
 	}
-
+	if api.PostprovisionExtension != nil {
+		vlabsExtension := &vlabs.Extension{}
+		convertExtensionToVLabs(api.PostprovisionExtension, vlabsExtension)
+		p.PostProvisionExtension = vlabsExtension
+	}
 	p.Extensions = []vlabs.Extension{}
 	for _, extension := range api.Extensions {
 		vlabsExtension := &vlabs.Extension{}

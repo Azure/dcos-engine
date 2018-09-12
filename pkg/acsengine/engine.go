@@ -183,26 +183,18 @@ func getStorageAccountType(sizeName string) (string, error) {
 	return "Standard_LRS", nil
 }
 
-func makeMasterExtensionScriptCommands(cs *api.ContainerService) string {
-	copyIndex := "',copyIndex(),'"
-	return makeExtensionScriptCommands(cs.Properties.MasterProfile.PreprovisionExtension,
-		cs.Properties.ExtensionProfiles, copyIndex)
+func makeMasterExtensionScriptCommands(cs *api.ContainerService, ext *api.Extension) string {
+	return makeExtensionScriptCommands(ext, cs.Properties.ExtensionProfiles)
 }
 
-func makeAgentExtensionScriptCommands(cs *api.ContainerService, profile *api.AgentPoolProfile) string {
-	copyIndex := "',copyIndex(),'"
-	if profile.IsAvailabilitySets() {
-		copyIndex = fmt.Sprintf("',copyIndex(variables('%sOffset')),'", profile.Name)
-	}
+func makeAgentExtensionScriptCommands(cs *api.ContainerService, profile *api.AgentPoolProfile, ext *api.Extension) string {
 	if profile.OSType == api.Windows {
-		return makeWindowsExtensionScriptCommands(profile.PreprovisionExtension,
-			cs.Properties.ExtensionProfiles, copyIndex)
+		return makeWindowsExtensionScriptCommands(ext, cs.Properties.ExtensionProfiles)
 	}
-	return makeExtensionScriptCommands(profile.PreprovisionExtension,
-		cs.Properties.ExtensionProfiles, copyIndex)
+	return makeExtensionScriptCommands(ext, cs.Properties.ExtensionProfiles)
 }
 
-func makeExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile, copyIndex string) string {
+func makeExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile) string {
 	var extensionProfile *api.ExtensionProfile
 	for _, eP := range extensionProfiles {
 		if strings.EqualFold(eP.Name, extension.Name) {
@@ -222,7 +214,7 @@ func makeExtensionScriptCommands(extension *api.Extension, extensionProfiles []*
 		scriptFilePath, scriptURL, scriptFilePath, scriptFilePath, extensionsParameterReference, extensionProfile.Name)
 }
 
-func makeWindowsExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile, copyIndex string) string {
+func makeWindowsExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile) string {
 	var extensionProfile *api.ExtensionProfile
 	for _, eP := range extensionProfiles {
 		if strings.EqualFold(eP.Name, extension.Name) {
