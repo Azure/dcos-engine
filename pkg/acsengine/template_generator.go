@@ -215,13 +215,6 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 		},
 		"GetDCOSMasterCustomData": func() string {
 			masterAttributeContents := getDCOSMasterCustomNodeLabels()
-			var masterPreprovisionExtension, masterPostprovisionExtension string
-			if cs.Properties.MasterProfile.PreprovisionExtension != nil {
-				masterPreprovisionExtension = makeMasterExtensionScriptCommands(cs, cs.Properties.MasterProfile.PreprovisionExtension)
-			}
-			if cs.Properties.MasterProfile.PostprovisionExtension != nil {
-				masterPostprovisionExtension = makeMasterExtensionScriptCommands(cs, cs.Properties.MasterProfile.PostprovisionExtension)
-			}
 			var bootstrapIP string
 			if cs.Properties.OrchestratorProfile.LinuxBootstrapProfile != nil {
 				bootstrapIP = cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP
@@ -235,20 +228,13 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 					"PROVISION_SOURCE_STR":    getDCOSProvisionScript(dcosProvisionSource),
 					"PROVISION_STR":           getDCOSMasterProvisionScript(cs.Properties.OrchestratorProfile, bootstrapIP),
 					"ATTRIBUTES_STR":          masterAttributeContents,
-					"PREPROVISION_EXTENSION":  masterPreprovisionExtension,
-					"POSTPROVISION_EXTENSION": masterPostprovisionExtension,
+					"PREPROVISION_EXTENSION":  makeExtensionScriptCommands(cs.Properties.MasterProfile.PreprovisionExtension, cs.Properties.ExtensionProfiles),
+					"POSTPROVISION_EXTENSION": makeExtensionScriptCommands(cs.Properties.MasterProfile.PostprovisionExtension, cs.Properties.ExtensionProfiles),
 					"ROLENAME":                "master"})
 			return fmt.Sprintf("\"customData\": \"[base64(concat('#cloud-config\\n\\n', '%s'))]\",", str)
 		},
 		"GetDCOSAgentCustomData": func(profile *api.AgentPoolProfile) string {
 			attributeContents := getDCOSAgentCustomNodeLabels(profile)
-			var agentPreprovisionExtension, agentPostprovisionExtension string
-			if profile.PreprovisionExtension != nil {
-				agentPreprovisionExtension = makeAgentExtensionScriptCommands(cs, profile, profile.PreprovisionExtension)
-			}
-			if profile.PostprovisionExtension != nil {
-				agentPostprovisionExtension = makeAgentExtensionScriptCommands(cs, profile, profile.PostprovisionExtension)
-			}
 			var agentRoleName, bootstrapIP string
 			if len(profile.Ports) > 0 {
 				agentRoleName = "slave_public"
@@ -267,18 +253,14 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 					"PROVISION_SOURCE_STR":    getDCOSProvisionScript(dcosProvisionSource),
 					"PROVISION_STR":           getDCOSAgentProvisionScript(profile, cs.Properties.OrchestratorProfile, bootstrapIP),
 					"ATTRIBUTES_STR":          attributeContents,
-					"PREPROVISION_EXTENSION":  agentPreprovisionExtension,
-					"POSTPROVISION_EXTENSION": agentPostprovisionExtension,
+					"PREPROVISION_EXTENSION":  makeExtensionScriptCommands(profile.PreprovisionExtension, cs.Properties.ExtensionProfiles),
+					"POSTPROVISION_EXTENSION": makeExtensionScriptCommands(profile.PostprovisionExtension, cs.Properties.ExtensionProfiles),
 					"ROLENAME":                agentRoleName})
 			return fmt.Sprintf("\"customData\": \"[base64(concat('#cloud-config\\n\\n', '%s'))]\",", str)
-
 		},
 		"GetDCOSWindowsAgentCustomData": func(profile *api.AgentPoolProfile) string {
-			agentPreprovisionExtension := ""
-			if profile.PreprovisionExtension != nil {
-				agentPreprovisionExtension += "\n"
-				agentPreprovisionExtension += makeAgentExtensionScriptCommands(cs, profile, profile.PreprovisionExtension)
-			}
+			preprovisionExtension := makeWindowsExtensionScriptCommands(profile.PreprovisionExtension, cs.Properties.ExtensionProfiles)
+			postprovisionExtension := makeWindowsExtensionScriptCommands(profile.PostprovisionExtension, cs.Properties.ExtensionProfiles)
 			b, err := Asset(dcosWindowsProvision)
 			if err != nil {
 				// this should never happen and this is a bug
@@ -292,7 +274,8 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			}
 			// translate the parameters
 			csStr := string(b)
-			csStr = strings.Replace(csStr, "PREPROVISION_EXTENSION", agentPreprovisionExtension, -1)
+			csStr = strings.Replace(csStr, "PREPROVISION_EXTENSION", preprovisionExtension, -1)
+			csStr = strings.Replace(csStr, "POSTPROVISION_EXTENSION", postprovisionExtension, -1)
 			csStr = strings.Replace(csStr, "ROLENAME", agentRoleName, -1)
 			csStr = strings.Replace(csStr, "SSH_PUB_KEY", cs.Properties.LinuxProfile.SSH.PublicKeys[0].KeyData, -1)
 			csStr = strings.Replace(csStr, "ADMIN_PASSWORD", cs.Properties.WindowsProfile.AdminPassword, -1)

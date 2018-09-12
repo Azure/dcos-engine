@@ -11,9 +11,9 @@
       "location": "centralus"
     },
     {
-      "cluster_definition": "lnx/dcos-m3.lnx2-2.bstrap.vnet.json",
+      "cluster_definition": "lnx/dcos-m3.lnx2-2.vnet.json",
       "orchestratorRelease": "1.11",
-      "location": "centralus"
+      "location": "westus2"
     },
     {
       "cluster_definition": "lnx/dcos-m3.lnx1-2.preprov.json",
