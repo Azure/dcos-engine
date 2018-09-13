@@ -117,7 +117,7 @@ function ConfirmServices {
         "dcos-net-watchdog.service"
     )
 
-    $timeout = New-TimeSpan -Minutes 15
+    $timeout = New-TimeSpan -Minutes 20
     $sw = [diagnostics.stopwatch]::StartNew()
     while ($sw.elapsed -lt $timeout) {
         $cnt = 0
