@@ -106,23 +106,43 @@ function InstallOpehSSH()
     }
 }
 
-function ConfirmService($serviceName) {
-  $timeout = New-TimeSpan -Minutes 15
-  $sw = [diagnostics.stopwatch]::StartNew()
-  while ($sw.elapsed -lt $timeout) {
-    if (Get-Service $serviceName -ErrorAction SilentlyContinue) {
-      $status = (Get-Service $serviceName).Status
-      if ($status -eq 'Running') {
-        Write-Log "Service $serviceName is Running"
-        return
-      }
-      Write-Log "Service $serviceName is $status. Waiting ..."
-    } else {
-        Write-Log "Service $serviceName is not listed. Waiting ..."
+function ConfirmServices {
+    $role = "ROLENAME" -replace '_','-'
+    $dcosServices = @(
+        "dcos-adminrouter-agent.service",
+        "dcos-diagnostics.service",
+        "dcos-mesos-$role.service",
+        "dcos-metrics-agent.service",
+        "dcos-net.service",
+        "dcos-net-watchdog.service"
+    )
+
+    $timeout = New-TimeSpan -Minutes 20
+    $sw = [diagnostics.stopwatch]::StartNew()
+    while ($sw.elapsed -lt $timeout) {
+        $cnt = 0
+        foreach($serviceName in $dcosServices) {
+            if (Get-Service $serviceName -ErrorAction SilentlyContinue) {
+                $status = (Get-Service $serviceName).Status
+                if ($status -eq 'Running') {
+                    Write-Log "Service $serviceName is Running"
+                    $cnt++
+                } else {
+                    Write-Log "Service $serviceName is $status. Waiting ..."
+                    break
+                }
+            } else {
+                Write-Log "Service $serviceName is not listed. Waiting ..."
+                break
+            }
+        }
+        if ($cnt -eq $dcosServices.Length) {
+            Write-Log "All services are running"
+            return
+        }
+        Start-Sleep -Seconds 15
     }
-    Start-Sleep -Seconds 15
-  }
-  Throw "Service $serviceName is not available or in the final state"
+    Throw "Not all expected DCOS services are available or running"
 }
 
 try {
@@ -168,8 +188,8 @@ try {
 '@
     $setcred_content | out-file -encoding ascii c:\AzureData\setcreds.ps1
     # prime the credential cache
-    Set-PSDebug -trace 1
-    get-wmiobject -class Win32_UserAccount
+    #Set-PSDebug -trace 1
+    #get-wmiobject -class Win32_UserAccount
 
     # Add all the known dcos users (2do)
 
@@ -200,17 +220,16 @@ powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
     }
 
     # Confirm Services
-    ConfirmService "dcos-net.service"
-    ConfirmService "dcos-metrics-agent.service"
+    ConfirmServices
 
     POSTPROVISION_EXTENSION
 
 } catch {
     Write-Log "Failed to provision Windows agent node: $_"
-    Set-PSDebug -Off
+    #Set-PSDebug -Off
     exit 1
 }
 
-Set-PSDebug -Off
+#Set-PSDebug -Off
 Write-Log "Successfully provisioned Windows agent node"
 exit 0
