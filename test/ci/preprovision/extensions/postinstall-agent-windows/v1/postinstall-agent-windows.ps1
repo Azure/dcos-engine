@@ -24,7 +24,7 @@ $ServiceList = "C:\opt\mesosphere\bin\servicelist.txt"
 $Content = Get-Content $ServiceList | Where-Object {$_ -notmatch 'dcos-metrics-agent.service'}
 Set-Content -Path $ServiceList -Value $Content
 
-& C:\opt\mesosphere\bin\systemctl.exe stop dcos-diagnostics.service
+& C:\opt\mesosphere\bin\systemctl.exe restart dcos-diagnostics.service
 if($LASTEXITCODE) {
     Throw "Failed to restart dcos-diagnostics.service"
 }
