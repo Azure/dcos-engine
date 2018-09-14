@@ -108,27 +108,28 @@ function InstallOpehSSH()
 
 function ConfirmServices {
     $role = "ROLENAME" -replace '_','-'
-    $dcosServices = @(
-        "dcos-adminrouter-agent.service",
-        "dcos-diagnostics.service",
-        "dcos-mesos-$role.service",
-        "dcos-metrics-agent.service",
-        "dcos-net.service",
-        "dcos-net-watchdog.service"
-    )
+    $dcosServices = [ordered]@{}
+    $dcosServices.Add("dcos.target", "Stopped")
+    $dcosServices.Add("dcos-adminrouter-agent.service", "Running")
+    $dcosServices.Add("dcos-diagnostics.service", "Running")
+    $dcosServices.Add("dcos-mesos-$role.service", "Running")
+    $dcosServices.Add("dcos-metrics-agent.service", "Running")
+    $dcosServices.Add("dcos-net.service", "Running")
+    $dcosServices.Add("dcos-net-watchdog.service", "Running")
 
     $timeout = New-TimeSpan -Minutes 20
     $sw = [diagnostics.stopwatch]::StartNew()
     while ($sw.elapsed -lt $timeout) {
         $cnt = 0
-        foreach($serviceName in $dcosServices) {
+        foreach($serviceName in $dcosServices.keys) {
             if (Get-Service $serviceName -ErrorAction SilentlyContinue) {
-                $status = (Get-Service $serviceName).Status
-                if ($status -eq 'Running') {
-                    Write-Log "Service $serviceName is Running"
+                $desiredStatus = $dcosServices.$serviceName
+                $actualStatus = (Get-Service $serviceName).Status
+                if ($actualStatus -eq $desiredStatus) {
+                    Write-Log "Service $serviceName is $actualStatus (as expected)"
                     $cnt++
                 } else {
-                    Write-Log "Service $serviceName is $status. Waiting ..."
+                    Write-Log "Service $serviceName is $actualStatus (expected $desiredStatus). Waiting ..."
                     break
                 }
             } else {
@@ -136,13 +137,13 @@ function ConfirmServices {
                 break
             }
         }
-        if ($cnt -eq $dcosServices.Length) {
-            Write-Log "All services are running"
+        if ($cnt -eq $dcosServices.Count) {
+            Write-Log "All services have the expected status"
             return
         }
         Start-Sleep -Seconds 15
     }
-    Throw "Not all expected DCOS services are available or running"
+    Throw "Not all required DCOS services are available or have the expected status"
 }
 
 try {
