@@ -95,12 +95,15 @@ function Install7zip
     Remove-Item C:\AzureData\7z\7z1801-x64.msi
 }
 
-function InstallOpehSSH()
+function InstallOpenSSH()
 {
-    Write-Log "Installing OpehSSH"
-    $list = (Get-WindowsCapability -Online | ? Name -like 'OpenSSH.Server*')
-    Add-WindowsCapability -Online -Name $list.Name
-    Install-Module -Force OpenSSHUtils
+    Write-Log "Installing OpenSSH"
+    $rslt = ( get-service | where { $.name -like "sshd" } )
+    if ( $rslt.count -eq 0) {
+        $list = (Get-WindowsCapability -Online | ? Name -like 'OpenSSH.Server*')
+        Add-WindowsCapability -Online -Name $list.Name
+        Install-Module -Force OpenSSHUtils
+    }
     Start-Service sshd
 
     Write-Log "Creating authorized key"
@@ -142,7 +145,7 @@ try {
     $systempart = (Get-Partition | where { $_.driveletter -eq "C" })
     $systempart | Resize-Partition -size $newSize
 
-    InstallOpehSSH
+    InstallOpenSSH
 
     Install7zip
 
