@@ -40,7 +40,6 @@ function Write-MesosSecretFiles {
     # Create the Mesos service environment file with authentication enabled
     $serviceEnv = @(
         "`$env:MESOS_AUTHENTICATE_HTTP_READONLY='true'",
-        "`$env:MESOS_AUTHENTICATE_HTTP_READONLY='true'",
         "`$env:MESOS_AUTHENTICATE_HTTP_READWRITE='true'",
         "`$env:MESOS_HTTP_CREDENTIALS=`"$MESOS_ETC_SERVICE_DIR\http_credential.json`"",
         "`$env:MESOS_CREDENTIAL=`"$MESOS_ETC_SERVICE_DIR\credential.json`""

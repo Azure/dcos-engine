@@ -123,17 +123,40 @@ function InstallOpenSSH()
         if ($targetrule) {
             $acl.RemoveAccessRule($targetrule)
         }
-    }
-    $acl | Set-Acl -Path $path
+        Start-Service sshd
 
-    Restart-Service sshd
-
-    $sshStartCmd = "C:\AzureData\OpenSSHStart.ps1"
-    Set-Content -Path $sshStartCmd -Value "Start-Service sshd"
-
-    & schtasks.exe /CREATE /F /SC ONSTART /RU SYSTEM /RL HIGHEST /TN "SSH start" /TR "powershell.exe -ExecutionPolicy Bypass -File $sshStartCmd"
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to add scheduled task $sshStartCmd"
+        Write-Log "Creating authorized key"
+        $path = "C:\AzureData\authorized_keys"
+        Set-Content -Path $path -Value "SSH_PUB_KEY" -Encoding Ascii
+    
+        (Get-Content C:\ProgramData\ssh\sshd_config) -replace "AuthorizedKeysFile(\s+).ssh/authorized_keys", "AuthorizedKeysFile $path" | Set-Content C:\ProgramData\ssh\sshd_config
+        $acl = Get-Acl -Path $path
+        $acl.SetAccessRuleProtection($True, $True)
+        $acl | Set-Acl -Path $path
+    
+        $acl = Get-Acl -Path $path
+        $rules = $acl.Access
+        $usersToRemove = @("Everyone","BUILTIN\Users","NT AUTHORITY\Authenticated Users")
+        foreach ($u in $usersToRemove) {
+            $targetrule = $rules | where IdentityReference -eq $u
+            if ($targetrule) {
+                $acl.RemoveAccessRule($targetrule)
+            }
+        }
+        $acl | Set-Acl -Path $path
+    
+        Restart-Service sshd
+    
+        $sshStartCmd = "C:\AzureData\OpenSSHStart.ps1"
+        Set-Content -Path $sshStartCmd -Value "Start-Service sshd"
+    
+        & schtasks.exe /CREATE /F /SC ONSTART /RU SYSTEM /RL HIGHEST /TN "SSH start" /TR "powershell.exe -ExecutionPolicy Bypass -File $sshStartCmd"
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to add scheduled task $sshStartCmd"
+        }
+    } 
+    catch {
+       Write-Log "OpenSSH install failed: $_"
     }
 }
 
