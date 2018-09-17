@@ -98,12 +98,30 @@ function Install7zip
 function InstallOpenSSH()
 {
     Write-Log "Installing OpenSSH"
-    try {
-        $rslt = ( get-service | where { $_.name -like "sshd" } )
-        if ( $rslt.count -eq 0) {
-            $list = (Get-WindowsCapability -Online | ? Name -like 'OpenSSH.Server*')
-            Add-WindowsCapability -Online -Name $list.Name
-            Install-Module -Force OpenSSHUtils
+    $rslt = ( get-service | where { $_.name -like "sshd" } )
+    if ( $rslt.count -eq 0) {
+        $list = (Get-WindowsCapability -Online | ? Name -like 'OpenSSH.Server*')
+        Add-WindowsCapability -Online -Name $list.Name
+        Install-Module -Force OpenSSHUtils
+    }
+    Start-Service sshd
+
+    Write-Log "Creating authorized key"
+    $path = "C:\AzureData\authorized_keys"
+    Set-Content -Path $path -Value "SSH_PUB_KEY" -Encoding Ascii
+
+    (Get-Content C:\ProgramData\ssh\sshd_config) -replace "AuthorizedKeysFile(\s+).ssh/authorized_keys", "AuthorizedKeysFile $path" | Set-Content C:\ProgramData\ssh\sshd_config
+    $acl = Get-Acl -Path $path
+    $acl.SetAccessRuleProtection($True, $True)
+    $acl | Set-Acl -Path $path
+
+    $acl = Get-Acl -Path $path
+    $rules = $acl.Access
+    $usersToRemove = @("Everyone","BUILTIN\Users","NT AUTHORITY\Authenticated Users")
+    foreach ($u in $usersToRemove) {
+        $targetrule = $rules | where IdentityReference -eq $u
+        if ($targetrule) {
+            $acl.RemoveAccessRule($targetrule)
         }
         Start-Service sshd
 
