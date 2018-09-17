@@ -70,7 +70,7 @@ function UpdateDocker()
 function InstallOpenSSH()
 {
     Write-Log "Installing OpenSSH"
-    $rslt = ( get-service | where { $.name -like "sshd" } )
+    $rslt = ( get-service | where { $_.name -like "sshd" } )
     if ( $rslt.count -eq 0) {
         $list = (Get-WindowsCapability -Online | ? Name -like 'OpenSSH.Server*')
         Add-WindowsCapability -Online -Name $list.Name
