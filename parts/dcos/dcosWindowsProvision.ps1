@@ -17,7 +17,11 @@ param(
 
     [string]
     [ValidateNotNullOrEmpty()]
-    $adminUser
+    $adminUser,
+
+    [string]
+    [AllowEmptyString()]
+    $customAttrs
 )
 
 $global:BootstrapInstallDir = "C:\AzureData"
@@ -109,6 +113,16 @@ function InstallOpenSSH()
     }
 }
 
+function SetCustomAttributes()
+{
+    if ($customAttrs -ne "") {
+        Write-Log "Setting custom attributes to $customAttrs"
+        New-Item -ItemType "Directory" -Path "C:\var\lib\dcos" -Force
+        $val = "`$env:MESOS_ATTRIBUTES=`"$customAttrs`""
+        Set-Content -Path "C:\var\lib\dcos\mesos-slave-common.ps1" -Value $val -Encoding Ascii
+    }
+}
+
 function ConfirmServices {
     $role = "ROLENAME" -replace '_','-'
     $dcosServices = [ordered]@{}
@@ -152,6 +166,7 @@ function ConfirmServices {
 try {
     Write-Log "Setting up Windows Agent node. BootstrapIP:$BootstrapIP"
     Write-Log "Admin user is $adminUser"
+    Write-Log "Custom node attributes are $customAttrs"
     Write-Log "User Domain is $env:computername"
 
     Write-Log "Run preprovision extension (if present)"
@@ -203,6 +218,9 @@ try {
     & net localgroup administrators $adminUser /add
     c:\AzureData\setcreds.ps1 -User $adminUser -Password $password -Domain $env:computername
 
+    # Set Custom node attributes (if present)
+    SetCustomAttributes
+
     $dcosInstallUrl = "http://${BootstrapIP}:8086/dcos_install.ps1"
     RetryCurl $dcosInstallUrl "$global:BootstrapInstallDir\dcos_install.ps1"
 
@@ -223,7 +241,7 @@ powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
         throw "Failed run DC/OS install script"
     }
 
-    # Confirm Services
+    # Confirm DCOS Services
     ConfirmServices
 
     POSTPROVISION_EXTENSION
