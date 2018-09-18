@@ -14,12 +14,18 @@
       {
         "name": "lnxpri",
         "count": 2,
-        "vmSize": "Standard_D2s_v3"
+        "vmSize": "Standard_D2s_v3",
+        "customNodeLabels": {
+          "infrastructure": "ci"
+        }
       },
       {
         "name": "lnxpub",
         "count": 2,
         "vmSize": "Standard_D2s_v3",
+        "customNodeLabels": {
+          "infrastructure": "ci"
+        },
         "dnsPrefix": "",
         "ports": [
           80,

@@ -20,12 +20,18 @@
         "name": "lnxpri",
         "count": 2,
         "vmSize": "Standard_D2s_v3",
+        "customNodeLabels": {
+          "infrastructure": "ci"
+        },
         "vnetSubnetId": "/subscriptions/SUB_ID/resourceGroups/RG_NAME/providers/Microsoft.Network/virtualNetworks/VNET_NAME/subnets/AGENT_SUBNET_NAME"
       },
       {
         "name": "lnxpub",
         "count": 2,
         "vmSize": "Standard_D2s_v3",
+        "customNodeLabels": {
+          "infrastructure": "ci"
+        },
         "dnsPrefix": "",
         "vnetSubnetId": "/subscriptions/SUB_ID/resourceGroups/RG_NAME/providers/Microsoft.Network/virtualNetworks/VNET_NAME/subnets/AGENT_SUBNET_NAME",
         "ports": [

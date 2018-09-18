@@ -18,12 +18,18 @@
       {
         "name": "lnxpri",
         "count": 2,
-        "vmSize": "Standard_D2s_v3"
+        "vmSize": "Standard_D2s_v3",
+        "customNodeLabels": {
+          "infrastructure": "ci"
+        }
       },
       {
         "name": "lnxpub",
         "count": 2,
         "vmSize": "Standard_D2s_v3",
+        "customNodeLabels": {
+          "infrastructure": "ci"
+        },
         "dnsPrefix": "",
         "ports": [
           80,
@@ -35,13 +41,19 @@
         "name": "winpri",
         "count": 2,
         "vmSize": "Standard_D8s_v3",
-        "osType": "Windows"
+        "osType": "Windows",
+        "customNodeLabels": {
+          "infrastructure": "ci"
+        }
       },
       {
         "name": "winpub",
         "count": 2,
         "vmSize": "Standard_D8s_v3",
         "osType": "Windows",
+        "customNodeLabels": {
+          "infrastructure": "ci"
+        },
         "dnsPrefix": "",
         "ports": [
           80,
