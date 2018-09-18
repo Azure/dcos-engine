@@ -289,7 +289,7 @@
         "typeHandlerVersion": "1.8",
         "autoUpgradeMinorVersion": true,
         "settings": {
-        "commandToExecute": "[variables('windowsAgentCustomScript')]"
+          "commandToExecute": "[variables('{{.Name}}windowsAgentCustomScript')]"
         }
       },
       "type": "Microsoft.Compute/virtualMachines/extensions"

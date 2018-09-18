@@ -3,25 +3,17 @@
     "{{.Name}}NSGName": "[concat(variables('orchestratorName'), '-{{.Name}}-nsg-', variables('nameSuffix'))]",
 {{if .IsWindows}}
     "winAgentCustomSuffix": " $inputFile = '%SYSTEMDRIVE%\\AzureData\\CustomData.bin' ; $outputFile = '%SYSTEMDRIVE%\\AzureData\\dcosWindowsProvision.ps1' ; $inputStream = New-Object System.IO.FileStream $inputFile, ([IO.FileMode]::Open), ([IO.FileAccess]::Read), ([IO.FileShare]::Read) ; $sr = New-Object System.IO.StreamReader(New-Object System.IO.Compression.GZipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)) ; $sr.ReadToEnd() | Out-File($outputFile) ; Invoke-Expression('{0} {1}' -f $outputFile, $arguments) ; ",
-    "winAgentCustomArguments": "[concat('$arguments = ', variables('singleQuote'),'-AdminUser ', variables('windowsAdminUsername'), ' -BootstrapIP ',variables('bootstrapWinStaticIP'),' -customAttrs ', variables('doubleSingleQuote'), '{{GetDCOSWindowsAgentCustomNodeAttributes . }}', variables('doubleSingleQuote'), variables('singleQuote'), ' ; ')]",
-    "windowsAgentCustomScript": "[concat('powershell.exe -ExecutionPolicy Unrestricted -command \"', variables('winAgentCustomArguments'), variables('winAgentCustomSuffix'), '\" > %SYSTEMDRIVE%\\AzureData\\windowsAgent.log 2>&1; exit $LASTEXITCODE')]",
+    "{{.Name}}winAgentCustomArguments": "[concat('$arguments = ', variables('singleQuote'),'-AdminUser ', variables('windowsAdminUsername'), ' -BootstrapIP ',variables('bootstrapWinStaticIP'),' -customAttrs ', variables('doubleSingleQuote'), '{{GetDCOSWindowsAgentCustomNodeAttributes . }}', variables('doubleSingleQuote'), variables('singleQuote'), ' ; ')]",
+    "{{.Name}}windowsAgentCustomScript": "[concat('powershell.exe -ExecutionPolicy Unrestricted -command \"', variables('{{.Name}}winAgentCustomArguments'), variables('winAgentCustomSuffix'), '\" > %SYSTEMDRIVE%\\AzureData\\windowsAgent.log 2>&1; exit $LASTEXITCODE')]",
     "winResourceNamePrefix" : "[substring(variables('nameSuffix'), 0, 5)]",
     {{if IsPublic .Ports}}
         "{{.Name}}VMNamePrefix": "[concat('dcos-p', variables('winResourceNamePrefix'), add(900,variables('{{.Name}}Index')))]",
-        "{{.Name}}windowsAgentCustomAttributes": "[concat(' -customAttrs ', variables('doubleSingleQuote'), '{{GetDCOSWindowsAgentCustomNodeAttributes . }}', variables('doubleSingleQuote') )]",
-        "{{.Name}}windowsAgentCustomScriptArguments": "[concat('$arguments = ', variables('singleQuote'), '-DcosVersion ', variables('orchestratorVersion'), ' -subnet ', variables('{{.Name}}Subnet'), ' -MasterCount ', variables('masterCount'), ' -firstMasterIP ', parameters('firstConsecutiveStaticIP'), ' -bootstrapUri ', '\"', variables('dcosWindowsBootstrapURL'), '\"', ' -isAgent $true -isPublic $true ',  variables('{{.Name}}windowsAgentCustomAttributes'), ' -preprovisionExtensionParams ', variables('doubleSingleQuote'), '{{GetDCOSWindowsAgentPreprovisionParameters .}}', variables('doubleSingleQuote'),  variables('singleQuote'), ' ; ')]",
     {{else}}
         "{{.Name}}VMNamePrefix": "[concat('dcos-', variables('winResourceNamePrefix'), add(900,variables('{{.Name}}Index')))]",
-        "{{.Name}}windowsAgentCustomAttributes": "[concat(' -customAttrs ', variables('doubleSingleQuote'), '{{GetDCOSWindowsAgentCustomNodeAttributes . }}', variables('doubleSingleQuote') )]",
-        "{{.Name}}windowsAgentCustomScriptArguments": "[concat('$arguments = ', variables('singleQuote'), '-DcosVersion ', variables('orchestratorVersion'), ' -subnet ', variables('{{.Name}}Subnet'),' -MasterCount ', variables('masterCount'), ' -firstMasterIP ', parameters('firstConsecutiveStaticIP'), ' -bootstrapUri ', '\"', variables('dcosWindowsBootstrapURL'), '\"', ' -isAgent $true -isPublic $false ',  variables('{{.Name}}windowsAgentCustomAttributes'), ' -preprovisionExtensionParams ', variables('doubleSingleQuote'), '{{GetDCOSWindowsAgentPreprovisionParameters .}}', variables('doubleSingleQuote'), variables('singleQuote'), ' ; ')]",
     {{end}}
-
-    "{{.Name}}windowsAgentCustomScript": "[concat('powershell.exe -ExecutionPolicy Unrestricted -command \"', variables('{{.Name}}windowsAgentCustomScriptArguments'), variables('windowsCustomScriptSuffix'), '\" > %SYSTEMDRIVE%\\AzureData\\dcosWindowsProvision.log 2>&1; exit $LASTEXITCODE')]",
-
 {{else}}
     "{{.Name}}VMNamePrefix": "[concat(variables('orchestratorName'), '-{{.Name}}-', variables('nameSuffix'), '-')]",
 {{end}}
-
     "{{.Name}}VMSize": "[parameters('{{.Name}}VMSize')]",
     "{{.Name}}VMSizeTier": "[split(parameters('{{.Name}}VMSize'),'_')[0]]",
 {{if .IsAvailabilitySets}}
@@ -54,7 +46,6 @@
      {{if .IsWindows}}
         "{{.Name}}WindowsRDPNatRangeStart": 3389,
         "{{.Name}}WindowsRDPEndRangeStop": "[add(variables('{{.Name}}WindowsRDPNatRangeStart'), add(variables('{{.Name}}Count'),variables('{{.Name}}Count')))]",
-
     {{end}}
 {{end}}
 {{if HasPrivateRegistry}}
