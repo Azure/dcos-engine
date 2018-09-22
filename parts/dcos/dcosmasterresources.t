@@ -99,7 +99,7 @@
             }
           }
         ]
-{{if .OrchestratorProfile.OAuthEnabled}}
+{{if or .OrchestratorProfile.OAuthEnabled .OrchestratorProfile.OpenAccess}}
         ,"loadBalancingRules": [
 	        {
             "name": "LBRule443",
@@ -200,6 +200,23 @@
               },
               "name": "ssh"
           }
+{{if .OrchestratorProfile.OpenAccess}}
+          ,
+          {
+              "properties": {
+                  "priority": 201,
+                  "access": "Allow",
+                  "direction": "Inbound",
+                  "destinationPortRange": "80",
+                  "sourcePortRange": "*",
+                  "destinationAddressPrefix": "*",
+                  "protocol": "Tcp",
+                  "description": "Allow HTTP",
+                  "sourceAddressPrefix": "*"
+              },
+              "name": "http"
+          }
+{{end}}
         ]
       },
       "type": "Microsoft.Network/networkSecurityGroups"

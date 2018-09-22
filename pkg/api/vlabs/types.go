@@ -132,6 +132,7 @@ type OrchestratorProfile struct {
 	OrchestratorRelease     string            `json:"orchestratorRelease,omitempty"`
 	OrchestratorVersion     string            `json:"orchestratorVersion,omitempty"`
 	OAuthEnabled            bool              `json:"oauthEnabled,omitempty"`
+	OpenAccess              bool              `json:"openAccess,omitempty"`
 	LinuxBootstrapProfile   *BootstrapProfile `json:"linuxBootstrapProfile,omitempty"`
 	WindowsBootstrapProfile *BootstrapProfile `json:"windowsBootstrapProfile,omitempty"`
 	Registry                string            `json:"registry,omitempty"`
