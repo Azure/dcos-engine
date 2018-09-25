@@ -177,7 +177,10 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			return getDataDisks(profile)
 		},
 		"HasBootstrapPublicIP": func() bool {
-			return false
+			return cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.HasPublicIP
+		},
+		"HasWindowsBootstrapPublicIP": func() bool {
+			return cs.Properties.OrchestratorProfile.WindowsBootstrapProfile.HasPublicIP
 		},
 		"IsHostedBootstrap": func() bool {
 			return cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.Hosted
