@@ -249,10 +249,12 @@ func getDCOSWindowsAgentPreprovisionParameters(cs *api.ContainerService, profile
 // GetDCOSDefaultBootstrapInstallerURL returns default DCOS Bootstrap installer URL
 func GetDCOSDefaultBootstrapInstallerURL(orchestratorVersion string) string {
 	switch orchestratorVersion {
+	case common.DCOSVersion1Dot12Dot0:
+		return "https://dcos-mirror.azureedge.net/dcos/1-12-0/dcos_generate_config.sh"
+	case common.DCOSVersion1Dot11Dot5:
+		return "https://dcos-mirror.azureedge.net/dcos/1-11-5/dcos_generate_config.sh"
 	case common.DCOSVersion1Dot11Dot4:
 		return "https://dcos-mirror.azureedge.net/dcos/1-11-4/dcos_generate_config.sh"
-	case common.DCOSVersion1Dot11Dot3:
-		return "https://dcos-mirror.azureedge.net/dcos/1-11-3/dcos_generate_config.sh"
 	case common.DCOSVersion1Dot11Dot2:
 		return "https://dcos-mirror.azureedge.net/dcos/1-11-2/dcos_generate_config.sh"
 	default:
@@ -263,12 +265,10 @@ func GetDCOSDefaultBootstrapInstallerURL(orchestratorVersion string) string {
 // GetDCOSDefaultWindowsBootstrapInstallerURL returns default DCOS Windows Bootstrap installer URL
 func GetDCOSDefaultWindowsBootstrapInstallerURL(orchestratorVersion string) string {
 	switch orchestratorVersion {
-	case common.DCOSVersion1Dot11Dot2:
-		return "https://dcos-mirror.azureedge.net/dcos/1-11-2/dcos_generate_config.windows.tar.xz"
-	case common.DCOSVersion1Dot11Dot3:
-		return "https://dcos-mirror.azureedge.net/dcos/1-11-3/dcos_generate_config.windows.tar.xz"
-	case common.DCOSVersion1Dot11Dot4:
-		return "https://dcos-mirror.azureedge.net/dcos/1-11-4/dcos_generate_config.windows.tar.xz"
+	case common.DCOSVersion1Dot12Dot0:
+		return "https://dcos-mirror.azureedge.net/dcos/1-12-0/dcos_generate_config.windows.tar.xz"
+	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot4, common.DCOSVersion1Dot11Dot5:
+		return "https://dcos-mirror.azureedge.net/dcos/1-11-5/dcos_generate_config.windows.tar.xz"
 	default:
 		return ""
 	}
@@ -597,7 +597,7 @@ func GetDCOSBootstrapConfig(cs *api.ContainerService) string {
 	}
 	var configFName string
 	switch cs.Properties.OrchestratorProfile.OrchestratorVersion {
-	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
+	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot4, common.DCOSVersion1Dot11Dot5, common.DCOSVersion1Dot12Dot0:
 		configFName = dcosBootstrapConfig111
 	default:
 		panic(fmt.Sprintf("BUG: invalid orchestrator version %s", cs.Properties.OrchestratorProfile.OrchestratorVersion))
@@ -628,7 +628,7 @@ func GetDCOSWindowsBootstrapConfig(cs *api.ContainerService) string {
 	}
 	var configFName string
 	switch cs.Properties.OrchestratorProfile.OrchestratorVersion {
-	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
+	case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot4, common.DCOSVersion1Dot11Dot5, common.DCOSVersion1Dot12Dot0:
 		configFName = dcosBootstrapWindowsConfig111
 	default:
 		panic(fmt.Sprintf("BUG: invalid orchestrator version %s", cs.Properties.OrchestratorProfile.OrchestratorVersion))
@@ -739,7 +739,7 @@ func getDCOSCustomDataTemplate(orchestratorType, orchestratorVersion string) str
 	switch orchestratorType {
 	case api.DCOS:
 		switch orchestratorVersion {
-		case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot3, common.DCOSVersion1Dot11Dot4:
+		case common.DCOSVersion1Dot11Dot2, common.DCOSVersion1Dot11Dot4, common.DCOSVersion1Dot11Dot5, common.DCOSVersion1Dot12Dot0:
 			return dcosCustomData111
 		}
 	default:
