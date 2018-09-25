@@ -158,6 +158,7 @@ func convertVLabsOrchestratorProfile(vp *vlabs.Properties, api *OrchestratorProf
 			vlabscs.OrchestratorVersion,
 			false)
 		api.OAuthEnabled = vlabscs.OAuthEnabled
+		api.OpenAccess = vlabscs.OpenAccess
 		if vlabscs.LinuxBootstrapProfile != nil {
 			api.LinuxBootstrapProfile = &BootstrapProfile{
 				BootstrapURL:  vlabscs.LinuxBootstrapProfile.BootstrapURL,
