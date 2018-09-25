@@ -378,7 +378,7 @@ function validate_node_count() {
 	[[ ! -z "${EXPECTED_NODE_COUNT:-}" ]]     || exit_with_msg "Must specify EXPECTED_NODE_COUNT"
 
 	local remote_exec="ssh -i "${SSH_KEY}" -o ConnectTimeout=30 -o StrictHostKeyChecking=no azureuser@${INSTANCE_NAME}.${LOCATION}.cloudapp.azure.com -p2200"
-	count=20
+	count=50
 	while (( $count > 0 )); do
 		echo $(date +%H:%M:%S) "  ... counting down $count"
 		node_list=$(${remote_exec} curl -s http://localhost:1050/system/health/v1/nodes)
