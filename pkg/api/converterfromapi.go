@@ -179,6 +179,7 @@ func convertOrchestratorProfileToVLabs(api *OrchestratorProfile, o *vlabs.Orches
 			VMSize:        api.LinuxBootstrapProfile.VMSize,
 			OSDiskSizeGB:  api.LinuxBootstrapProfile.OSDiskSizeGB,
 			StaticIP:      api.LinuxBootstrapProfile.StaticIP,
+			HasPublicIP:   api.LinuxBootstrapProfile.HasPublicIP,
 			Subnet:        api.LinuxBootstrapProfile.Subnet,
 		}
 	}
@@ -190,6 +191,7 @@ func convertOrchestratorProfileToVLabs(api *OrchestratorProfile, o *vlabs.Orches
 			VMSize:        api.WindowsBootstrapProfile.VMSize,
 			OSDiskSizeGB:  api.WindowsBootstrapProfile.OSDiskSizeGB,
 			StaticIP:      api.WindowsBootstrapProfile.StaticIP,
+			HasPublicIP:   api.WindowsBootstrapProfile.HasPublicIP,
 			Subnet:        api.WindowsBootstrapProfile.Subnet,
 		}
 	}
