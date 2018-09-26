@@ -159,13 +159,13 @@ func setOrchestratorDefaults(cs *api.ContainerService) {
 			o.LinuxBootstrapProfile = &api.BootstrapProfile{}
 		}
 		if len(o.LinuxBootstrapProfile.VMSize) == 0 {
-			o.LinuxBootstrapProfile.VMSize = "Standard_D2s_v3"
+			o.LinuxBootstrapProfile.VMSize = DefaultBootstrapVMSize
 		}
 		if o.WindowsBootstrapProfile == nil {
 			o.WindowsBootstrapProfile = &api.BootstrapProfile{}
 		}
 		if len(o.WindowsBootstrapProfile.VMSize) == 0 {
-			o.WindowsBootstrapProfile.VMSize = "Standard_D2s_v3"
+			o.WindowsBootstrapProfile.VMSize = DefaultWindowsBootstrapVMSize
 		}
 		if len(o.WindowsBootstrapProfile.DockerVersion) == 0 {
 			o.WindowsBootstrapProfile.DockerVersion = DefaultWindowsDockerVersion

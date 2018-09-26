@@ -23,6 +23,10 @@ const (
 	DefaultOrchestratorName = "dcos"
 	// DefaultWindowsDockerVersion specifies default docker version installed on Windows nodes
 	DefaultWindowsDockerVersion = "18.03.1-ee-1"
+	// DefaultBootstrapVMSize specifies default bootstrap VM size
+	DefaultBootstrapVMSize = "Standard_D2s_v3"
+	// DefaultWindowsBootstrapVMSize specifies default Windows bootstrap VM size
+	DefaultWindowsBootstrapVMSize = "Standard_D4s_v3"
 )
 
 const (
