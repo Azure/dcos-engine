@@ -4,6 +4,7 @@ exhibitor_storage_backend: static
 master_discovery: static
 oauth_enabled: BOOTSTRAP_OAUTH_ENABLED
 ip_detect_public_filename: genconf/ip-detect
+enable_ipv6: BOOTSTRAP_LINUX_ENABLE_IPV6
 master_list:
 MASTER_IP_LIST
 resolvers:

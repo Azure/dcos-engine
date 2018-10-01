@@ -179,6 +179,7 @@ func convertOrchestratorProfileToVLabs(api *OrchestratorProfile, o *vlabs.Orches
 			OSDiskSizeGB:  api.LinuxBootstrapProfile.OSDiskSizeGB,
 			StaticIP:      api.LinuxBootstrapProfile.StaticIP,
 			Subnet:        api.LinuxBootstrapProfile.Subnet,
+			EnableIPv6:    api.LinuxBootstrapProfile.EnableIPv6,
 		}
 	}
 	if api.WindowsBootstrapProfile != nil {
@@ -190,6 +191,7 @@ func convertOrchestratorProfileToVLabs(api *OrchestratorProfile, o *vlabs.Orches
 			OSDiskSizeGB:  api.WindowsBootstrapProfile.OSDiskSizeGB,
 			StaticIP:      api.WindowsBootstrapProfile.StaticIP,
 			Subnet:        api.WindowsBootstrapProfile.Subnet,
+			EnableIPv6:    api.WindowsBootstrapProfile.EnableIPv6,
 		}
 	}
 	o.Registry = api.Registry

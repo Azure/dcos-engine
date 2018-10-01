@@ -617,6 +617,7 @@ func GetDCOSBootstrapConfig(cs *api.ContainerService) string {
 	config = strings.Replace(config, "MASTER_IP_LIST", strings.Join(masterIPList, "\n"), -1)
 	config = strings.Replace(config, "BOOTSTRAP_IP", cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.StaticIP, -1)
 	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.OAuthEnabled), -1)
+	config = strings.Replace(config, "BOOTSTRAP_LINUX_ENABLE_IPV6", strconv.FormatBool(cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.EnableIPv6), -1)
 
 	return config
 }
@@ -648,6 +649,7 @@ func GetDCOSWindowsBootstrapConfig(cs *api.ContainerService) string {
 	config = strings.Replace(config, "MASTER_IP_LIST", strings.Join(masterIPList, "\n"), -1)
 	config = strings.Replace(config, "BOOTSTRAP_IP", cs.Properties.OrchestratorProfile.WindowsBootstrapProfile.StaticIP, -1)
 	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.OAuthEnabled), -1)
+	config = strings.Replace(config, "BOOTSTRAP_WINDOWS_ENABLE_IPV6", strconv.FormatBool(cs.Properties.OrchestratorProfile.WindowsBootstrapProfile.EnableIPv6), -1)
 
 	return config
 }

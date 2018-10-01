@@ -181,6 +181,7 @@ type BootstrapProfile struct {
 	OSDiskSizeGB  int    `json:"osDiskSizeGB,omitempty"`
 	StaticIP      string `json:"staticIP,omitempty"`
 	Subnet        string `json:"subnet,omitempty"`
+	EnableIPv6    bool   `json:"enableIPv6,omitempty"`
 }
 
 // MasterProfile represents the definition of the master cluster
