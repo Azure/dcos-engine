@@ -183,6 +183,7 @@ type BootstrapProfile struct {
 	StaticIP      string `json:"staticIP,omitempty"`
 	HasPublicIP   bool   `json:"hasPublicIP,omitempty"`
 	Subnet        string `json:"subnet,omitempty"`
+	EnableIPv6    bool   `json:"enableIPv6,omitempty"`
 }
 
 // MasterProfile represents the definition of the master cluster
