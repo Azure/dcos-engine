@@ -199,7 +199,6 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 					"PROVISION_SOURCE_STR": getDCOSProvisionScript(dcosProvisionSource),
 					"PROVISION_STR":        getDCOSProvisionScript(dcosBootstrapProvision),
 				})
-
 			return fmt.Sprintf("\"customData\": \"[base64(concat('#cloud-config\\n\\n', '%s'))]\",", str)
 		},
 		"GetDCOSBootstrapWindowsCustomData": func() string {
@@ -262,8 +261,8 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			return fmt.Sprintf("\"customData\": \"[base64(concat('#cloud-config\\n\\n', '%s'))]\",", str)
 		},
 		"GetDCOSWindowsAgentCustomData": func(profile *api.AgentPoolProfile) string {
-			preprovisionExtension := makeWindowsExtensionScriptCommands(profile.PreprovisionExtension, cs.Properties.ExtensionProfiles)
-			postprovisionExtension := makeWindowsExtensionScriptCommands(profile.PostprovisionExtension, cs.Properties.ExtensionProfiles)
+			preprovisionExtensionURL, preprovisionExtensionDir, preprovisionExtensionPath := getWindowsExtensionScriptData(profile.PreprovisionExtension, cs.Properties.ExtensionProfiles)
+			postprovisionExtensionURL, postprovisionExtensionDir, postprovisionExtensionPath := getWindowsExtensionScriptData(profile.PostprovisionExtension, cs.Properties.ExtensionProfiles)
 			b, err := Asset(dcosWindowsProvision)
 			if err != nil {
 				// this should never happen and this is a bug
@@ -277,8 +276,12 @@ func (t *TemplateGenerator) getTemplateFuncMap(cs *api.ContainerService) templat
 			}
 			// translate the parameters
 			csStr := string(b)
-			csStr = strings.Replace(csStr, "PREPROVISION_EXTENSION", preprovisionExtension, -1)
-			csStr = strings.Replace(csStr, "POSTPROVISION_EXTENSION", postprovisionExtension, -1)
+			csStr = strings.Replace(csStr, "PREPROVISION_EXTENSION_URL", preprovisionExtensionURL, -1)
+			csStr = strings.Replace(csStr, "PREPROVISION_EXTENSION_DIR", preprovisionExtensionDir, -1)
+			csStr = strings.Replace(csStr, "PREPROVISION_EXTENSION_PATH", preprovisionExtensionPath, -1)
+			csStr = strings.Replace(csStr, "POSTPROVISION_EXTENSION_URL", postprovisionExtensionURL, -1)
+			csStr = strings.Replace(csStr, "POSTPROVISION_EXTENSION_DIR", postprovisionExtensionDir, -1)
+			csStr = strings.Replace(csStr, "POSTPROVISION_EXTENSION_PATH", postprovisionExtensionPath, -1)
 			csStr = strings.Replace(csStr, "ROLENAME", agentRoleName, -1)
 			csStr = strings.Replace(csStr, "SSH_PUB_KEY", cs.Properties.LinuxProfile.SSH.PublicKeys[0].KeyData, -1)
 			csStr = strings.Replace(csStr, "ADMIN_PASSWORD", cs.Properties.WindowsProfile.AdminPassword, -1)

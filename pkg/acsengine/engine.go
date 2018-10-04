@@ -206,9 +206,9 @@ func makeExtensionScriptCommands(extension *api.Extension, extensionProfiles []*
 		scriptFilePath, scriptURL, scriptFilePath, scriptFilePath, extensionsParameterReference, extensionProfile.Name)
 }
 
-func makeWindowsExtensionScriptCommands(extension *api.Extension, extensionProfiles []*api.ExtensionProfile) string {
+func getWindowsExtensionScriptData(extension *api.Extension, extensionProfiles []*api.ExtensionProfile) (string, string, string) {
 	if extension == nil {
-		return ""
+		return "", "", ""
 	}
 	var extensionProfile *api.ExtensionProfile
 	for _, eP := range extensionProfiles {
@@ -225,7 +225,10 @@ func makeWindowsExtensionScriptCommands(extension *api.Extension, extensionProfi
 	scriptURL := getExtensionURL(extensionProfile.RootURL, extensionProfile.Name, extensionProfile.Version, extensionProfile.Script, extensionProfile.URLQuery)
 	scriptFileDir := fmt.Sprintf("$env:SystemDrive:/AzureData/extensions/%s", extensionProfile.Name)
 	scriptFilePath := fmt.Sprintf("%s/%s", scriptFileDir, extensionProfile.Script)
-	return fmt.Sprintf("New-Item -ItemType Directory -Force -Path \"%s\" ; Invoke-WebRequest -Uri \"%s\" -OutFile \"%s\" ; powershell \"%s %s\" ; if($LASTEXITCODE) { Write-Output \"Failed to execute: %s\" ; exit 1 }\n", scriptFileDir, scriptURL, scriptFilePath, scriptFilePath, "$preprovisionExtensionParams", scriptFilePath)
+	scriptURL = "\"" + scriptURL + "\""
+	scriptFileDir = "\"" + scriptFileDir + "\""
+	scriptFilePath = "\"" + scriptFilePath + "\""
+	return scriptURL, scriptFileDir, scriptFilePath
 }
 
 func getDCOSWindowsAgentPreprovisionParameters(cs *api.ContainerService, profile *api.AgentPoolProfile) string {

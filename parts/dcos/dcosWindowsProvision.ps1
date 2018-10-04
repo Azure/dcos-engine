@@ -163,6 +163,20 @@ function ConfirmServices {
     Throw "Not all required DCOS services are available or have the expected status"
 }
 
+function DownloadRunScript($scriptURL, $scriptFileDir, $scriptFilePath) {
+    if (!$scriptURL) {
+        return
+    }
+
+    New-Item -ItemType Directory -Force -Path $scriptFileDir
+    RetryCurl $scriptURL $scriptFilePath
+
+    powershell "$scriptFilePath"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to execute: powershell $scriptFilePath"
+    }
+}
+
 try {
     Write-Log "Setting up Windows Agent node. BootstrapIP:$BootstrapIP"
     Write-Log "Admin user is $adminUser"
@@ -171,7 +185,11 @@ try {
 
     Write-Log "Run preprovision extension (if present)"
 
-    PREPROVISION_EXTENSION
+    $PreProvisionScriptURL = PREPROVISION_EXTENSION_URL
+    $PreProvisionScriptDir = PREPROVISION_EXTENSION_DIR
+    $PreProvisionScriptPath = PREPROVISION_EXTENSION_PATH
+
+    DownloadRunScript $PreProvisionScriptURL $PreProvisionScriptDir $PreProvisionScriptPath
 
     UpdateDocker
 
@@ -244,7 +262,11 @@ powershell -command c:\AzureData\dcos_install.ps1 ROLENAME
     # Confirm DCOS Services
     ConfirmServices
 
-    POSTPROVISION_EXTENSION
+    $PostProvisionScriptURL = POSTPROVISION_EXTENSION_URL
+    $PostProvisionScriptDir = POSTPROVISION_EXTENSION_DIR
+    $PostProvisionScriptPath = POSTPROVISION_EXTENSION_PATH
+    
+    DownloadRunScript $PostProvisionScriptURL $PostProvisionScriptDir $PostProvisionScriptPath
 
 } catch {
     Write-Log "Failed to provision Windows agent node: $_"
