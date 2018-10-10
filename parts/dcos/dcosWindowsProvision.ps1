@@ -23,6 +23,7 @@ Param(
 )
 
 $global:BootstrapInstallDir = Join-Path $env:SystemDrive "AzureData"
+$global:MesosFlags = $null
 $global:SetCredsScript = @'
 [CmdletBinding(DefaultParameterSetName="Standard")]
 Param(
@@ -435,16 +436,48 @@ function Set-MesosCustomAttributes {
                 -Encoding Ascii
 }
 
+function Set-MesosFlags {
+    Write-Log "Enter Set-MesosFlags"
+    if($global:MesosFlags) {
+        Write-Log "Mesos flags are already set"
+        return
+    }
+    $timeout = 5400.0 # 1 hour and 30 minutes timeout
+    $startTime = Get-Date
+    while(((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
+        try {
+            $response = Invoke-WebRequest -UseBasicParsing -Uri "http://leader.mesos:5050/flags" -ErrorAction Stop
+        } catch {
+            Start-Sleep -Seconds 30
+            continue
+        }
+        Write-Log "Setting the Mesos flags"
+        $global:MesosFlags = (ConvertFrom-Json -InputObject $response.Content).flags
+        return
+    }
+    Throw "ERROR: Cannot get the Mesos flags from the leader.mesos within a timeout of $timeout seconds"
+}
+
+function Get-MesosFlags {
+    if(!$global:MesosFlags) {
+        Set-MesosFlags | Out-Null
+    }
+    return $global:MesosFlags
+}
+
 function Confirm-DCOSServices {
+    $mesosFlags = Get-MesosFlags
     $role = "ROLENAME" -replace '_','-'
     $dcosServices = [ordered]@{}
     $dcosServices.Add("dcos.target", "Stopped")
     $dcosServices.Add("dcos-adminrouter-agent.service", "Running")
     $dcosServices.Add("dcos-diagnostics.service", "Running")
     $dcosServices.Add("dcos-mesos-$role.service", "Running")
-    $dcosServices.Add("dcos-metrics-agent.service", "Running")
     $dcosServices.Add("dcos-net.service", "Running")
     $dcosServices.Add("dcos-net-watchdog.service", "Running")
+    if($mesosFlags.authenticate_agents -eq "false") {
+        $dcosServices.Add("dcos-metrics-agent.service", "Running")
+    }
 
     $timeout = New-TimeSpan -Minutes 20
     $sw = [diagnostics.stopwatch]::StartNew()
