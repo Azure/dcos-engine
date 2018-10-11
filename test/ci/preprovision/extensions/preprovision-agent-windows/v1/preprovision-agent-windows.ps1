@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 
-$MESOS_ETC_SERVICE_DIR = Join-Path $env:SystemDrive "DCOS-etc\mesos\service"
+$MESOS_CREDENTIALS_DIR = Join-Path $env:SystemDrive "AzureData\mesos"
+
 
 filter Timestamp { "[$(Get-Date -Format o)] $_" }
 
@@ -15,17 +16,17 @@ function Write-Log {
 function Write-MesosSecretFiles {
     # Write the credential files
     # NOTE: These are only some dumb secrets used for testing. DO NOT use in production!
-    if(Test-Path $MESOS_ETC_SERVICE_DIR) {
-        Remove-Item -Recurse -Force $MESOS_ETC_SERVICE_DIR
+    if(Test-Path $MESOS_CREDENTIALS_DIR) {
+        Remove-Item -Recurse -Force $MESOS_CREDENTIALS_DIR
     }
-    New-Item -ItemType "Directory" -Path $MESOS_ETC_SERVICE_DIR -Force
+    New-Item -ItemType "Directory" -Path $MESOS_CREDENTIALS_DIR -Force
     $utf8NoBOM = New-Object System.Text.UTF8Encoding $false
     $credentials = @{
         "principal" = "mycred1"
         "secret" = "mysecret1"
     }
     $json = ConvertTo-Json -InputObject $credentials -Compress
-    [System.IO.File]::WriteAllLines("$MESOS_ETC_SERVICE_DIR\credential.json", $json, $utf8NoBOM)
+    [System.IO.File]::WriteAllLines("$MESOS_CREDENTIALS_DIR\credential.json", $json, $utf8NoBOM)
     $httpCredentials = @{
         "credentials" = @(
             @{
@@ -35,19 +36,15 @@ function Write-MesosSecretFiles {
         )
     }
     $json = ConvertTo-Json -InputObject $httpCredentials -Compress
-    [System.IO.File]::WriteAllLines("$MESOS_ETC_SERVICE_DIR\http_credential.json", $json, $utf8NoBOM)
-
+    [System.IO.File]::WriteAllLines("$MESOS_CREDENTIALS_DIR\http_credential.json", $json, $utf8NoBOM)
     # Create the Mesos service environment file with authentication enabled
     $serviceEnv = @(
         "`$env:MESOS_AUTHENTICATE_HTTP_READONLY='true'",
         "`$env:MESOS_AUTHENTICATE_HTTP_READWRITE='true'",
-        "`$env:MESOS_HTTP_CREDENTIALS=`"$MESOS_ETC_SERVICE_DIR\http_credential.json`"",
-        "`$env:MESOS_CREDENTIAL=`"$MESOS_ETC_SERVICE_DIR\credential.json`""
+        "`$env:MESOS_HTTP_CREDENTIALS=`"$MESOS_CREDENTIALS_DIR\http_credential.json`"",
+        "`$env:MESOS_CREDENTIAL=`"$MESOS_CREDENTIALS_DIR\credential.json`""
     )
-
-    New-Item -ItemType "Directory" -Path "C:\azuredata\mesos" -Force
-    $AuthEnvFile = "C:\azuredata\mesos\auth-env.ps1"
-    Set-Content -Path $AuthEnvFile -Value $serviceEnv -Encoding utf8
+    Set-Content -Path "$MESOS_CREDENTIALS_DIR\auth-env.ps1" -Value $serviceEnv -Encoding "default"
 }
 
 try {
