@@ -624,6 +624,10 @@ func GetDCOSBootstrapConfig(cs *api.ContainerService) string {
 	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.OAuthEnabled), -1)
 	config = strings.Replace(config, "BOOTSTRAP_LINUX_ENABLE_IPV6", strconv.FormatBool(cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.EnableIPv6), -1)
 
+	if len(cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.ExtraConfigs) != 0 {
+		config = combineYAML(config, cs.Properties.OrchestratorProfile.LinuxBootstrapProfile.ExtraConfigs)
+	}
+
 	return config
 }
 
@@ -656,7 +660,32 @@ func GetDCOSWindowsBootstrapConfig(cs *api.ContainerService) string {
 	config = strings.Replace(config, "BOOTSTRAP_OAUTH_ENABLED", strconv.FormatBool(cs.Properties.OrchestratorProfile.OAuthEnabled), -1)
 	config = strings.Replace(config, "BOOTSTRAP_WINDOWS_ENABLE_IPV6", strconv.FormatBool(cs.Properties.OrchestratorProfile.WindowsBootstrapProfile.EnableIPv6), -1)
 
+	if len(cs.Properties.OrchestratorProfile.WindowsBootstrapProfile.ExtraConfigs) != 0 {
+		config = combineYAML(config, cs.Properties.OrchestratorProfile.WindowsBootstrapProfile.ExtraConfigs)
+	}
+
 	return config
+}
+
+func combineYAML(config string, extra_config map[string]interface{}) string {
+	var config_map map[string]interface{}
+	if err := yaml.Unmarshal([]byte(config), &config_map); err != nil {
+		panic(err)
+	}
+
+	for k, v := range extra_config {
+		if value, exist := config_map[k]; exist {
+			log.Fatalf("Error: %s has the value %s and cannot be set in ExtraConfigs", k, value)
+		} else {
+			config_map[k] = v
+		}
+	}
+
+	new_config, err := yaml.Marshal(config_map)
+	if err != nil {
+		panic(err)
+	}
+	return string(new_config)
 }
 
 func getDCOSBootstrapConfig(cs *api.ContainerService) string {
