@@ -423,6 +423,11 @@ function Install-OpenSSH {
     Set-Service -Name "sshd" -StartupType Automatic
 }
 
+function Get-AgentPrivateIP {
+    $primaryIfIndex = (Get-NetRoute -DestinationPrefix "0.0.0.0/0").ifIndex
+    return (Get-NetIPAddress -AddressFamily IPv4 -ifIndex $primaryIfIndex).IPAddress
+}
+
 function Set-MesosCustomAttributes {
     if (!$customAttrs) {
         # Mesos custom attributes were not set
@@ -431,9 +436,11 @@ function Set-MesosCustomAttributes {
     Write-Log "Setting custom attributes to: $customAttrs"
     $dcosLibDir = Join-Path $env:SystemDrive "var\lib\dcos"
     New-Item -ItemType "Directory" -Path $dcosLibDir -Force
-    Set-Content -Path "${dcosLibDir}\mesos-slave-common.ps1" `
-                -Value "`$env:MESOS_ATTRIBUTES=`"$customAttrs`"" `
-                -Encoding Ascii
+    $envContent = @(
+        "`$env:MESOS_ATTRIBUTES=`"$customAttrs`"",
+        "`$env:MESOS_IP=`"$(Get-AgentPrivateIP)`""
+    )
+    Set-Content -Path "${dcosLibDir}\mesos-slave-common.ps1" -Value $envContent -Encoding Ascii
 }
 
 function Set-MesosFlags {
