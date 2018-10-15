@@ -3,6 +3,58 @@ $ErrorActionPreference = "Stop"
 $DCOS_DIR = Join-Path $env:SystemDrive "opt\mesosphere"
 $ETC_DIR = Join-Path $env:SystemDrive "etc"
 
+function Start-ExecuteWithRetry {
+    Param(
+        [Parameter(Mandatory=$true)]
+        [ScriptBlock]$ScriptBlock,
+        [int]$MaxRetryCount=10,
+        [int]$RetryInterval=3,
+        [string]$RetryMessage,
+        [array]$ArgumentList=@()
+    )
+    $currentErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $retryCount = 0
+    while ($true) {
+        try {
+            $res = Invoke-Command -ScriptBlock $ScriptBlock `
+                                  -ArgumentList $ArgumentList
+            $ErrorActionPreference = $currentErrorActionPreference
+            return $res
+        } catch [System.Exception] {
+            $retryCount++
+            if ($retryCount -gt $MaxRetryCount) {
+                $ErrorActionPreference = $currentErrorActionPreference
+                Throw
+            } else {
+                if($RetryMessage) {
+                    Write-Output $RetryMessage
+                } elseif($_) {
+                    Write-Output $_.ToString()
+                }
+                Start-Sleep $RetryInterval
+            }
+        }
+    }
+}
+
+function Start-FileDownloadWithCurl {
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string]$URL,
+        [Parameter(Mandatory=$true)]
+        [string]$Destination,
+        [Parameter(Mandatory=$false)]
+        [int]$RetryCount=10
+    )
+    $params = @('-fLsS', '-o', "`"${Destination}`"", "`"${URL}`"")
+    Start-ExecuteWithRetry -ScriptBlock {
+        $p = Start-Process -FilePath 'curl.exe' -NoNewWindow -ArgumentList $params -Wait -PassThru
+        if($p.ExitCode -ne 0) {
+            Throw "Fail to download $URL"
+        }
+    } -MaxRetryCount $RetryCount -RetryInterval 3 -RetryMessage "Failed to download ${URL}. Retrying"
+}
 
 #
 # Enable Docker debug logging and capture stdout and stderr to a file.
