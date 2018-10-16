@@ -449,7 +449,7 @@ function Set-MesosFlags {
         Write-Log "Mesos flags are already set"
         return
     }
-    $timeout = 5400.0 # 1 hour and 30 minutes timeout
+    $timeout = 7200.0 # 2 hours
     $startTime = Get-Date
     while(((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
         try {
