@@ -22,7 +22,7 @@ const (
 	// DefaultOrchestratorName specifies the 3 character orchestrator code of the cluster template and affects resource naming.
 	DefaultOrchestratorName = "dcos"
 	// DefaultWindowsDockerVersion specifies default docker version installed on Windows nodes
-	DefaultWindowsDockerVersion = "18.03.1-ee-1"
+	DefaultWindowsDockerVersion = "18.03.1-ee-3"
 	// DefaultBootstrapVMSize specifies default bootstrap VM size
 	DefaultBootstrapVMSize = "Standard_D2s_v3"
 	// DefaultWindowsBootstrapVMSize specifies default Windows bootstrap VM size
