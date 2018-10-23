@@ -20,7 +20,19 @@ Here are the cluster definitions for apiVersion "vlabs":
 Here are the valid values for the orchestrator types:
 
 1. `DCOS` - this represents the [DC/OS orchestrator](dcos.md).
+2. `linuxBootstrapProfile` describes the Linux Bootstrap node settings
 
+|Name|Required|Description|
+|---|---|---|
+|bootstrapURL|no|URL for downloading a custom dcos_generate_config.windows.tar.xz|
+|extraConfigs|no|This is an array of valid extra [configs](https://docs.mesosphere.com/1.12/installing/production/advanced-configuration/configuration-reference/) to be added to [config.yaml](https://docs.mesosphere.com/1.12/installing/production/deploying-dcos/configuration/examples/) on the Linux Bootstrap node. ([bring your own Bootstrap examples](../examples/custom_boostrap))|
+
+3. `windowsBootstrapProfile` describes the Windows Bootstrap node settings
+
+|Name|Required|Description|
+|---|---|---|
+|bootstrapURL|no|URL for downloading a custom dcos_generate_config.sh|
+|extraConfigs|no|This is an array of valid extra [configs](https://docs.mesosphere.com/1.12/installing/production/advanced-configuration/configuration-reference/) to be added to [config.yaml](https://docs.mesosphere.com/1.12/installing/production/deploying-dcos/configuration/examples/) on the Windows Bootstrap node. ([bring your own Bootstrap examples](../examples/custom_boostrap))|
 
 ### masterProfile
 `masterProfile` describes the settings for master configuration.
