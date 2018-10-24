@@ -206,7 +206,7 @@ function New-BootstrapNodeFiles {
     Set-Content -Path "${global:BootstrapDir}\genconf\ip-detect.ps1" -Value $global:IpDetectScript
     Start-FileDownload -URL $BootstrapURL -Destination "${global:BootstrapDir}\dcos_generate_config.windows.tar.xz"
     Push-Location $global:BootstrapDir
-    cmd.exe /C "7z.exe e .\dcos_generate_config.windows.tar.xz -so | 7z.exe x -si -ttar"
+    cmd.exe /c '"C:\Program Files\7-Zip\7z.exe" e .\dcos_generate_config.windows.tar.xz -so | "C:\Program Files\7-Zip\7z.exe" x -si -ttar'
     if($LASTEXITCODE -ne 0) {
         Throw "Failed to untar dcos_generate_config.windows.tar.xz"
     }
