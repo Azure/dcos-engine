@@ -22,8 +22,10 @@ Param(
     $customAttrs
 )
 
+$ErrorActionPreference = "Stop"
+
+
 $global:BootstrapInstallDir = Join-Path $env:SystemDrive "AzureData"
-$global:MesosFlags = $null
 $global:SetCredsScript = @'
 [CmdletBinding(DefaultParameterSetName="Standard")]
 Param(
@@ -390,7 +392,8 @@ function Install-OpenSSH {
     Write-Log "Installing OpenSSH"
     $sshdService = Get-Service -Name "sshd" -ErrorAction SilentlyContinue
     if(!$sshdService) {
-        $list = (Get-WindowsCapability -Online | Where-Object Name -like 'OpenSSH.Server*')
+        $fullList = Start-ExecuteWithRetry -ScriptBlock { Get-WindowsCapability -Online } -RetryMessage "Failed to get full list of features"
+        $list = ($fullList | Where-Object Name -like 'OpenSSH.Server*')
         Add-WindowsCapability -Online -Name $list.Name
         Install-PackageProvider -Name "NuGet" -Force
         Install-Module "OpenSSHUtils" -Confirm:$false -Force
@@ -443,37 +446,7 @@ function Set-MesosCustomAttributes {
     Set-Content -Path "${dcosLibDir}\mesos-slave-common.ps1" -Value $envContent -Encoding Ascii
 }
 
-function Set-MesosFlags {
-    Write-Log "Enter Set-MesosFlags"
-    if($global:MesosFlags) {
-        Write-Log "Mesos flags are already set"
-        return
-    }
-    $timeout = 7200.0 # 2 hours
-    $startTime = Get-Date
-    while(((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
-        try {
-            $response = Invoke-WebRequest -UseBasicParsing -Uri "http://leader.mesos:5050/flags" -ErrorAction Stop
-        } catch {
-            Start-Sleep -Seconds 30
-            continue
-        }
-        Write-Log "Setting the Mesos flags"
-        $global:MesosFlags = (ConvertFrom-Json -InputObject $response.Content).flags
-        return
-    }
-    Throw "ERROR: Cannot get the Mesos flags from the leader.mesos within a timeout of $timeout seconds"
-}
-
-function Get-MesosFlags {
-    if(!$global:MesosFlags) {
-        Set-MesosFlags | Out-Null
-    }
-    return $global:MesosFlags
-}
-
 function Confirm-DCOSServices {
-    $mesosFlags = Get-MesosFlags
     $role = "ROLENAME" -replace '_','-'
     $dcosServices = [ordered]@{}
     $dcosServices.Add("dcos.target", "Stopped")
@@ -482,9 +455,7 @@ function Confirm-DCOSServices {
     $dcosServices.Add("dcos-mesos-$role.service", "Running")
     $dcosServices.Add("dcos-net.service", "Running")
     $dcosServices.Add("dcos-net-watchdog.service", "Running")
-    if($mesosFlags.authenticate_agents -eq "false") {
-        $dcosServices.Add("dcos-metrics-agent.service", "Running")
-    }
+    $dcosServices.Add("dcos-telegraf.service", "Running")
 
     $timeout = New-TimeSpan -Minutes 20
     $sw = [diagnostics.stopwatch]::StartNew()
