@@ -73,7 +73,7 @@ try {
 	\$path = Join-Path \$upgradeDir "dcos_generate_config.windows.tar.xz"
 	RetryCurl \$BootstrapURL \$path
 
-	& cmd /c "7z.exe e .\dcos_generate_config.windows.tar.xz -so | 7z.exe x -si -ttar"
+	cmd.exe /c '"C:\Program Files\7-Zip\7z.exe" e .\dcos_generate_config.windows.tar.xz -so | "C:\Program Files\7-Zip\7z.exe" x -si -ttar'
 	if (\$LASTEXITCODE -ne 0) {
 		throw "Failed to untar dcos_generate_config.windows.tar.xz"
 	}
