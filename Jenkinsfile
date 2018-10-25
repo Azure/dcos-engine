@@ -33,7 +33,7 @@ def dcos_engine_testing_env(String command) {
              "SUBSCRIPTION_ID=${env.SUBSCRIPTION_ID}",
              "TENANT_ID=${env.TENANT_ID}",
              "STAGE_TIMEOUT_MIN=60",
-             "TEST_CONFIG=dcos1.11-hyb.json",
+             "TEST_CONFIG=dcos1.12-hyb.json",
              "NUM_OF_RETRIES=1",
              "AUTOCLEAN=false",
              "RESOURCE_GROUP_PREFIX=r-pr-${env.GITHUB_PR_NUMBER}-hyb-rs4",
@@ -59,4 +59,4 @@ def dcosRegressionTesting = { dcos_engine_testing_env("""
                              """) }
 
 runBuild('jenkins/unit-testing', env.TEST_NODE_NAME,   dcosEngineTesting)
-runBuild('jenkins/regression-dcos-1.11-hyb-rs4', env.TEST_NODE_NAME, dcosRegressionTesting)
+runBuild('jenkins/regression-dcos-1.12-hyb-rs4', env.TEST_NODE_NAME, dcosRegressionTesting)
