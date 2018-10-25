@@ -33,7 +33,7 @@ def dcos_engine_testing_env(String command) {
              "SUBSCRIPTION_ID=${env.SUBSCRIPTION_ID}",
              "TENANT_ID=${env.TENANT_ID}",
              "STAGE_TIMEOUT_MIN=60",
-             "TEST_CONFIG=dcos1.11-hyb.json",
+             "TEST_CONFIG=dcos1.12-hyb.json",
              "NUM_OF_RETRIES=1",
              "AUTOCLEAN=false",
              "RESOURCE_GROUP_PREFIX=r-pr-${env.GITHUB_PR_NUMBER}-hyb-rs4",
