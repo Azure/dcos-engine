@@ -59,4 +59,4 @@ def dcosRegressionTesting = { dcos_engine_testing_env("""
                              """) }
 
 runBuild('jenkins/unit-testing', env.TEST_NODE_NAME,   dcosEngineTesting)
-runBuild('jenkins/regression-dcos-1.11-hyb-rs4', env.TEST_NODE_NAME, dcosRegressionTesting)
+runBuild('jenkins/regression-dcos-1.12-hyb-rs4', env.TEST_NODE_NAME, dcosRegressionTesting)
