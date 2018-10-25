@@ -2,22 +2,22 @@
   "deployments": [
     {
       "cluster_definition": "lnx/dcos-m1.lnx2-2.json",
-      "orchestratorRelease": "1.11",
+      "orchestratorRelease": "1.12",
       "location": "eastus"
     },
     {
       "cluster_definition": "lnx/dcos-m3.lnx2-2.json",
-      "orchestratorRelease": "1.11",
+      "orchestratorRelease": "1.12",
       "location": "centralus"
     },
     {
       "cluster_definition": "lnx/dcos-m3.lnx2-2.vnet.json",
-      "orchestratorRelease": "1.11",
+      "orchestratorRelease": "1.12",
       "location": "westus2"
     },
     {
       "cluster_definition": "lnx/dcos-m3.lnx1-2.preprov.json",
-      "orchestratorRelease": "1.11",
+      "orchestratorRelease": "1.12",
       "location": "westus2"
     }
   ]

@@ -3,14 +3,14 @@
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "DCOS",
-      "orchestratorVersion": "1.11.4",
+      "orchestratorVersion": "1.11.6",
       "windowsBootstrapProfile": {
         "bootstrapURL": "https://dcosci.blob.core.windows.net/dcos-windows/stable/dcos_generate_config.windows.tar.xz",
         "vmSize": "Standard_D8s_v3"
       }
     },
     "masterProfile": {
-      "count": 1,
+      "count": 3,
       "dnsPrefix": "",
       "vmSize": "Standard_D2s_v3"
     },
