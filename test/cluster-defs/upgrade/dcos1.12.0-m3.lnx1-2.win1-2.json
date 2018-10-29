@@ -10,7 +10,7 @@
       }
     },
     "masterProfile": {
-      "count": 1,
+      "count": 3,
       "dnsPrefix": "",
       "vmSize": "Standard_D2s_v3"
     },

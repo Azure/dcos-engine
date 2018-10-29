@@ -2,7 +2,7 @@
   "deployments": [
     {
       "cluster_definition": "lnx/dcos-m1.lnx2-2.oauth.json",
-      "orchestratorRelease": "1.11",
+      "orchestratorRelease": "1.12",
       "location": "westus2"
     }
   ]
