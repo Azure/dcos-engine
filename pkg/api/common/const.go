@@ -47,25 +47,13 @@ const (
 const (
 	// DCOSVersion1Dot12Dot0 is the major.minor.patch string for 1.12.0 versions of DCOS
 	DCOSVersion1Dot12Dot0 string = "1.12.0"
-	// DCOSVersion1Dot11Dot6 is the major.minor.patch string for 1.11.6 versions of DCOS
-	DCOSVersion1Dot11Dot6 string = "1.11.6"
-	// DCOSVersion1Dot11Dot5 is the major.minor.patch string for 1.11.5 versions of DCOS
-	DCOSVersion1Dot11Dot5 string = "1.11.5"
-	// DCOSVersion1Dot11Dot4 is the major.minor.patch string for 1.11.4 versions of DCOS
-	DCOSVersion1Dot11Dot4 string = "1.11.4"
-	// DCOSVersion1Dot11Dot2 is the major.minor.patch string for 1.11.2 versions of DCOS
-	DCOSVersion1Dot11Dot2 string = "1.11.2"
 	// DCOSDefaultVersion is a default DCOS version
-	DCOSDefaultVersion string = DCOSVersion1Dot11Dot6
+	DCOSDefaultVersion string = DCOSVersion1Dot12Dot0
 )
 
 // AllDCOSSupportedVersions maintain a list of available dcos versions in acs-engine
 var AllDCOSSupportedVersions = []string{
 	DCOSVersion1Dot12Dot0,
-	DCOSVersion1Dot11Dot6,
-	DCOSVersion1Dot11Dot5,
-	DCOSVersion1Dot11Dot4,
-	DCOSVersion1Dot11Dot2,
 }
 
 // GetAllSupportedDCOSVersions returns a slice of all supported DCOS versions.

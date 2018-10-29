@@ -1,11 +1,7 @@
 {
   "deployments": [
     {
-      "cluster_definition": "upgrade/dcos1.11.6-m3.lnx1-2.win1-2.json",
-      "location": "westus2"
-    },
-    {
-      "cluster_definition": "upgrade/dcos1.12.0-m1.lnx1-2.win1-2.json",
+      "cluster_definition": "upgrade/dcos1.12.0-m3.lnx1-2.win1-2.json",
       "location": "westus2"
     }
   ]

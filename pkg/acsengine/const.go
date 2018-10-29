@@ -57,11 +57,11 @@ const (
 	dcosProvisionSource    = "dcos/dcosprovisionsource.sh"
 	dcosProvision          = "dcos/dcosprovision.sh"
 	dcosBootstrapProvision = "dcos/bootstrapprovision.sh"
-	dcosBootstrapConfig111 = "dcos/dcos1.11.bootstrap-config.yaml"
-	dcosCustomData111      = "dcos/dcos1.11.customdata.t"
+	dcosBootstrapConfig112 = "dcos/dcos1.12.bootstrap-config.yaml"
+	dcosCustomData112      = "dcos/dcos1.12.customdata.t"
 
 	dcosBootstrapWindowsProvision = "dcos/bootstrapWindowsProvision.ps1"
-	dcosBootstrapWindowsConfig111 = "dcos/dcos1.11.bootstrapwin-config.yaml"
+	dcosBootstrapWindowsConfig112 = "dcos/dcos1.12.bootstrapwin-config.yaml"
 	dcosWindowsProvision          = "dcos/dcosWindowsProvision.ps1"
 )
 
