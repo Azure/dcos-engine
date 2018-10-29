@@ -39,7 +39,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "",
 					deploymentDirectory: "_output/test",
-					upgradeVersion:      "1.11.2",
+					upgradeVersion:      "1.12.0",
 					location:            "centralus",
 					sshPrivateKeyPath:   privKey.Name(),
 					authArgs: authArgs{
@@ -52,7 +52,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "test",
 					deploymentDirectory: "_output/test",
-					upgradeVersion:      "1.11.2",
+					upgradeVersion:      "1.12.0",
 					location:            "",
 					sshPrivateKeyPath:   privKey.Name(),
 					authArgs: authArgs{
@@ -78,7 +78,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "test",
 					deploymentDirectory: "",
-					upgradeVersion:      "1.11.2",
+					upgradeVersion:      "1.12.0",
 					location:            "southcentralus",
 					sshPrivateKeyPath:   privKey.Name(),
 					authArgs: authArgs{
@@ -91,7 +91,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "test",
 					deploymentDirectory: "_output/mydir",
-					upgradeVersion:      "1.11.2",
+					upgradeVersion:      "1.12.0",
 					location:            "southcentralus",
 					sshPrivateKeyPath:   privKey.Name(),
 					authArgs:            authArgs{},
@@ -102,7 +102,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "test",
 					deploymentDirectory: "_output/mydir",
-					upgradeVersion:      "1.11.2",
+					upgradeVersion:      "1.12.0",
 					location:            "southcentralus",
 					authArgs:            authArgs{},
 				},
@@ -112,7 +112,7 @@ var _ = Describe("the upgrade command", func() {
 				uc: &dcosUpgradeCmd{
 					resourceGroupName:   "test",
 					deploymentDirectory: "_output/mydir",
-					upgradeVersion:      "1.11.2",
+					upgradeVersion:      "1.12.0",
 					location:            "southcentralus",
 					sshPrivateKeyPath:   privKey.Name(),
 					authArgs: authArgs{
