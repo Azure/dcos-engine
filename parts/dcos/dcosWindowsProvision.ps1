@@ -386,6 +386,29 @@ function Update-Docker {
     }
     Write-Log "Starting Docker"
     Start-Service Docker
+    $dockerd = Join-Path $env:ProgramFiles "Docker\dockerd.exe"
+    $dockerVersion = & $dockerd --version # This returns a string of the form: "Docker version 18.03.1-ee-3, build b9a5c95"
+    Write-Log "Docker string version returned by the CLI: '$dockerVersion'"
+    if($LASTEXITCODE) {
+        Throw "Failed to get the Docker server version"
+    }
+    $version = $dockerVersion.Split()[2].Trim(',') # Parse the string get the version
+    switch ($version.Substring(0,5)) {
+        "17.06" {
+            Write-Log "Docker 17.06 found, setting DOCKER_API_VERSION to 1.30"
+            $apiVersion = "1.30"
+        }
+        "18.03" {
+            Write-Log "Docker 18.03 found, setting DOCKER_API_VERSION to 1.37"
+            $apiVersion = "1.37"
+        }
+        default {
+            Write-Log "Docker version $version found, clearing DOCKER_API_VERSION system environment variable"
+            $apiVersion = $null
+        }
+    }
+    [System.Environment]::SetEnvironmentVariable('DOCKER_API_VERSION', $apiVersion, [System.EnvironmentVariableTarget]::Machine)
+    $env:DOCKER_API_VERSION = $apiVersion
 }
 
 function Install-OpenSSH {
