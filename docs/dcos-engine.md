@@ -146,10 +146,12 @@ Build dcos-engine:
   9. Type `go generate`
   10. Type `cd %GOPATH%\src\github.com\Azure\dcos-engine\pkg\i18n`
   11. Type `go generate`
-  12. Type `cd %GOPATH%\src\github.com\Azure\dcos-engine`
-  13. Type `go build` to build the project
-  14. Type `go install` to install the project
-  15. Run `dcos-engine.exe` to see the command line parameters
+  12. Type `cd %GOPATH%\src\github.com\Azure\dcos-engine\pkg\operations\dcosupgrade`
+  13. Type `go generate`
+  14. Type `cd %GOPATH%\src\github.com\Azure\dcos-engine`
+  15. Type `go build` to build the project
+  16. Type `go install` to install the project
+  17. Run `dcos-engine.exe` to see the command line parameters
 
 ### OS X and Linux
 
