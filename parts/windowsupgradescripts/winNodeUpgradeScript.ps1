@@ -67,23 +67,16 @@ function Start-FileDownload {
 }
 
 
-$upgradeScriptURL = "WIN_UPGRADE_SCRIPT_URL"
-$upgradeDir = Join-Path $env:SystemDrive "AzureData\upgrade\NEW_VERSION"
-$log = Join-Path $env:SystemDrive "AzureData\upgrade_NEW_VERSION.log"
-$adminUser = "ADMIN_USER"
-$password = "ADMIN_PASSWORD"
 try {
+    $upgradeScriptURL = "WIN_UPGRADE_SCRIPT_URL"
+    $upgradeDir = Join-Path $env:SystemDrive "AzureData\upgrade\NEW_VERSION"
+    $log = Join-Path $env:SystemDrive "AzureData\upgrade_NEW_VERSION.log"
+
     Start-Transcript -Path $log -append
     Write-Log "Starting node upgrade to DCOS NEW_VERSION"
     Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $upgradeDir
     New-Item -ItemType Directory -Force -Path $upgradeDir
     Push-Location $upgradeDir
-
-    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_USERNAME", "$env:computername\\$adminUser", "Machine")
-    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_PASSWORD", $password, "Machine")
-
-    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_USERNAME", "$env:computername\\$adminUser", "Process")
-    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_PASSWORD", $password, "Process")
 
     Start-FileDownload -URL $upgradeScriptURL -Destination "dcos_node_upgrade.ps1"
 
