@@ -108,11 +108,9 @@ function Update-Docker {
     # Upgrade and start Docker
     if ("WINDOWS_DOCKER_VERSION" -ne "current") {
         Write-Log "Updating Docker to WINDOWS_DOCKER_VERSION"
-        Install-Module DockerMsftProvider -Force
+        Install-Module -Name DockerMsftProvider -Repository PSGallery -Force
         Install-Package -Name docker -ProviderName DockerMsftProvider -Force -RequiredVersion WINDOWS_DOCKER_VERSION
     }
-    Write-Log "Starting Docker"
-    Start-Service Docker
     $dockerd = Join-Path $env:ProgramFiles "Docker\dockerd.exe"
     $dockerVersion = & $dockerd --version # This returns a string of the form: "Docker version 18.03.1-ee-3, build b9a5c95"
     Write-Log "Docker string version returned by the CLI: '$dockerVersion'"
@@ -136,6 +134,8 @@ function Update-Docker {
     }
     [System.Environment]::SetEnvironmentVariable('DOCKER_API_VERSION', $apiVersion, [System.EnvironmentVariableTarget]::Machine)
     $env:DOCKER_API_VERSION = $apiVersion
+    Write-Log "Restarting Docker"
+    Restart-Service Docker
 }
 
 function Install-OpenSSH {
