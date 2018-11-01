@@ -1,9 +1,9 @@
 ﻿<#
     .SYNOPSIS
-        Provisions VM as a Windows bootstrap node.
+        Provisions VM as a Windows agent node.
 
     .DESCRIPTION
-        Provisions VM as a Windows bootstrap node. This script is invoked
+        Provisions VM as a Windows agent node. This script is invoked
         by the Azure Windows VMs user data script.
 #>
 
@@ -26,19 +26,6 @@ $ErrorActionPreference = "Stop"
 
 
 $global:BootstrapInstallDir = Join-Path $env:SystemDrive "AzureData"
-$global:SetCredsScript = @'
-[CmdletBinding(DefaultParameterSetName="Standard")]
-Param(
-    [ValidateNotNullOrEmpty()]
-    [string]$user,
-    [ValidateNotNullOrEmpty()]
-    [string]$password,
-    [ValidateNotNullOrEmpty()]
-    [string]$domain
-)
-Install-Module CredentialManager -Force
-New-StoredCredential -Target dcos/app -Username "$domain\$user" -Password $password -Type GENERIC -Persist LocalMachine
-'@
 
 
 filter Timestamp { "[$(Get-Date -Format o)] $_" }
@@ -49,266 +36,6 @@ function Write-Log {
     )
     $msg = $Message | Timestamp
     Write-Output $msg
-}
-
-function Get-AccountObjectByName {
-    <#
-    .SYNOPSIS
-    Returns a CimInstance or a ManagementObject containing the Win32_Account representation of the requested username.
-    .PARAMETER Username
-    User name to lookup.
-    #>
-    [CmdletBinding()]
-    Param(
-        [parameter(Mandatory=$true)]
-        [string]$Username
-    )
-    PROCESS {
-        $u = Get-CimInstance -Class "Win32_Account" -Filter ("Name='{0}'" -f $Username)
-        if (!$u) {
-            Throw [System.Management.Automation.ItemNotFoundException] "User not found: $Username"
-        }
-        return $u
-    }
-}
-
-function Get-GroupObjectBySID {
-    <#
-    .SYNOPSIS
-    This will return a win32_group object. If running on a system with powershell >= 4, this will be a CimInstance.
-    Systems running powershell <= 3 will return a ManagementObject.
-    .PARAMETER SID
-    The SID of the user we want to find
-    .PARAMETER Exact
-    This is $true by default. If set to $false, the query will use the 'LIKE' operator instead of '='.
-    .NOTES
-    If $Exact is $false, multiple win32_account objects may be returned.
-    #>
-    [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory=$true)]
-        [string]$SID,
-        [Parameter(Mandatory=$false)]
-        [switch]$Exact=$true
-    )
-    PROCESS {
-        $modifier = " LIKE "
-        if ($Exact){
-            $modifier = "="
-        }
-        $query = ("SID{0}'{1}'" -f @($modifier, $SID))
-        $s = Get-CimInstance -Class Win32_Group -Filter $query
-        if(!$s){
-            Throw "SID not found: $SID"
-        }
-        return $s
-    }
-}
-
-function Get-GroupObjectByName {
-    <#
-    .SYNOPSIS
-    Returns a CimInstance or a ManagementObject containing the Win32_Group representation of the requested group name.
-    .PARAMETER GroupName
-    Group name to lookup.
-    #>
-    [CmdletBinding()]
-    Param(
-        [parameter(Mandatory=$true)]
-        [string]$GroupName
-    )
-    PROCESS {
-        $g = Get-CimInstance -Class "Win32_Group" -Filter ("Name='{0}'" -f $GroupName)
-        if (!$g) {
-            Throw "Group not found: $GroupName"
-        }
-        return $g
-    }
-}
-
-function Get-GroupNameFromSID {
-    <#
-    .SYNOPSIS
-    This function exists for compatibility. Please use Get-GroupObjectBySID.
-    .PARAMETER SID
-    The SID of the group we want to find
-    .PARAMETER Exact
-    This is $true by default. If set to $false, the query will use the 'LIKE' operator instead of '='.
-    .NOTES
-    If $Exact is $false, multiple win32_group objects may be returned.
-    #>
-    [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory=$true)]
-        [string]$SID,
-        [Parameter(Mandatory=$false)]
-        [switch]$Exact=$true
-    )
-    PROCESS {
-        return (Get-GroupObjectBySID -SID $SID -Exact:$Exact).Name
-    }
-}
-
-function Add-WindowsUser {
-    <#
-    .SYNOPSIS
-    Creates a new local Windows account.
-    .PARAMETER Username
-    The user name of the new user
-    .PARAMETER Password
-    The password the user will authenticate with
-    .PARAMETER Fullname
-    The user full name. Applies only when user doesn't exist already.
-    .PARAMETER Description
-    The description for the user. Applies only when user doesn't exist already.
-    .NOTES
-    This commandlet creates a local user that never expires, and which is not required to reset the password on first logon.
-    #>
-    [CmdletBinding()]
-    Param(
-        [parameter(Mandatory=$true)]
-        [string]$Username,
-        [parameter(Mandatory=$true)]
-        [string]$Password,
-        [parameter(Mandatory=$false)]
-        [string]$Fullname,
-        [parameter(Mandatory=$false)]
-        [String]$Description
-    )
-    PROCESS {
-        try {
-            $exists = Get-AccountObjectByName $Username
-        } catch [System.Management.Automation.ItemNotFoundException] {
-            $exists = $false
-        }
-        if($exists) {
-            Write-Output "Username $Username already exists"
-            return
-        }
-        $params = @("user", $Username)
-        $params += @($Password, "/add", "/expires:never", "/active:yes", "/Y")
-        if($Fullname) {
-            $params += "/fullname:{0}" -f @($Fullname)
-        }
-        if($Description) {
-            $params += "/comment:{0}" -f @($Description)
-        }
-        $p = Start-Process -FilePath "net.exe" -ArgumentList $params -NoNewWindow -Wait -PassThru
-        if($p.ExitCode -ne 0) {
-            Throw "Failed to set the Windows user $Username"
-        }
-    }
-}
-
-function Confirm-IsMemberOfGroup {
-    [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory=$true)]
-        [string]$GroupSID,
-        [Parameter(Mandatory=$true)]
-        [string]$Username
-    )
-    PROCESS {
-        $name = Get-GroupNameFromSID -SID $GroupSID
-        return Get-LocalUserGroupMembership -Group $name -Username $Username
-    }
-}
-
-function Get-LocalUserGroupMembership {
-    [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory=$true)]
-        [string]$Group,
-        [Parameter(Mandatory=$true)]
-        [string]$Username
-    )
-    PROCESS {
-        $ret = net.exe localgroup $Group
-        if($LASTEXITCODE) {
-            Throw "Failed to run: net.exe localgroup $Group"
-        }
-        $members =  $ret | where {$_ -AND $_ -notmatch "command completed successfully"} | select -skip 4
-        foreach ($i in $members){
-            if ($Username -eq $i){
-                return $true
-            }
-        }
-        return $false
-    }
-}
-
-function Add-UserToLocalGroup {
-    <#
-    .SYNOPSIS
-    Add a user to a localgroup
-    .PARAMETER Username
-    The username to add
-    .PARAMETER GroupSID
-    The SID of the group to add the user to
-    .PARAMETER GroupName
-    The name of the group to add the user to
-    .NOTES
-    GroupSID and GroupName are mutually exclusive
-    #>
-    [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory=$true)]
-        [string]$Username,
-        [Parameter(Mandatory=$false)]
-        [string]$GroupSID,
-        [Parameter(Mandatory=$false)]
-        [string]$GroupName
-    )
-    PROCESS {
-        if(!$GroupSID -and !$GroupName) {
-            Throw "Neither GroupSID, nor GroupName have been specified"
-        }
-        if($GroupName -and $GroupSID){
-            Throw "The -GroupName and -GroupSID options are mutually exclusive"
-        }
-        if($GroupSID){
-            $GroupName = Get-GroupNameFromSID $GroupSID
-        }
-        if($GroupName) {
-            $GroupSID = (Get-GroupObjectByName $GroupName).SID
-        }
-        $isInGroup = Confirm-IsMemberOfGroup -User $Username -Group $GroupSID
-        if($isInGroup){
-            return
-        }
-        $params = @("net.exe", "localgroup", $GroupName, $Username, "/add")
-        $p = Start-Process -FilePath "net.exe" -ArgumentList $params -NoNewWindow -Wait -PassThru
-        if($p.ExitCode -ne 0) {
-            Throw "Failed to add the Windows user $Username to the group $GroupName"
-        }
-    }
-}
-
-function New-LocalAdmin {
-    <#
-    .SYNOPSIS
-    Create a local user account and add it to the local Administrators group. This works with internationalized versions of Windows as well.
-    .PARAMETER Username
-    The user name of the new user
-    .PARAMETER Password
-    The password the user will authenticate with
-    .NOTES
-    This commandlet creates an administrator user that never expires, and which is not required to reset the password on first logon.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [Alias("LocalAdminUsername")]
-        [string]$Username,
-        [Parameter(Mandatory=$true)]
-        [Alias("LocalAdminPassword")]
-        [string]$Password
-    )
-    PROCESS {
-        Add-WindowsUser $Username $Password | Out-Null
-        $administratorsGroupSID = "S-1-5-32-544"
-        Add-UserToLocalGroup -Username $Username -GroupSID $administratorsGroupSID
-    }
 }
 
 function Start-ExecuteWithRetry {
@@ -532,28 +259,9 @@ function Start-ExtensionScript {
 }
 
 function Start-DCOSSetup {
-    $password = "ADMIN_PASSWORD"
-    New-LocalAdmin -Username $adminUser -Password $password
-    $setCredsScriptFile = Join-Path $global:BootstrapInstallDir "setcreds.ps1"
-    Set-Content -Path $setCredsScriptFile -Value $global:SetCredsScript -Encoding ascii
-    & "$setCredsScriptFile" -User $adminUser -Password $password -Domain $env:computername
-    if($LASTEXITCODE -ne 0) {
-        Throw "Failed to execute: $setCredsScript"
-    }
-
-    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_USERNAME", "$env:computername\$adminUser", "Machine")
-    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_PASSWORD", $password, "Machine")
-    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_USERNAME", "$env:computername\$adminUser", "Process")
-    [Environment]::SetEnvironmentVariable("SYSTEMD_SERVICE_PASSWORD", $password, "Process")
-
-    $runasxboxFile = Join-Path $global:BootstrapInstallDir "runasxbox.exe"
-    Start-FileDownload -URL "https://dcos-mirror.azureedge.net/winbootstrap/RunAsXbox.exe" -Destination $runasxboxFile
     Start-FileDownload -URL "http://${BootstrapIP}:8086/dcos_install.ps1" -Destination "${global:BootstrapInstallDir}\dcos_install.ps1"
-
-    $cmd = "powershell -command ${global:BootstrapInstallDir}\dcos_install.ps1 ROLENAME"
-    $runasargs = "/fix /type:4 /user:$env:computername\$adminUser /password:$password /command:'$cmd'"
-    Invoke-Expression -Command "$runasxboxFile $runasargs"
-    if ($LASTEXITCODE -ne 0) {
+    & "${global:BootstrapInstallDir}\dcos_install.ps1" ROLENAME
+    if($LASTEXITCODE -ne 0) {
         throw "Failed run DC/OS install script"
     }
 }
