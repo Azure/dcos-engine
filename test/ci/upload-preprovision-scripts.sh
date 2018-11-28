@@ -9,8 +9,9 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 # Upload preprovision scripts to a storage account
-storage_account=dcosenginetest
-key=$(az storage account keys list -g osct-test-infra -n ${storage_account} --output tsv | grep key1 | cut -f 3)
+resource_group="dcos-engine-CI"
+storage_account="dcosenginetest"
+key=$(az storage account keys list -g ${resource_group} -n ${storage_account} --output tsv | grep key1 | cut -f 3)
 
 cd $DIR/preprovision
 

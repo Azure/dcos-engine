@@ -430,7 +430,7 @@ function validate() {
 	fi
 
 	echo $(date +%H:%M:%S) "Downloading dcos"
-	${remote_exec} curl -O https://downloads.dcos.io/binaries/cli/linux/x86-64/dcos-1.11/dcos
+	${remote_exec} curl -O https://downloads.dcos.io/binaries/cli/linux/x86-64/dcos-1.12/dcos
 	[ $? -eq 0 ] || exit_with_msg "Error: failed to download dcos"
 	echo $(date +%H:%M:%S) "Setting dcos permissions"
 	${remote_exec} chmod a+x ./dcos
