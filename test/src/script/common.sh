@@ -152,7 +152,7 @@ function create_resource_group() {
 	# Create resource group if doesn't exist
 	exists=$(az group exists --name ${RESOURCE_GROUP})
 	if [ "$exists" = "false" ]; then
-		az group create --name="${RESOURCE_GROUP}" --location="${LOCATION}" --tags "type=${RESOURCE_GROUP_TAG_TYPE:-}" "now=$(date +%s)" "job=${JOB_BASE_NAME:-}" "buildno=${BUILD_NUMBER:-}"
+		az group create --name="${RESOURCE_GROUP}" --location="${LOCATION}" --tags "type=${RESOURCE_GROUP_TAG_TYPE:-}" "expiration=${EXPIRATION:-}" "owner=cloudcleaner" "job=${JOB_BASE_NAME:-}" "buildno=${BUILD_NUMBER:-}"
 		sleep 3 # TODO: investigate why this is needed (eventual consistency in ARM)
 	fi
 }
